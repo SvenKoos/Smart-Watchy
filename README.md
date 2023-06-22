@@ -2,12 +2,16 @@
 
 ## Functional principles
 Smart Watchy and companion are app using WiFi to communicate to each other.
+
 Smart messages are transferred ones per minute from mobile app to Watchy.
 
 ### Smart messages from mobile device on Watchy
 New messages detected on mobile device and filtered by companion app configuration are forwarded to Watchy and indicated by icon on wtach face.
+
 Use the right up and down buttons on Watchy to open and change the messages; use left up button to get back to watch face.
+
 The list of messages is limited to last 20 entries.
+
 A single message is shortend to the size of the Watchy display (no scrolling).
 
 ## Mobile app: ESP-Alerts-for-Android
@@ -22,6 +26,7 @@ The companion app provides the following features:
 							
 ### Build and Deployment
 Build the mobile app with Android Studio or use the signed .apk from release.zip and deploy it to your mobile device via Android Studio or sideloading.
+
 Change the mobile app settings for battery usage to Unlimited to enable running in background.
 
 ### Configuration
@@ -44,6 +49,7 @@ The firmware is based on Watchy package 1.4.x, the 7-segment watch face and adds
 
 ### Build and Deployment
 Change the OpenWeather API key in settings.h to your own.
+
 Build the firmware with Arduino IDE and deploy it to your Watchy.
 
 ### Configuration
@@ -54,8 +60,12 @@ Build the firmware with Arduino IDE and deploy it to your Watchy.
 
 ### Android Smart Lock support
 The Watchy should be used as Trusted device for Android Smart Lock functionality.
+
 The Watchy must be paired / bonded to the mobile device (new item in Watchy menu).
+
 Watchy will advertise via BLE to support Smart Lock unlock.
 
 ## Hints
-If mobile device is in roaming zone, IP address is still received from home mobile service provider, which results in home weather report on watch face.
+Location discovery: If mobile device is in roaming zone, IP address is still received from home mobile service provider, which results in home weather report on watch face.
+
+Quiet mode: Exit by pressing the left-upper button.

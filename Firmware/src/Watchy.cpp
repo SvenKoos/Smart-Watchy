@@ -1375,9 +1375,8 @@ void Watchy::showAlert(singleAlert alert, int index, int amount) {
 	display.setTextColor(darkMode ? GxEPD_WHITE : GxEPD_BLACK);
 	display.setCursor(0, 20);
 
-	display.print("["); display.print(index+1); display.print("/"); display.print(amount); display.print("] ");
-	
-	display.print(alert.timeStamp); display.print(" ");
+	String _string = (const char*)alert.timeStamp;
+	display.println(_string.substring(0, 16));
 	display.println(alert.appName);
 	display.println(alert.title);
 	display.println(alert.body);
@@ -1415,6 +1414,64 @@ alertData Watchy::getAlertData(bool _darkMode) {
 			String payload = http.getString();
 			currentAlerts.alerts = JSON.parse(payload);
 			alertIndex = -1;
+			
+			alertNo = currentAlerts.alerts["data"].length();
+			if (alertNo > ALERT_MAX_NO) {
+				alertNo = ALERT_MAX_NO;
+			}
+			
+			for (int i = 0; i < alertNo; i++) {
+				JSONVar alert = currentAlerts.alerts["data"][i];
+				
+				String _string = (const char*)alert["appName"];
+				if (_string.length() < NAME_LEN)
+					strcpy(allAlerts[i].appName, _string.c_str());
+				else
+					strcpy(allAlerts[i].appName, (_string.substring(0, NAME_LEN-1)).c_str());
+
+				_string = (const char*)alert["title"];
+				if (_string.length() < TITLE_LEN)
+					strcpy(allAlerts[i].title, _string.c_str());
+				else
+					strcpy(allAlerts[i].title, (_string.substring(0, TITLE_LEN-1)).c_str());
+
+				_string = (const char*)alert["body"];
+				// SvKo
+				// _string = Normalize2ASCII(_string);
+				if ((_string != null) && (_string.length() > 0)) {
+					if (_string.length() < BODY_LEN)
+						strcpy(allAlerts[i].body, _string.c_str());
+					else
+						strcpy(allAlerts[i].body, (_string.substring(0, BODY_LEN-1)).c_str());
+				} else {
+					strcpy(allAlerts[i].body, "");
+				}
+				
+				allAlerts[i].dismissed = false;
+				
+				_string = (const char*)(alert["timestamp"]);
+				_string.replace("T", " ");
+				int index = _string.lastIndexOf(".");
+				_string = _string.substring(0, index);
+				strcpy(allAlerts[i].timeStamp, _string.c_str());
+
+				allAlerts[i].id = int(alert["id"]);
+			}
+			int newNo = alertNo;
+			int newMin = 0;
+			int newMax = 0;
+			if  (newNo > 0) {
+				newMin = allAlerts[0].id;
+				newMax = allAlerts[newNo - 1].id;
+				
+				String log = String(newMin) + " " + String(newMax) + " " + String(oldMin) + " " + String(oldMax);
+				strcpy(currentAlerts.log, log.c_str());
+
+				if ((oldNo != newNo) || (oldMin != newMin) || (oldMax != newMax)) {
+				  vibMotor(200, 3);
+				}
+			}
+			
 		} else {
 			// http error
 		}
@@ -1424,63 +1481,6 @@ alertData Watchy::getAlertData(bool _darkMode) {
 		// turn off radios
 		WiFi.mode(WIFI_OFF);
 		btStop();
-		
-		alertNo = currentAlerts.alerts["data"].length();
-		if (alertNo > ALERT_MAX_NO) {
-			alertNo = ALERT_MAX_NO;
-		}
-		
-		for (int i = 0; i < alertNo; i++) {
-			JSONVar alert = currentAlerts.alerts["data"][i];
-			
-			String _string = (const char*)alert["appName"];
-			if (_string.length() < NAME_LEN)
-				strcpy(allAlerts[i].appName, _string.c_str());
-			else
-				strcpy(allAlerts[i].appName, (_string.substring(0, NAME_LEN-1)).c_str());
-
-			_string = (const char*)alert["title"];
-			if (_string.length() < TITLE_LEN)
-				strcpy(allAlerts[i].title, _string.c_str());
-			else
-				strcpy(allAlerts[i].title, (_string.substring(0, TITLE_LEN-1)).c_str());
-
-			_string = (const char*)alert["body"];
-			// SvKo
-			// _string = Normalize2ASCII(_string);
-			if ((_string != null) && (_string.length() > 0)) {
-				if (_string.length() < BODY_LEN)
-					strcpy(allAlerts[i].body, _string.c_str());
-				else
-					strcpy(allAlerts[i].body, (_string.substring(0, BODY_LEN-1)).c_str());
-			} else {
-				strcpy(allAlerts[i].body, "");
-			}
-			
-			allAlerts[i].dismissed = false;
-			
-			_string = (const char*)(alert["timestamp"]);
-			_string.replace("T", " ");
-			int index = _string.lastIndexOf(".");
-			_string = _string.substring(0, index);
-			strcpy(allAlerts[i].timeStamp, _string.c_str());
-
-			allAlerts[i].id = int(alert["id"]);
-		}
-		int newNo = alertNo;
-		int newMin = 0;
-		int newMax = 0;
-		if  (newNo > 0) {
-			newMin = allAlerts[0].id;
-			newMax = allAlerts[newNo - 1].id;
-			
-			String log = String(newMin) + " " + String(newMax) + " " + String(oldMin) + " " + String(oldMax);
-			strcpy(currentAlerts.log, log.c_str());
-
-			if ((oldNo != newNo) || (oldMin != newMin) || (oldMax != newMax)) {
-			  vibMotor(200, 3);
-			}
-		}
 		
 	} else {
 		strcpy(currentAlerts.log, gatewayIP.c_str());
