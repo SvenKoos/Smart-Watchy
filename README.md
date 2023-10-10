@@ -68,4 +68,4 @@ Watchy will advertise via BLE to support Smart Lock unlock.
 ## Hints
 Location discovery: If mobile device is in roaming zone, IP address is still received from home mobile service provider, which results in home weather report on watch face.
 
-Quiet mode: Exit by pressing the left-upper button.
+Quiet mode: Exit by pressing the left up button.
