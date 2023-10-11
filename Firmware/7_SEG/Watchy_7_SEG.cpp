@@ -159,7 +159,9 @@ void Watchy7SEG::drawWeather(locationData currentLocation){
       if (strlen(currentLocation.city) > maxNameLength)
       {
         name = String(currentLocation.city, maxNameLength - 1);
-        name = name + String(".");
+        if (name[maxNameLength - 2] != ' ') {
+          name = name + String(".");
+        }
       }
       else
         name = currentLocation.city;
