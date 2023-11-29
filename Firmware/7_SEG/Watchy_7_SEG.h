@@ -20,6 +20,7 @@ class Watchy7SEG : public Watchy{
         locationData getLocation();
         void drawAlerts();
         accelData getAccel();
+        void drawStackTrace();
 };
 
 #endif

@@ -15,6 +15,7 @@
 #include "BLE_OTA.h"
 #include "bma.h"
 #include "config.h"
+#include "exception.h"
 
 // SvKo added
 #include <Time.h>
@@ -68,7 +69,9 @@ typedef struct locationData {
 
   // SvKo: added
 typedef struct alertData {
-  JSONVar alerts;
+  // SvKo alerts
+  // JSONVar alerts;
+  int count;
   char log[LOG_LEN];
   int code;  
 } alertData;

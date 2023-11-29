@@ -10,27 +10,37 @@ const uint8_t WEATHER_ICON_HEIGHT = 32;
 
 void Watchy7SEG::drawWatchFace(){
     // SvKo added
-    locationData currentLocation = getLocation();
-    accelData currentAccel = getAccel();
+    try {
+      // SvKo added
+      locationData currentLocation = getLocation();
+      accelData currentAccel = getAccel();
 
-    display.fillScreen(DARKMODE ? GxEPD_BLACK : GxEPD_WHITE);
-    display.setTextColor(DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
+      display.fillScreen(DARKMODE ? GxEPD_BLACK : GxEPD_WHITE);
+      display.setTextColor(DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
 
-    drawTime();
-    drawDate();
-    
-    // SvKo changed
-    bool move = drawSteps(currentAccel);
-    if (move == true) {
-      drawWeather(currentLocation);
+      drawTime();
+      drawDate();
+      
+      // SvKo changed
+      bool move = drawSteps(currentAccel);
+      if (move == true) {
+        drawWeather(currentLocation);
 
-      //SvKo added
-      drawAlerts();
+        //SvKo added
+        drawAlerts();
 
-      display.drawBitmap(125, 75, WIFI_CONFIGURED ? wifi : wifioff, 26, 18, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
+        display.drawBitmap(125, 75, WIFI_CONFIGURED ? wifi : wifioff, 26, 18, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
+      }
+
+      drawBattery();
+
+      // SvKo added
+      drawStackTrace();
     }
-
-    drawBattery();
+    // SvKo added
+    catch(Exception& ex) {
+      StoreStackTrace(ex.Message());
+    }
 
     // SvKo Removed
 /*
@@ -229,9 +239,10 @@ void Watchy7SEG::drawAlerts() {
 
   display.setFont(&Seven_Segment10pt7b);
   int noAlerts = 0;
-  noAlerts = currentAlerts.alerts["data"].length();
+  // SvKo alerts
+  // noAlerts = currentAlerts.alerts["data"].length();
+  noAlerts = currentAlerts.count;
   if (noAlerts > 0) {
-    // display.drawBitmap(7, 132, alert, 24, 24, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
     display.drawBitmap(95, 72, alert, 24, 24, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
 
     // display.setFont(&DSEG7_Classic_Bold_25);
@@ -245,3 +256,20 @@ accelData Watchy7SEG::getAccel(){
     return getAccelData();
 }
 
+// SvKo: added
+void Watchy7SEG::drawStackTrace() {
+  char stack[STACK_LEN];
+  strcpy(stack, GetStackTrace());
+
+	if (strlen(stack) > 0) {
+    display.setFullWindow();
+    display.fillScreen(DARKMODE ? GxEPD_BLACK : GxEPD_WHITE);
+    display.setTextColor(DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
+    display.setFont(&Seven_Segment10pt7b);
+
+    display.setCursor(0, 0);
+    display.println(stack);
+
+    CleanStackTrace();
+  }
+}

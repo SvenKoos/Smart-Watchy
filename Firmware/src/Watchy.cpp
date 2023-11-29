@@ -1389,6 +1389,8 @@ alertData Watchy::getAlertData(bool _darkMode) {
 	String localIP;
 	String gatewayIP;
 	String macAdress;
+	// SvKo alerts
+	JSONVar alerts;
 	
 	darkMode = _darkMode;
     
@@ -1412,16 +1414,24 @@ alertData Watchy::getAlertData(bool _darkMode) {
 		currentAlerts.code = httpResponseCode;
 		if (httpResponseCode == 200) {
 			String payload = http.getString();
-			currentAlerts.alerts = JSON.parse(payload);
+			// SvKo alerts
+			// currentAlerts.alerts = JSON.parse(payload);
+			alerts = JSON.parse(payload);
 			alertIndex = -1;
 			
-			alertNo = currentAlerts.alerts["data"].length();
+			// SvKo alerts
+			// alertNo = currentAlerts.alerts["data"].length();
+			alertNo = alerts["data"].length();
 			if (alertNo > ALERT_MAX_NO) {
 				alertNo = ALERT_MAX_NO;
 			}
+			// SvKo alerts
+			currentAlerts.count = alertNo;
 			
 			for (int i = 0; i < alertNo; i++) {
-				JSONVar alert = currentAlerts.alerts["data"][i];
+				// SvKo alerts
+				// JSONVar alert = currentAlerts.alerts["data"][i];
+				JSONVar alert = alerts["data"][i];
 				
 				String _string = (const char*)alert["appName"];
 				if (_string.length() < NAME_LEN)
