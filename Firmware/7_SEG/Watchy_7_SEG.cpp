@@ -11,16 +11,16 @@ const uint8_t WEATHER_ICON_HEIGHT = 32;
 void Watchy7SEG::drawWatchFace(){
     // SvKo added
     try {
-      // SvKo added
-      locationData currentLocation = getLocation();
-      accelData currentAccel = getAccel();
-
       display.fillScreen(DARKMODE ? GxEPD_BLACK : GxEPD_WHITE);
       display.setTextColor(DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
 
       drawTime();
       drawDate();
       
+      // SvKo added
+      locationData currentLocation = getLocation();
+      accelData currentAccel = getAccel();
+
       // SvKo changed
       bool move = drawSteps(currentAccel);
       if (move == true) {
@@ -163,7 +163,7 @@ void Watchy7SEG::drawWeather(locationData currentLocation){
     display.setCursor(5, 150);
     display.setFont(&Seven_Segment10pt7b);
 
-    if (currentLocation.code == 200) {
+    if (currentLocation.code == CODE_NO_ERROR) {
       String name;
       int maxNameLength = 10;
       if (strlen(currentLocation.city) > maxNameLength)
@@ -183,7 +183,7 @@ void Watchy7SEG::drawWeather(locationData currentLocation){
       currentWeather = getWeatherData();
     }
 
-    if (currentWeather.code == 200) {
+    if (currentWeather.code == CODE_NO_ERROR) {
 
       int8_t temperature = currentWeather.temperature;
       int16_t weatherConditionCode = currentWeather.weatherConditionCode;

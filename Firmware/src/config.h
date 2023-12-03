@@ -61,6 +61,12 @@
 // SvKo added
 #define ALERT_STATE 3
 
+// SvKo added
+#define CODE_NO_ERROR	0
+#define CODE_COMM_ERROR	1
+#define CODE_HTTP_ERROR 2
+#define CODE_DATA_ERROR 3
+
 #define MENU_HEIGHT     25
 #define MENU_LENGTH     8
 // set time
@@ -79,5 +85,5 @@
 #define HARDWARE_VERSION_MAJOR 1
 #define HARDWARE_VERSION_MINOR 0
 // Versioning
-#define WATCHY_LIB_VER "1.4.2"
+#define WATCHY_LIB_VER "1.4.6"
 #endif

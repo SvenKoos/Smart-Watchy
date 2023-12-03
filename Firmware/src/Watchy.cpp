@@ -18,7 +18,6 @@ RTC_DATA_ATTR locationData currentLocation;
 RTC_DATA_ATTR int locationIntervalCounter = -1;
 RTC_DATA_ATTR alertData currentAlerts;
 RTC_DATA_ATTR int alertIndex = -1;
-RTC_DATA_ATTR int alertNo = 0;
 RTC_DATA_ATTR singleAlert allAlerts[ALERT_MAX_NO];
 RTC_DATA_ATTR bool darkMode = false;
 
@@ -168,16 +167,16 @@ void Watchy::handleButtonPress() {
       }
       showMenu(menuIndex, true);
     } else if (guiState == WATCHFACE_STATE) {
-		if (alertNo > 0) {
-			alertIndex = alertNo - 1;
-			showAlert(allAlerts[alertIndex], alertIndex, alertNo);
+		if (currentAlerts.count > 0) {
+			alertIndex = currentAlerts.count - 1;
+			showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 		}	
 	  return;
     } else if (guiState == ALERT_STATE) {
-		if (alertNo > 0) {
-			if (alertIndex < alertNo - 1) {
+		if (currentAlerts.count > 0) {
+			if (alertIndex < currentAlerts.count - 1) {
 				alertIndex++;
-				showAlert(allAlerts[alertIndex], alertIndex, alertNo);
+				showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 			}
 		}	
       return;
@@ -195,16 +194,16 @@ void Watchy::handleButtonPress() {
       }
       showMenu(menuIndex, true);
     } else if (guiState == WATCHFACE_STATE) {
-		if (alertNo > 0) {
+		if (currentAlerts.count > 0) {
 			alertIndex = 0;
-			showAlert(allAlerts[alertIndex], alertIndex, alertNo);
+			showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 		}
       return;
     } else if (guiState == ALERT_STATE) {
-		if (alertNo > 0) {
+		if (currentAlerts.count > 0) {
 			if (alertIndex > 0) {
 				alertIndex--;
-				showAlert(allAlerts[alertIndex], alertIndex, alertNo);
+				showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 			}
 		}
       return;
@@ -282,15 +281,15 @@ void Watchy::handleButtonPress() {
           }
           showFastMenu(menuIndex);
         } else if (guiState == WATCHFACE_STATE) {
-			if (alertNo > 0) {
-				alertIndex = alertNo - 1;
-				showAlert(allAlerts[alertIndex], alertIndex, alertNo);
+			if (currentAlerts.count > 0) {
+				alertIndex = currentAlerts.count - 1;
+				showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 			}	
 		} else if (guiState == ALERT_STATE) {
-			if (alertNo > 0) {
-				if (alertIndex < alertNo - 1) {
+			if (currentAlerts.count > 0) {
+				if (alertIndex < currentAlerts.count - 1) {
 					alertIndex++;
-					showAlert(allAlerts[alertIndex], alertIndex, alertNo);
+					showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 				}
 			}	
 		}
@@ -303,15 +302,15 @@ void Watchy::handleButtonPress() {
           }
           showFastMenu(menuIndex);
         } else if (guiState == WATCHFACE_STATE) {
-			if (alertNo > 0) {
+			if (currentAlerts.count > 0) {
 				alertIndex = 0;
-				showAlert(allAlerts[alertIndex], alertIndex, alertNo);
+				showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 			}
 		} else if (guiState == ALERT_STATE) {
-			if (alertNo > 0) {
+			if (currentAlerts.count > 0) {
 				if (alertIndex > 0) {
 					alertIndex--;
-					showAlert(allAlerts[alertIndex], alertIndex, alertNo);
+					showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 				}
 			}
 		}
@@ -707,6 +706,9 @@ weatherData Watchy::getWeatherData() {
 
 weatherData Watchy::getWeatherData(String cityID, String units, String lang, String url, String apiKey, uint8_t updateInterval) {
   currentWeather.isMetric = units == String("metric");
+  // SvKo added
+  currentWeather.code = CODE_NO_ERROR;
+  
   if (weatherIntervalCounter < 0) { //-1 on first run, set to updateInterval
     weatherIntervalCounter = updateInterval;
   }
@@ -725,8 +727,6 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
                                apiKey;
       http.begin(weatherQueryURL.c_str());
       int httpResponseCode = http.GET();
-	  // SvKo added
-	  currentWeather.code = httpResponseCode;
       if (httpResponseCode == 200) {
         String payload             = http.getString();
         JSONVar responseObject     = JSON.parse(payload);
@@ -745,22 +745,23 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
 		currentWeather.offset = long(responseObject["timezone"]);		
       } else {
         // http error
+	    // SvKo: added
+	    currentWeather.code = CODE_HTTP_ERROR;
       }
       http.end();
       // turn off radios
 	  // SvKo changed
-		WiFi.mode(WIFI_OFF);
-		btStop();
-    } else { // No WiFi, use internal temperature sensor
+	  WiFi.mode(WIFI_OFF);
+	  btStop();
+    } else { /* // No WiFi, use internal temperature sensor
       uint8_t temperature = sensor.readTemperature(); // celsius
       if (!currentWeather.isMetric) {
         temperature = temperature * 9. / 5. + 32.; // fahrenheit
       }
-      currentWeather.temperature          = temperature;
+      currentWeather.temperature          = temperature; */ // SvKo commented out
+	  currentWeather.code = CODE_COMM_ERROR;
       // SvKo changed
       currentWeather.weatherConditionCode = 0;
-		// SvKo: added
-	  currentWeather.code = 1;
     }
     weatherIntervalCounter = 0;
   } else {
@@ -778,6 +779,9 @@ weatherData Watchy::getWeatherDataExt(double latitude, double longitude) {
 
 weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, String units, String lang, String url, String apiKey, uint8_t updateInterval) {
   currentWeather.isMetric = units == String("metric");
+  // SvKo added
+  currentWeather.code = CODE_NO_ERROR;
+
   if (weatherIntervalCounter < 0) { //-1 on first run, set to updateInterval
     weatherIntervalCounter = updateInterval;
   }
@@ -796,8 +800,6 @@ weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, 
                                apiKey;
       http.begin(weatherQueryURL.c_str());
       int httpResponseCode = http.GET();
-	  // SvKo added
-	  currentWeather.code = httpResponseCode;
       if (httpResponseCode == 200) {
         String payload             = http.getString();
         JSONVar responseObject     = JSON.parse(payload);
@@ -818,22 +820,24 @@ weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, 
 		strcpy(currentWeather.name, cityString.c_str());
       } else {
         // http error
+	    // SvKo: added
+	    currentWeather.code = CODE_HTTP_ERROR;
       }
       http.end();
       
 	  // turn off radios
 	  // SvKo changes
-		WiFi.mode(WIFI_OFF);
-		btStop();
-    } else { // No WiFi, use internal temperature sensor
+	  WiFi.mode(WIFI_OFF);
+	  btStop();
+    } else { /* // No WiFi, use internal temperature sensor
       uint8_t temperature = sensor.readTemperature(); // celsius
       if (!currentWeather.isMetric) {
         temperature = temperature * 9. / 5. + 32.; // fahrenheit
       }
-      currentWeather.temperature = temperature;
+      currentWeather.temperature = temperature; */ // SvKo commented out
+	  currentWeather.code = CODE_COMM_ERROR;
       // SvKo changed
-	  currentWeather.weatherConditionCode = 0;
-	  currentWeather.code = 1;
+      currentWeather.weatherConditionCode = 0;
     }
     weatherIntervalCounter = 0;
   } else {
@@ -848,6 +852,9 @@ locationData Watchy::getLocationData() {
 }
 
 locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
+  // SvKo added
+  currentLocation.code = CODE_NO_ERROR;
+  
   if (locationIntervalCounter < 0) { //-1 on first run, set to updateInterval
     locationIntervalCounter = updateInterval;
   }
@@ -863,8 +870,6 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
       String locationQueryURL = url;
       http.begin(locationQueryURL.c_str());
       int httpResponseCode = http.GET();
-	  // SvKo added
-	  currentLocation.code = httpResponseCode;
       if (httpResponseCode == 200) {
         String payload             = http.getString();
         JSONVar responseObject     = JSON.parse(payload);
@@ -880,15 +885,17 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
 		strcpy(currentLocation.city, cityString.c_str());
       } else {
         // http error
+	    // SvKo: added
+	    currentLocation.code = CODE_HTTP_ERROR;
       }
       http.end();
       // turn off radios
 	  // SvKo changed
-		WiFi.mode(WIFI_OFF);
-		btStop();
+	  WiFi.mode(WIFI_OFF);
+	  btStop();
     } else {
-	// SvKo added
-		currentLocation.code = 1;
+	  // SvKo added
+	  currentLocation.code = CODE_COMM_ERROR;
 	}
     locationIntervalCounter = 0;
   } else {
@@ -1394,15 +1401,10 @@ alertData Watchy::getAlertData(bool _darkMode) {
 	
 	darkMode = _darkMode;
     
+	// SvKo added
+	currentAlerts.code = CODE_NO_ERROR;
+
 	if (connectWiFi(localIP, gatewayIP, macAdress)) {
-		int oldNo = alertNo;
-		int oldMin = 0;
-		int oldMax = 0;
-		if (oldNo > 0) {
-			oldMin = allAlerts[0].id;
-			oldMax = allAlerts[oldNo - 1].id;
-		}
-		
 		HTTPClient http; // Use location API if WiFi is connected
 		http.setConnectTimeout(3000); // 3 second max timeout
 		String locationQueryURL = "http://" + gatewayIP + ":8080/alert?MAC=" + macAdress;
@@ -1410,9 +1412,15 @@ alertData Watchy::getAlertData(bool _darkMode) {
 		// SvKo added
 		// http.addHeader("MAC", macAdress.c_str());
 		int httpResponseCode = http.GET();
-		// SvKo added
-		currentAlerts.code = httpResponseCode;
-		if (httpResponseCode == 200) {
+			if (httpResponseCode == 200) {
+			int oldNo = currentAlerts.count;
+			int oldMin = 0;
+			int oldMax = 0;
+			if (oldNo > 0) {
+				oldMin = allAlerts[0].id;
+				oldMax = allAlerts[oldNo - 1].id;
+			}
+
 			String payload = http.getString();
 			// SvKo alerts
 			// currentAlerts.alerts = JSON.parse(payload);
@@ -1420,15 +1428,15 @@ alertData Watchy::getAlertData(bool _darkMode) {
 			alertIndex = -1;
 			
 			// SvKo alerts
-			// alertNo = currentAlerts.alerts["data"].length();
-			alertNo = alerts["data"].length();
+			// currentAlerts.count = currentAlerts.alerts["data"].length();
+			int alertNo = alerts["data"].length();
 			if (alertNo > ALERT_MAX_NO) {
 				alertNo = ALERT_MAX_NO;
 			}
 			// SvKo alerts
 			currentAlerts.count = alertNo;
 			
-			for (int i = 0; i < alertNo; i++) {
+			for (int i = 0; i < currentAlerts.count; i++) {
 				// SvKo alerts
 				// JSONVar alert = currentAlerts.alerts["data"][i];
 				JSONVar alert = alerts["data"][i];
@@ -1467,7 +1475,8 @@ alertData Watchy::getAlertData(bool _darkMode) {
 
 				allAlerts[i].id = int(alert["id"]);
 			}
-			int newNo = alertNo;
+			
+			int newNo = currentAlerts.count;
 			int newMin = 0;
 			int newMax = 0;
 			if  (newNo > 0) {
@@ -1487,8 +1496,10 @@ alertData Watchy::getAlertData(bool _darkMode) {
 			
 		} else {
 			// http error
+			// SvKo: added
+			currentAlerts.code = CODE_HTTP_ERROR;
 		}
-		strcpy(currentLocation.log, String(httpResponseCode).c_str());
+		strcpy(currentAlerts.log, String(httpResponseCode).c_str());
 		http.end();
 
 		// turn off radios
@@ -1496,8 +1507,8 @@ alertData Watchy::getAlertData(bool _darkMode) {
 		btStop();
 		
 	} else {
-		strcpy(currentAlerts.log, gatewayIP.c_str());
-		currentAlerts.code = 1;
+		// SvKo: added
+		currentAlerts.code = CODE_COMM_ERROR;
 	}
 
 	return currentAlerts;
@@ -1522,9 +1533,10 @@ accelData Watchy::getAccelData() {
 	  
 	  quietMode = !currentAccel.move;
 	  
-	  currentAccel.code = 0;
+	  currentAccel.code = CODE_NO_ERROR;
   } else {
-	  currentAccel.code = 1;
+	  currentAccel.code = CODE_DATA_ERROR;
+	  currentAccel.move = true;
   }
 	  
 	return currentAccel;
