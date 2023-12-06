@@ -1080,13 +1080,19 @@ bool Watchy::connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
 	  // SvKo added
 	  hostIP = WiFi.localIP().toString();
 	  gatewayIP = WiFi.gatewayIP().toString();
-	  macAdress = WiFi.macAddress();
+	  macAdress = String(WiFi.macAddress());
     } else { // connection failed, time out
       WIFI_CONFIGURED = false;
       // turn off radios
       WiFi.mode(WIFI_OFF);
       btStop();
     }
+	
+	if ((hostIP.length() == 0) | (gatewayIP.length() == 0) | (macAdress.length() == 0)) {
+      WIFI_CONFIGURED = false;
+      WiFi.mode(WIFI_OFF);
+      btStop();
+	}
   }
   return WIFI_CONFIGURED;
 }
@@ -1448,6 +1454,8 @@ alertData Watchy::getAlertData(bool _darkMode) {
 					strcpy(allAlerts[i].appName, (_string.substring(0, NAME_LEN-1)).c_str());
 
 				_string = (const char*)alert["title"];
+				if (_string == "null")
+					_string = "";
 				if (_string.length() < TITLE_LEN)
 					strcpy(allAlerts[i].title, _string.c_str());
 				else
@@ -1489,7 +1497,7 @@ alertData Watchy::getAlertData(bool _darkMode) {
 				if ((oldNo != newNo) || (oldMin != newMin) || (oldMax != newMax)) {
 					float VBAT = getBatteryVoltage();
 					if	(VBAT > 3.80) {
-						vibMotor(200, 3);
+						vibMotor(100, 3);
 					}
 				}
 			}
@@ -1528,10 +1536,10 @@ accelData Watchy::getAccelData() {
 	  currentAccel.accelX = acc.x;
 	  currentAccel.accelY = acc.y;
 	  currentAccel.accelZ = acc.z;
-	  currentAccel.stepCounter = sensor.getCounter();
 	  currentAccel.move = ((abs(oldAccelX - currentAccel.accelX) > MAX_ACCEL_QUIET) || (abs(oldAccelY - currentAccel.accelY) > MAX_ACCEL_QUIET) || (abs(oldAccelZ - currentAccel.accelZ) > MAX_ACCEL_QUIET));
-	  
 	  quietMode = !currentAccel.move;
+
+	  currentAccel.stepCounter = sensor.getCounter();
 	  
 	  currentAccel.code = CODE_NO_ERROR;
   } else {
@@ -1540,6 +1548,12 @@ accelData Watchy::getAccelData() {
   }
 	  
 	return currentAccel;
+}
+
+// SvKo
+void Watchy::resetAccelData() {
+	sensor.resetStepCounter();
+	currentAccel.stepCounter = 0;
 }
 
 // SvKo

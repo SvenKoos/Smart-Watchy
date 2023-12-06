@@ -19,7 +19,6 @@ class Watchy7SEG : public Watchy{
         void drawBattery();
         locationData getLocation();
         void drawAlerts();
-        accelData getAccel();
         void drawStackTrace();
 };
 

@@ -167,6 +167,7 @@ public:
 
   // SvKo added
   accelData getAccelData();
+  void resetAccelData();
   
   // SvKo
   void bleSetup();

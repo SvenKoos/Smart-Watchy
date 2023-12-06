@@ -19,7 +19,7 @@ void Watchy7SEG::drawWatchFace(){
       
       // SvKo added
       locationData currentLocation = getLocation();
-      accelData currentAccel = getAccel();
+      accelData currentAccel = getAccelData();
 
       // SvKo changed
       bool move = drawSteps(currentAccel);
@@ -104,7 +104,9 @@ void Watchy7SEG::drawDate(){
 bool Watchy7SEG::drawSteps(accelData currentAccel){
     // reset step counter at midnight
     if (currentTime.Hour == 0 && currentTime.Minute == 0){
-      sensor.resetStepCounter();
+      // SvKo
+      // sensor.resetStepCounter();
+      resetAccelData();
     }
 
     // SvKo changed
@@ -249,11 +251,6 @@ void Watchy7SEG::drawAlerts() {
     // display.setCursor(35, 155);
     // display.println(currentAlerts.log);
   } 
-}
-
-// SvKo: added
-accelData Watchy7SEG::getAccel(){
-    return getAccelData();
 }
 
 // SvKo: added
