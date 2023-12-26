@@ -1496,7 +1496,7 @@ alertData Watchy::getAlertData(bool _darkMode) {
 
 				if ((oldNo != newNo) || (oldMin != newMin) || (oldMax != newMax)) {
 					float VBAT = getBatteryVoltage();
-					if	(VBAT > 3.80) {
+					if	(VBAT > BATTERY_V0) {
 						vibMotor(100, 3);
 					}
 				}

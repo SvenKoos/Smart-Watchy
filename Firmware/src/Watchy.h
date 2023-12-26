@@ -40,6 +40,12 @@
 // SvKo
 #define MAX_ACCEL_QUIET 5
 
+// SvKo
+#define BATTERY_V0 3.65
+#define BATTERY_V1 3.8
+#define BATTERY_V2 3.95
+#define BATTERY_V3 4.1
+
 typedef struct weatherData {
   int8_t temperature;
   int16_t weatherConditionCode;

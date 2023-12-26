@@ -139,16 +139,16 @@ void Watchy7SEG::drawBattery(){
     int8_t batteryLevel = 0;
     float VBAT = getBatteryVoltage();
 
-    if(VBAT > 4.1){
+    if(VBAT > BATTERY_V3){
         batteryLevel = 3;
     }
-    else if(VBAT > 3.95 && VBAT <= 4.1){
+    else if(VBAT > BATTERY_V2 && VBAT <= BATTERY_V3){
         batteryLevel = 2;
     }
-    else if(VBAT > 3.80 && VBAT <= 3.95){
+    else if(VBAT > BATTERY_V1 && VBAT <= BATTERY_V2){
         batteryLevel = 1;
     }
-    else if(VBAT <= 3.80){
+    else if(VBAT <= BATTERY_V1){
         batteryLevel = 0;
     }
 
