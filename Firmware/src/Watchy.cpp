@@ -253,7 +253,9 @@ void Watchy::handleButtonPress() {
           }
         } else if (guiState == FW_UPDATE_STATE) {
           updateFWBegin();
-        }
+        } else if (guiState == WATCHFACE_STATE) { // SvKo, enter menu state if coming from watch face
+		  showMenu(menuIndex, true);
+		}
       } else if (digitalRead(BACK_BTN_PIN) == 1) {
         lastTimeout = millis();
         if (guiState == MAIN_MENU_STATE) { // exit to watch face if already in menu
