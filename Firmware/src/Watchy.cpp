@@ -93,11 +93,9 @@ void Watchy::handleButtonPress() {
 	// SvKo
 	quietMode = false;
 
-    if (guiState ==
-        WATCHFACE_STATE) { // enter menu state if coming from watch face
+    if (guiState == WATCHFACE_STATE) { // enter menu state if coming from watch face
       showMenu(menuIndex, true);
-    } else if (guiState ==
-               MAIN_MENU_STATE) { // if already in menu, then select menu item
+    } else if (guiState == MAIN_MENU_STATE) { // if already in menu, then select menu item
       switch (menuIndex) {
       case 0:
         showAbout();
@@ -223,8 +221,7 @@ void Watchy::handleButtonPress() {
     } else {
       if (digitalRead(MENU_BTN_PIN) == 1) {
         lastTimeout = millis();
-        if (guiState ==
-            MAIN_MENU_STATE) { // if already in menu, then select menu item
+        if (guiState == MAIN_MENU_STATE) { // if already in menu, then select menu item
           switch (menuIndex) {
           case 0:
             showAbout();
@@ -259,8 +256,7 @@ void Watchy::handleButtonPress() {
         }
       } else if (digitalRead(BACK_BTN_PIN) == 1) {
         lastTimeout = millis();
-        if (guiState ==
-            MAIN_MENU_STATE) { // exit to watch face if already in menu
+        if (guiState == MAIN_MENU_STATE) { // exit to watch face if already in menu
           RTC.read(currentTime);
           showWatchFace(true);
           break; // leave loop
@@ -270,7 +266,8 @@ void Watchy::handleButtonPress() {
           showMenu(menuIndex, true); // exit to menu if already in app
         } else if (guiState == ALERT_STATE) {
 			RTC.read(currentTime);
-			showWatchFace(true);		
+			showWatchFace(true);
+			break;			
 		}
       } else if (digitalRead(UP_BTN_PIN) == 1) {
         lastTimeout = millis();
@@ -748,6 +745,7 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
 	    // SvKo: added
 	    currentWeather.code = CODE_HTTP_ERROR;
       }
+	  strcpy(currentWeather.log, String(httpResponseCode).c_str());
       http.end();
       // turn off radios
 	  // SvKo changed
@@ -760,6 +758,7 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
       }
       currentWeather.temperature          = temperature; */ // SvKo commented out
 	  currentWeather.code = CODE_COMM_ERROR;
+	  strcpy(currentWeather.log, String(CODE_COMM_ERROR).c_str());
       // SvKo changed
       currentWeather.weatherConditionCode = 0;
     }
@@ -823,6 +822,7 @@ weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, 
 	    // SvKo: added
 	    currentWeather.code = CODE_HTTP_ERROR;
       }
+	  strcpy(currentWeather.log, String(httpResponseCode).c_str());
       http.end();
       
 	  // turn off radios
@@ -836,6 +836,7 @@ weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, 
       }
       currentWeather.temperature = temperature; */ // SvKo commented out
 	  currentWeather.code = CODE_COMM_ERROR;
+	  strcpy(currentWeather.log, String(CODE_COMM_ERROR).c_str());
       // SvKo changed
       currentWeather.weatherConditionCode = 0;
     }
@@ -888,6 +889,7 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
 	    // SvKo: added
 	    currentLocation.code = CODE_HTTP_ERROR;
       }
+	  strcpy(currentLocation.log, String(httpResponseCode).c_str());
       http.end();
       // turn off radios
 	  // SvKo changed
@@ -896,6 +898,7 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
     } else {
 	  // SvKo added
 	  currentLocation.code = CODE_COMM_ERROR;
+	  strcpy(currentLocation.log, String(CODE_COMM_ERROR).c_str());
 	}
     locationIntervalCounter = 0;
   } else {
@@ -1418,7 +1421,7 @@ alertData Watchy::getAlertData(bool _darkMode) {
 		// SvKo added
 		// http.addHeader("MAC", macAdress.c_str());
 		int httpResponseCode = http.GET();
-			if (httpResponseCode == 200) {
+		if (httpResponseCode == 200) {
 			int oldNo = currentAlerts.count;
 			int oldMin = 0;
 			int oldMax = 0;
@@ -1465,6 +1468,8 @@ alertData Watchy::getAlertData(bool _darkMode) {
 				// SvKo
 				// _string = Normalize2ASCII(_string);
 				if ((_string != null) && (_string.length() > 0)) {
+					if (_string == "null")
+						_string = "";
 					if (_string.length() < BODY_LEN)
 						strcpy(allAlerts[i].body, _string.c_str());
 					else
@@ -1473,7 +1478,11 @@ alertData Watchy::getAlertData(bool _darkMode) {
 					strcpy(allAlerts[i].body, "");
 				}
 				
-				allAlerts[i].dismissed = false;
+				_string = (const char*)alert["dismissed"];
+				if (_string == "false") {
+					allAlerts[i].dismissed = false;
+				} else
+					allAlerts[i].dismissed = true;
 				
 				_string = (const char*)(alert["timestamp"]);
 				_string.replace("T", " ");
@@ -1517,6 +1526,7 @@ alertData Watchy::getAlertData(bool _darkMode) {
 	} else {
 		// SvKo: added
 		currentAlerts.code = CODE_COMM_ERROR;
+		strcpy(currentAlerts.log, String(CODE_COMM_ERROR).c_str());
 	}
 
 	return currentAlerts;

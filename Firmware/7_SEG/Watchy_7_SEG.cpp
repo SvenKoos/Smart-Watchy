@@ -246,11 +246,11 @@ void Watchy7SEG::drawAlerts() {
   noAlerts = currentAlerts.count;
   if (noAlerts > 0) {
     display.drawBitmap(95, 72, alert, 24, 24, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
-
-    // display.setFont(&DSEG7_Classic_Bold_25);
-    // display.setCursor(35, 155);
-    // display.println(currentAlerts.log);
   } 
+
+  // display.setFont(&DSEG7_Classic_Bold_25);
+  // display.setCursor(35, 155);
+  // display.println(currentAlerts.log);
 }
 
 // SvKo: added
