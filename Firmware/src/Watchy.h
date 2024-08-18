@@ -40,11 +40,17 @@
 // SvKo
 #define MAX_ACCEL_QUIET 5
 
-// SvKo
-#define BATTERY_V0 3.65
-#define BATTERY_V1 3.8
-#define BATTERY_V2 3.95
-#define BATTERY_V3 4.1
+// SvKo Watchy original 2.0
+// #define BATTERY_V0 3.65
+// #define BATTERY_V1 3.8
+// #define BATTERY_V2 3.95
+// #define BATTERY_V3 4.1
+// USB-C 1: Vmax=4.25, Vmin=3.45, delta=0.8V, 4 areas
+#define BATTERY_V0 3.45
+#define BATTERY_V1 3.65
+#define BATTERY_V2 3.85
+#define BATTERY_V3 4.05
+// USB-C 2: Vmax=, Vmin=3.60, delta=, 4 areas
 
 typedef struct weatherData {
   int8_t temperature;
