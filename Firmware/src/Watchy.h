@@ -156,7 +156,9 @@ public:
   void setupWifi();
   // SvKo change
   bool connectWiFi(String &hostIP, String &gatewayIP, String &macAdress);
-  
+  // SvKo added
+  void disconnectWifi();
+
   weatherData getWeatherData();
   weatherData getWeatherData(String cityID, String units, String lang,
                              String url, String apiKey, uint8_t updateInterval);
@@ -175,7 +177,7 @@ public:
   
   // SvKo added
   void showAlert(singleAlert alert, int index, int amount);
-  alertData getAlertData(bool darkMode);
+  alertData getAlertData(bool darkMode, String gatewayIP, String macAdress);
 
   // SvKo added
   accelData getAccelData();

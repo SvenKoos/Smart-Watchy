@@ -714,11 +714,17 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
   if (weatherIntervalCounter >=
       updateInterval) { // only update if WEATHER_UPDATE_INTERVAL has elapsed
                         // i.e. 30 minutes
+	// SvKo removed
+/*
 	String localIP;
 	String gatewayIP;
 	String macAdress;
     if (connectWiFi(localIP, gatewayIP, macAdress)) {
-      HTTPClient http; // Use Weather API for live data if WiFi is connected
+*/
+      // SvKo changed
+      currentWeather.weatherConditionCode = 0;
+	  
+	  HTTPClient http; // Use Weather API for live data if WiFi is connected
       http.setConnectTimeout(3000); // 3 second max timeout
 	  // API documentation: https://openweathermap.org/current
       String weatherQueryURL = url + String("?id=") + cityID + String("&units=") + units +
@@ -750,20 +756,21 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
 	  strcpy(currentWeather.log, String(httpResponseCode).c_str());
       http.end();
       // turn off radios
-	  // SvKo changed
-	  WiFi.mode(WIFI_OFF);
-	  btStop();
-    } else { /* // No WiFi, use internal temperature sensor
+	  // SvKo removed
+	  // WiFi.mode(WIFI_OFF);
+	  // btStop();
+// SvKo removed
+/*	  
+    } else { // No WiFi, use internal temperature sensor
       uint8_t temperature = sensor.readTemperature(); // celsius
       if (!currentWeather.isMetric) {
         temperature = temperature * 9. / 5. + 32.; // fahrenheit
       }
-      currentWeather.temperature          = temperature; */ // SvKo commented out
+      currentWeather.temperature          = temperature; // SvKo commented out
 	  currentWeather.code = CODE_COMM_ERROR;
 	  strcpy(currentWeather.log, String(CODE_COMM_ERROR).c_str());
-      // SvKo changed
-      currentWeather.weatherConditionCode = 0;
     }
+*/	
     weatherIntervalCounter = 0;
   } else {
     weatherIntervalCounter++;
@@ -789,10 +796,16 @@ weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, 
   if (weatherIntervalCounter >=
       updateInterval) { // only update if WEATHER_UPDATE_INTERVAL has elapsed
                         // i.e. 30 minutes
+// SvKo removed
+/*
 	String localIP;
 	String gatewayIP;
 	String macAdress;
     if (connectWiFi(localIP, gatewayIP, macAdress)) {
+*/
+      // SvKo changed
+      currentWeather.weatherConditionCode = 0;
+	  
       HTTPClient http; // Use Weather API for live data if WiFi is connected
       http.setConnectTimeout(3000); // 3 second max timeout
 	  // API documentation: https://openweathermap.org/current
@@ -828,20 +841,23 @@ weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, 
       http.end();
       
 	  // turn off radios
-	  // SvKo changes
-	  WiFi.mode(WIFI_OFF);
-	  btStop();
-    } else { /* // No WiFi, use internal temperature sensor
+	  // SvKo remove
+	  // WiFi.mode(WIFI_OFF);
+	  // btStop();
+// SvKo removed
+/*
+    } else { // No WiFi, use internal temperature sensor
       uint8_t temperature = sensor.readTemperature(); // celsius
       if (!currentWeather.isMetric) {
         temperature = temperature * 9. / 5. + 32.; // fahrenheit
       }
-      currentWeather.temperature = temperature; */ // SvKo commented out
+      currentWeather.temperature = temperature; // SvKo commented out
 	  currentWeather.code = CODE_COMM_ERROR;
 	  strcpy(currentWeather.log, String(CODE_COMM_ERROR).c_str());
       // SvKo changed
       currentWeather.weatherConditionCode = 0;
     }
+*/
     weatherIntervalCounter = 0;
   } else {
     weatherIntervalCounter++;
@@ -864,10 +880,13 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
   if (locationIntervalCounter >=
       updateInterval) { // only update if UPDATE_INTERVAL has elapsed
                         // i.e. 30 minutes
+	// SvKo removed
+/*
 	String localIP;
 	String gatewayIP;
 	String macAdress;
     if (connectWiFi(localIP, gatewayIP, macAdress)) {
+*/
       HTTPClient http; // Use location API if WiFi is connected
       http.setConnectTimeout(3000); // 3 second max timeout
       String locationQueryURL = url;
@@ -881,8 +900,9 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
         currentLocation.latitude = double(responseObject["latitude"]);
         currentLocation.longitude = double(responseObject["longitude"]);
 		currentLocation.offset = long(responseObject["timezone"]["offset"]);
-		strcpy(currentLocation.localIP, localIP.c_str());
-		strcpy(currentLocation.gatewayIP, gatewayIP.c_str());
+		// SvKo removed
+		// strcpy(currentLocation.localIP, localIP.c_str());
+		// strcpy(currentLocation.gatewayIP, gatewayIP.c_str());
 		
 		String cityString = Normalize2ASCII(String(currentLocation.city));
 		strcpy(currentLocation.city, cityString.c_str());
@@ -894,14 +914,17 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
 	  strcpy(currentLocation.log, String(httpResponseCode).c_str());
       http.end();
       // turn off radios
-	  // SvKo changed
-	  WiFi.mode(WIFI_OFF);
-	  btStop();
+	  // SvKo removed
+	  // WiFi.mode(WIFI_OFF);
+	  // btStop();
+// SvKo removed
+/*	  
     } else {
 	  // SvKo added
 	  currentLocation.code = CODE_COMM_ERROR;
 	  strcpy(currentLocation.log, String(CODE_COMM_ERROR).c_str());
 	}
+*/
     locationIntervalCounter = 0;
   } else {
     locationIntervalCounter++;
@@ -1100,6 +1123,13 @@ bool Watchy::connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
 	}
   }
   return WIFI_CONFIGURED;
+}
+
+// SvKo added
+void Watchy::disconnectWifi() {
+	// turn off radios
+	WiFi.mode(WIFI_OFF);
+	btStop();
 }
 
 void Watchy::showUpdateFW() {
@@ -1403,10 +1433,12 @@ void Watchy::showAlert(singleAlert alert, int index, int amount) {
 }
 
 // SvKo added
-alertData Watchy::getAlertData(bool _darkMode) {
-	String localIP;
-	String gatewayIP;
-	String macAdress;
+alertData Watchy::getAlertData(bool _darkMode, String gatewayIP, String macAdress) {
+	// SvKo removed
+	// String localIP;
+	// String gatewayIP;
+	// String macAdress;
+	
 	// SvKo alerts
 	JSONVar alerts;
 	
@@ -1414,8 +1446,10 @@ alertData Watchy::getAlertData(bool _darkMode) {
     
 	// SvKo added
 	currentAlerts.code = CODE_NO_ERROR;
-
+// SvKo removed
+/*
 	if (connectWiFi(localIP, gatewayIP, macAdress)) {
+*/
 		HTTPClient http; // Use location API if WiFi is connected
 		http.setConnectTimeout(3000); // 3 second max timeout
 		String locationQueryURL = "http://" + gatewayIP + ":8080/alert?MAC=" + macAdress;
@@ -1522,15 +1556,17 @@ alertData Watchy::getAlertData(bool _darkMode) {
 		http.end();
 
 		// turn off radios
-		WiFi.mode(WIFI_OFF);
-		btStop();
-		
+		// SvKo removed
+		// WiFi.mode(WIFI_OFF);
+		// btStop();
+// SvKo removed
+/*
 	} else {
 		// SvKo: added
 		currentAlerts.code = CODE_COMM_ERROR;
 		strcpy(currentAlerts.log, String(CODE_COMM_ERROR).c_str());
 	}
-
+*/
 	return currentAlerts;
 }
 

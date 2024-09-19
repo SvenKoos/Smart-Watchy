@@ -18,7 +18,7 @@ class Watchy7SEG : public Watchy{
         void drawWeather(locationData currentLocation);
         void drawBattery();
         locationData getLocation();
-        void drawAlerts();
+        void drawAlerts(String gatewayIP, String macAdress);
         void drawStackTrace();
 };
 

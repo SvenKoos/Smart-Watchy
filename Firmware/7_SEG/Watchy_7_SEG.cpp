@@ -18,31 +18,45 @@ void Watchy7SEG::drawWatchFace(){
       drawDate();
       
       // SvKo added
-      locationData currentLocation = getLocation();
       accelData currentAccel = getAccelData();
 
       // SvKo changed
       bool move = drawSteps(currentAccel);
       if (move == true) {
+      // SvKo added
+      String localIP;
+	    String gatewayIP;
+	    String macAdress;
+      if (connectWiFi(localIP, gatewayIP, macAdress)) {
+        // SvKo added
+        locationData currentLocation = getLocation();
+		    strcpy(currentLocation.localIP, localIP.c_str());
+		    strcpy(currentLocation.gatewayIP, gatewayIP.c_str());
+
         drawWeather(currentLocation);
 
         //SvKo added
-        drawAlerts();
+        drawAlerts(gatewayIP, macAdress);
 
-        display.drawBitmap(125, 75, WIFI_CONFIGURED ? wifi : wifioff, 26, 18, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
+        // SvKo added
+        disconnectWifi();
       }
 
-      drawBattery();
+      display.drawBitmap(125, 75, WIFI_CONFIGURED ? wifi : wifioff, 26, 18, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
+    }
+
+    drawBattery();
 
       // SvKo added
-      drawStackTrace();
-    }
-    // SvKo added
-    catch(Exception& ex) {
-      StoreStackTrace(ex.Message());
-    }
+    drawStackTrace();
+  }
+  
+  // SvKo added
+  catch(Exception& ex) {
+    StoreStackTrace(ex.Message());
+  }
 
-    // SvKo Removed
+// SvKo Removed
 /*
     if(BLE_CONFIGURED){
         display.drawBitmap(100, 75, bluetooth, 13, 21, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
@@ -235,9 +249,9 @@ locationData Watchy7SEG::getLocation(){
 }
 
 // SvKo: added
-void Watchy7SEG::drawAlerts() {
+void Watchy7SEG::drawAlerts(String gatewayIP, String macAdress) {
   alertData currentAlerts;
-  currentAlerts = getAlertData(DARKMODE);
+  currentAlerts = getAlertData(DARKMODE, gatewayIP, macAdress);
 
   display.setFont(&Seven_Segment10pt7b);
   int noAlerts = 0;
