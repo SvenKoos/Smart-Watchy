@@ -1,19 +1,25 @@
 #include "BLE_Bond.h"
 
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
+#define CHARACTERISTIC_UUID "abcd1234-5678-90ab-cdef-1234567890ab"
 
 int bondStatus		= BOND_STATUS_UNDEFINED;
 int bondErrorCode = -1;
 
+static bool deviceConnected = false;
+static BLEServer* pServer = nullptr;
+
 class BLECustomServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer *pServer) { 
 	bondStatus = BOND_STATUS_CONNECTED; 
+	deviceConnected = true;
 	pServer->getAdvertising()->start();
+	// BLEDevice::startAdvertising();
   }
 
   void onDisconnect(BLEServer *pServer) { 
 	bondStatus = BOND_STATUS_DISCONNECTED; 
+    deviceConnected = false;
   }
 };
 
@@ -74,7 +80,6 @@ switch(event){
   }
 }
 
-// never called
 void gattcEventHandler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param)
 {
     if (event == ESP_GATTC_DISCONNECT_EVT) {
@@ -96,18 +101,26 @@ BLE_Bond::~BLE_Bond(void) {}
 
 //
 // begin
-bool BLE_Bond::begin(const char *localName = "Watchy") {
+bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
   BLEDevice::setCustomGattcHandler(gattcEventHandler);
   
   // Create the BLE Device
   BLEDevice::init(localName);
-  BLEDevice::setCustomGapHandler(my_gap_event_handler);
+  // BLEDevice::setCustomGapHandler(my_gap_event_handler);
+
+  BLESecurity *pSecurity = new BLESecurity();
+  // pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_BOND);
+  pSecurity->setAuthenticationMode(ESP_LE_AUTH_BOND);
+  pSecurity->setCapability(ESP_IO_CAP_NONE);
+  // uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
+  // esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
+  pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);  
 
   // Create the BLE Server
   pServer = BLEDevice::createServer();
   
-  BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT);
-  BLEDevice::setSecurityCallbacks(new MySecurity());
+  // BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT);
+  // BLEDevice::setSecurityCallbacks(new MySecurity());
   
   pServer->setCallbacks(new BLECustomServerCallbacks());
 
@@ -121,8 +134,8 @@ bool BLE_Bond::begin(const char *localName = "Watchy") {
                      BLECharacteristic::PROPERTY_WRITE
                    );
 
-  pCharacteristic->setAccessPermissions(ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
-    pCharacteristic->setValue("Hello World says Watchy");
+  // pCharacteristic->setAccessPermissions(ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
+  pCharacteristic->setValue("Hello World says Watchy");
   
   pCharacteristic->addDescriptor(new BLE2902());
   pCharacteristic->setCallbacks(new bondCallback(this));
@@ -136,16 +149,110 @@ bool BLE_Bond::begin(const char *localName = "Watchy") {
   pAdvertising->setScanResponse(true);
   pAdvertising->setMinPreferred(0x12);  // set value to 0x00 to not advertise this parameter
   pAdvertising->start();
-
-  BLESecurity *pSecurity = new BLESecurity();
-  pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_BOND);
-  pSecurity->setCapability(ESP_IO_CAP_NONE);
-  uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
-  esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
-  pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);  
+  // BLEDevice::startAdvertising();
 
   return true;
 }
 
+/*
+static BLEServer* pServer = nullptr;
+static bool deviceConnected = false;
+
+class MyServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer* pServer) override {
+    deviceConnected = true;
+	bondStatus = BOND_STATUS_CONNECTED;
+    Serial.println("BLE: Client connected");
+  }
+
+  void onDisconnect(BLEServer* pServer) override {
+    deviceConnected = false;
+	bondStatus = BOND_STATUS_DISCONNECTED; 
+    Serial.println("BLE: Client disconnected");
+    // Nach Disconnect wieder advertiset, damit Android neu verbinden kann
+    BLEDevice::startAdvertising();
+  }
+};
+
+bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
+  Serial.begin(115200);
+
+  BLEDevice::init(localName);  // Name, der auf Android angezeigt wird
+
+  // Security konfigurieren (Bonding)
+  BLESecurity* pSecurity = new BLESecurity();
+  // SvKo changed
+  // pSecurity->setAuthenticationMode(ESP_LE_AUTH_BOND); // Bonding aktiv
+  pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_BOND); // Bonding aktiv
+  // SvKo changed
+  // pSecurity->setCapability(ESP_IO_CAP_OUT);           // je nach gewünschter Methode
+  pSecurity->setCapability(ESP_IO_CAP_NONE);           // je nach gewünschter Methode
+  pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);
+  // SvKo added
+  uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
+  esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
+
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+  // SvKo added
+  BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT);
+
+  // Einfacher Service + Characteristic (für Debug/Keep-Alive)
+  BLEService* pService = pServer->createService(SERVICE_UUID);
+
+  BLECharacteristic* pCharacteristic = pService->createCharacteristic(
+      CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_READ | 
+// SvKo changed
+//      BLECharacteristic::PROPERTY_NOTIFY
+      BLECharacteristic::PROPERTY_WRITE
+  );
+
+  // SvKo added
+  pCharacteristic->setAccessPermissions(ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
+
+  pCharacteristic->setValue("Hello Android");
+  pCharacteristic->addDescriptor(new BLE2902());
+
+  pService->start();
+
+  // Advertising konfigurieren
+  BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(pService->getUUID());
+  pAdvertising->setScanResponse(true);
+  // SvKo removed
+  // pAdvertising->setMinPreferred(0x06);  // optional
+  pAdvertising->setMinPreferred(0x12);  // optional
+
+  // SvKo changed
+  // BLEDevice::startAdvertising();
+  pAdvertising->start();
+
+  Serial.println("BLE: Advertising started");
+
+  return true;
+}
+*/
+
 int BLE_Bond::updateStatus() { return bondStatus; }
 
+void BLEAdvertise() {
+  // Hier könntest du z.B. alle 60s einen Notify schicken, wenn verbunden
+  static unsigned long lastNotify = 0;
+  if (deviceConnected) {
+    unsigned long now = millis();
+    if (now - lastNotify > 59000) { // 60 Sekunden
+      lastNotify = now;
+      // Beispiel: Notify senden
+      BLEService* pService = pServer->getServiceByUUID(SERVICE_UUID);
+      if (pService) {
+        BLECharacteristic* pChar = pService->getCharacteristic(CHARACTERISTIC_UUID);
+        if (pChar) {
+          pChar->setValue("Ping");
+          pChar->notify();
+          Serial.println("BLE: Notify Ping");
+        }
+      }
+    }
+  }
+}

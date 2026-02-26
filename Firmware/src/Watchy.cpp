@@ -51,6 +51,10 @@ void Watchy::init(String datetime) {
     RTC.config(datetime);
     _bmaConfig();
     RTC.read(currentTime);
+	
+	// SvKo added
+	BLEAdvertise();
+	
     showWatchFace(false); // full update on reset
     break;
   }
@@ -393,8 +397,9 @@ void Watchy::showAbout() {
   display.setTextColor(darkMode ? GxEPD_WHITE : GxEPD_BLACK);
   display.setCursor(0, 20);
 
-  display.print("LibVer: ");
-  display.println(WATCHY_LIB_VER);
+  // SvKo removed
+  // display.print("LibVer: ");
+  // display.println(WATCHY_LIB_VER);
 
   const char *RTC_HW[3] = {"<UNKNOWN>", "DS3231", "PCF8563"};
   display.print("RTC: ");
@@ -410,16 +415,22 @@ void Watchy::showAbout() {
   String macAdress;
 
   if (connectWiFi(localIP, gatewayIP, macAdress)) {
-    display.println("");
 	display.println("Local IP:"); display.println(localIP);
     display.println("Gateway IP:"); display.println(gatewayIP);
-    display.println("MAC Address:"); display.println(macAdress);
+    display.println("WiFi MAC Address:"); display.println(macAdress);
 	  
-	WiFi.mode(WIFI_OFF);
-	btStop();	  
+	//1 WiFi.mode(WIFI_OFF);
+	// SvKo remove
+	// btStop();	  
   } else {
     display.println("WiFi Not Configured");
-  }  
+  }
+
+  // SvKo added
+  uint8_t mac[6];
+  esp_read_mac(mac, ESP_MAC_BT);  // ESP_MAC_BT = BLE MAC
+  display.println("BLE MAC Address:");
+  display.printf("%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
   display.display(true); // full refresh
 
@@ -1076,8 +1087,9 @@ void Watchy::setupWifi() {
   }
   display.display(false); // full refresh
   // turn off radios
-  WiFi.mode(WIFI_OFF);
-  btStop();
+  //1 WiFi.mode(WIFI_OFF);
+  // SvKo remove
+  // btStop();
   display.epd2.setBusyCallback(displayBusyCallback); // enable lightsleep on
                                                      // busy
   guiState = APP_STATE;
@@ -1112,14 +1124,16 @@ bool Watchy::connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
     } else { // connection failed, time out
       WIFI_CONFIGURED = false;
       // turn off radios
-      WiFi.mode(WIFI_OFF);
-      btStop();
+      //1 WiFi.mode(WIFI_OFF);
+	  // SvKo remove
+      // btStop();
     }
 	
 	if ((hostIP.length() == 0) | (gatewayIP.length() == 0) | (macAdress.length() == 0)) {
       WIFI_CONFIGURED = false;
-      WiFi.mode(WIFI_OFF);
-      btStop();
+      //1 WiFi.mode(WIFI_OFF);
+	  // SvKo remove
+      // btStop();
 	}
   }
   return WIFI_CONFIGURED;
@@ -1128,8 +1142,9 @@ bool Watchy::connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
 // SvKo added
 void Watchy::disconnectWifi() {
 	// turn off radios
-	WiFi.mode(WIFI_OFF);
-	btStop();
+	//1 WiFi.mode(WIFI_OFF);
+	// SvKo remove
+	// btStop();
 }
 
 void Watchy::showUpdateFW() {
@@ -1233,8 +1248,9 @@ void Watchy::updateFWBegin() {
   }
 
   // turn off radios
-  WiFi.mode(WIFI_OFF);
-  btStop();
+  //1 WiFi.mode(WIFI_OFF);
+  // SvKo remove
+  // btStop();
   showMenu(menuIndex, false);
 }
 
@@ -1300,7 +1316,7 @@ void Watchy::bondBLE() {
   display.display(true); 
 
   BLE_Bond BT;
-  BT.begin("Watchy");
+  BT.begin("WatchyUnlock");
   int prevStatus = BOND_STATUS_UNDEFINED;
   int currentStatus;
   int count = 0;
@@ -1320,6 +1336,7 @@ void Watchy::bondBLE() {
         display.println("Waiting for");
         display.println("bonding...");
         display.display(true);
+        // delay(1000);
       } else
       if (currentStatus == BOND_STATUS_BONDED) {
         display.println("BLE Bonded!");
@@ -1327,6 +1344,8 @@ void Watchy::bondBLE() {
         display.println("Waiting for");
         display.println("disconnect...");
         display.display(true); 
+        delay(1000);
+        break;
       } else
       if (currentStatus == BOND_STATUS_FAILED) {
         display.println("BLE Bonding");
@@ -1348,6 +1367,8 @@ void Watchy::bondBLE() {
         display.println("BLE GATT");
         display.println("Connect!");
         display.display(true); 
+        delay(1000);
+        break;
       } else
       if (currentStatus == BOND_STATUS_GATTDISCONNECT) {
         display.println("BLE GATT");
@@ -1383,8 +1404,9 @@ void Watchy::bondBLE() {
   }
 
   // turn off radios
-  WiFi.mode(WIFI_OFF);
-  btStop();
+  //1 WiFi.mode(WIFI_OFF);
+  // SvKo remove
+  // btStop();
   showMenu(menuIndex, false);
 }
 
