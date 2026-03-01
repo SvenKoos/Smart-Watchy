@@ -2,6 +2,8 @@
 #define WATCHY_H
 
 #include <Arduino.h>
+// SvKo added
+#include <NimBLEDevice.h>
 #include <WiFiManager.h>
 #include <HTTPClient.h>
 #include <NTPClient.h>
@@ -12,14 +14,16 @@
 #include <Fonts/FreeMonoBold9pt7b.h>
 #include "DSEG7_Classic_Bold_53.h"
 #include "WatchyRTC.h"
-#include "BLE_OTA.h"
+// SvKo removed
+// #include "BLE_OTA.h"
 #include "bma.h"
 #include "config.h"
 #include "exception.h"
 
 // SvKo added
 #include <esp_system.h>
-#include <BLEDevice.h>
+// SvKo removed
+// #include <BLEDevice.h>
 
 // SvKo added
 #include <Time.h>

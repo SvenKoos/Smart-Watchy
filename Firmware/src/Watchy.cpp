@@ -53,7 +53,7 @@ void Watchy::init(String datetime) {
     RTC.read(currentTime);
 	
 	// SvKo added
-	BLEAdvertise();
+	// BLEAdvertise();
 	
     showWatchFace(false); // full update on reset
     break;
@@ -116,22 +116,23 @@ void Watchy::handleButtonPress() {
       case 4:
         setupWifi();
         break;
+	// SvKo removed
+      // case 5:
+        // showUpdateFW();
+        // break;
       case 5:
-        showUpdateFW();
-        break;
-      case 6:
         showSyncNTP();
         break;
   // SvKo added
-      case 7:
+      case 6:
         bondBLE();
         break;
       default:
         break;
       }
-    } else if (guiState == FW_UPDATE_STATE) {
+    } /* else if (guiState == FW_UPDATE_STATE) {
       updateFWBegin();
-    }
+    } */
   }
   // Back Button
   else if (wakeupBit & BACK_BTN_MASK) {
@@ -140,9 +141,9 @@ void Watchy::handleButtonPress() {
       showWatchFace(true);
     } else if (guiState == APP_STATE) {
       showMenu(menuIndex, true); // exit to menu if already in app
-    } else if (guiState == FW_UPDATE_STATE) {
+    } /* else if (guiState == FW_UPDATE_STATE) {
       showMenu(menuIndex, true); // exit to menu if already in app
-    } else if (guiState == ALERT_STATE) {
+    } */ else if (guiState == ALERT_STATE) {
       RTC.read(currentTime);
       showWatchFace(true);		
 	} else if (guiState == WATCHFACE_STATE) {
@@ -242,22 +243,23 @@ void Watchy::handleButtonPress() {
           case 4:
             setupWifi();
             break;
+// SvKo removed
+          // case 5:
+            // showUpdateFW();
+            // break;
           case 5:
-            showUpdateFW();
-            break;
-          case 6:
             showSyncNTP();
             break;
   // SvKo added
-          case 7:
+          case 6:
             bondBLE();
             break;
           default:
             break;
           }
-        } else if (guiState == FW_UPDATE_STATE) {
+        } /* else if (guiState == FW_UPDATE_STATE) {
           updateFWBegin();
-        } else if (guiState == WATCHFACE_STATE) { // SvKo, enter menu state if coming from watch face
+        }*/ else if (guiState == WATCHFACE_STATE) { // SvKo, enter menu state if coming from watch face
 		  showMenu(menuIndex, true);
 		}
       } else if (digitalRead(BACK_BTN_PIN) == 1) {
@@ -268,9 +270,9 @@ void Watchy::handleButtonPress() {
           break; // leave loop
         } else if (guiState == APP_STATE) {
           showMenu(menuIndex, true); // exit to menu if already in app
-        } else if (guiState == FW_UPDATE_STATE) {
+        } /*else if (guiState == FW_UPDATE_STATE) {
           showMenu(menuIndex, true); // exit to menu if already in app
-        } else if (guiState == ALERT_STATE) {
+        } */ else if (guiState == ALERT_STATE) {
 			RTC.read(currentTime);
 			showWatchFace(true);
 			break;			
@@ -333,7 +335,9 @@ void Watchy::showMenu(byte menuIndex, bool partialRefresh) {
 
   const char *menuItems[] = {
       "About Watchy", "Vibrate Motor", "Show Accelerometer",
-      "Set Time",     "Setup WiFi",    "Update Firmware",
+// SvKo changed
+//      "Set Time",     "Setup WiFi",    "Update Firmware",
+      "Set Time",     "Setup WiFi",    
       "Sync NTP",     "Bond BLE"};
   for (int i = 0; i < MENU_LENGTH; i++) {
     yPos = MENU_HEIGHT + (MENU_HEIGHT * i) - 5;
@@ -369,7 +373,9 @@ void Watchy::showFastMenu(byte menuIndex) {
 
   const char *menuItems[] = {
       "About Watchy", "Vibrate Motor", "Show Accelerometer",
-      "Set Time",     "Setup WiFi",    "Update Firmware",
+// SvKo changed
+//      "Set Time",     "Setup WiFi",    "Update Firmware",
+      "Set Time",     "Setup WiFi",    
       "Sync NTP",     "Bond BLE"};
   for (int i = 0; i < MENU_LENGTH; i++) {
     yPos = MENU_HEIGHT + (MENU_HEIGHT * i) - 5;
@@ -1147,6 +1153,8 @@ void Watchy::disconnectWifi() {
 	// btStop();
 }
 
+// SvKo removed
+/*
 void Watchy::showUpdateFW() {
   display.setFullWindow();
   display.fillScreen(darkMode ? GxEPD_BLACK : GxEPD_WHITE);
@@ -1166,7 +1174,10 @@ void Watchy::showUpdateFW() {
 
   guiState = FW_UPDATE_STATE;
 }
+*/
 
+// SvKo removed
+/*
 void Watchy::updateFWBegin() {
   display.setFullWindow();
   display.fillScreen(darkMode ? GxEPD_BLACK : GxEPD_WHITE);
@@ -1253,6 +1264,7 @@ void Watchy::updateFWBegin() {
   // btStop();
   showMenu(menuIndex, false);
 }
+*/
 
 void Watchy::showSyncNTP() {
   display.setFullWindow();
@@ -1344,39 +1356,39 @@ void Watchy::bondBLE() {
         display.println("Waiting for");
         display.println("disconnect...");
         display.display(true); 
-        delay(1000);
-        break;
+        // delay(1000);
+        // break;
       } else
       if (currentStatus == BOND_STATUS_FAILED) {
         display.println("BLE Bonding");
         display.println("failed!");
         display.println("Exiting...");
         display.display(true); 
-        delay(1000);
-        break;
+        // delay(1000);
+        // break;
       } else
       if (currentStatus == BOND_STATUS_DISCONNECTED) {
         display.println("BLE Disconnected!");
         display.println(" ");
         display.println("Exiting...");
         display.display(true); 
-        delay(1000);
-        break;
+        // delay(1000);
+        // break;
       } else
       if (currentStatus == BOND_STATUS_GATTCONNECT) {
         display.println("BLE GATT");
         display.println("Connect!");
         display.display(true); 
-        delay(1000);
-        break;
+        // delay(1000);
+        // break;
       } else
       if (currentStatus == BOND_STATUS_GATTDISCONNECT) {
         display.println("BLE GATT");
         display.println("Disconnected!");
         display.println("Exiting...");
         display.display(true); 
-        delay(1000);
-        break;
+        // delay(1000);
+        // break;
       } else
       if (currentStatus == BOND_STATUS_SECURITYEVT) {
         display.println("BLE Security");

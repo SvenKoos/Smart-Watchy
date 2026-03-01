@@ -3,12 +3,16 @@
 #define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
 #define CHARACTERISTIC_UUID "abcd1234-5678-90ab-cdef-1234567890ab"
 
+#define UNLOCK_SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
+#define UNLOCK_CHARACTERISTIC_UUID "abcdef01-1234-5678-1234-56789abcdef0"
+
 int bondStatus		= BOND_STATUS_UNDEFINED;
 int bondErrorCode = -1;
 
 static bool deviceConnected = false;
-static BLEServer* pServer = nullptr;
+static NimBLEServer* pServer = nullptr;
 
+/*
 class BLECustomServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer *pServer) { 
 	bondStatus = BOND_STATUS_CONNECTED; 
@@ -22,7 +26,9 @@ class BLECustomServerCallbacks : public BLEServerCallbacks {
     deviceConnected = false;
   }
 };
+*/
 
+/*
 class bondCallback : public BLECharacteristicCallbacks {
 public:
   bondCallback(BLE_Bond *ble) { 
@@ -31,7 +37,9 @@ public:
   
   BLE_Bond *_p_ble;
 };
+*/
 
+/*
 class MySecurity : public BLESecurityCallbacks {
   bool onConfirmPIN(uint32_t pin){
     return true;  
@@ -59,7 +67,9 @@ class MySecurity : public BLESecurityCallbacks {
 	bondErrorCode = cmpl.fail_reason;
   }
 };
+*/
 
+/*
 static void my_gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t* param) {
 switch(event){
     case ESP_GAP_BLE_AUTH_CMPL_EVT:{											// last called
@@ -79,7 +89,9 @@ switch(event){
     }     
   }
 }
+*/
 
+/*
 void gattcEventHandler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param)
 {
     if (event == ESP_GATTC_DISCONNECT_EVT) {
@@ -90,6 +102,33 @@ void gattcEventHandler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_b
 	    bondStatus = BOND_STATUS_GATTCONNECT; 
 	}
 }
+*/
+
+class ServerCallbacks : public NimBLEServerCallbacks {
+    void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
+		bondStatus = BOND_STATUS_CONNECTED; 
+		deviceConnected = true;
+    }
+
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override {
+		bondStatus = BOND_STATUS_DISCONNECTED; 
+		deviceConnected = false;		
+
+        NimBLEDevice::startAdvertising();
+    }
+
+    void onAuthenticationComplete(NimBLEConnInfo& connInfo) override {
+        if(!connInfo.isEncrypted()) {
+			bondStatus = BOND_STATUS_FAILED; 
+            pServer->disconnect(connInfo.getConnHandle());
+        } else     
+			if (connInfo.isBonded()) {
+				bondStatus = BOND_STATUS_BONDED;
+			} else {
+				bondStatus = BOND_STATUS_CONNECTED;
+			}
+    }
+};
 
 //
 // Constructor
@@ -102,54 +141,87 @@ BLE_Bond::~BLE_Bond(void) {}
 //
 // begin
 bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
-  BLEDevice::setCustomGattcHandler(gattcEventHandler);
+  // BLEDevice::setCustomGattcHandler(gattcEventHandler);
   
   // Create the BLE Device
-  BLEDevice::init(localName);
+  NimBLEDevice::init(localName);
   // BLEDevice::setCustomGapHandler(my_gap_event_handler);
 
-  BLESecurity *pSecurity = new BLESecurity();
+  //1 NimBLESecurity *pSecurity = new NimBLESecurity();
   // pSecurity->setAuthenticationMode(ESP_LE_AUTH_REQ_SC_BOND);
-  pSecurity->setAuthenticationMode(ESP_LE_AUTH_BOND);
-  pSecurity->setCapability(ESP_IO_CAP_NONE);
+  //1 pSecurity->setAuthenticationMode(ESP_LE_AUTH_BOND);
+  //1 pSecurity->setCapability(ESP_IO_CAP_NONE);
   // uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
   // esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
-  pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);  
+  //1 pSecurity->setInitEncryptionKey(ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK);  
+  
+  NimBLEDevice::setSecurityAuth(true, true, true);
+  // NimBLEDevice::setSecurityPasskey(0);  // optional
+  NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
+  NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
+  NimBLEDevice::setSecurityRespKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
 
   // Create the BLE Server
-  pServer = BLEDevice::createServer();
+  pServer = NimBLEDevice::createServer();
+  pServer->setCallbacks(new ServerCallbacks());
   
   // BLEDevice::setEncryptionLevel(ESP_BLE_SEC_ENCRYPT);
   // BLEDevice::setSecurityCallbacks(new MySecurity());
   
-  pServer->setCallbacks(new BLECustomServerCallbacks());
+  // pServer->setCallbacks(new BLECustomServerCallbacks());
 
   // Create the BLE Service
-  pService       = pServer->createService(SERVICE_UUID);
+  // pService       = pServer->createService(SERVICE_UUID);
+  NimBLEService* pService = pServer->createService(SERVICE_UUID);
 
   // Create a BLE Characteristic
+  /*
   pCharacteristic = pService->createCharacteristic(
                      CHARACTERISTIC_UUID,
                      BLECharacteristic::PROPERTY_READ   |
                      BLECharacteristic::PROPERTY_WRITE
                    );
+  */
+  NimBLECharacteristic* pChar = pService->createCharacteristic(
+      CHARACTERISTIC_UUID,
+      NIMBLE_PROPERTY::READ
+  );
 
   // pCharacteristic->setAccessPermissions(ESP_GATT_PERM_READ_ENCRYPTED | ESP_GATT_PERM_WRITE_ENCRYPTED);
-  pCharacteristic->setValue("Hello World says Watchy");
+  pChar->setValue("Hello World says Watchy");
   
-  pCharacteristic->addDescriptor(new BLE2902());
-  pCharacteristic->setCallbacks(new bondCallback(this));
+  // pCharacteristic->addDescriptor(new BLE2902());
+  // pCharacteristic->setCallbacks(new bondCallback(this));
 
   // Start the service(s)
   pService->start();
 
   // Start advertising
+/*
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(true);
   pAdvertising->setMinPreferred(0x12);  // set value to 0x00 to not advertise this parameter
   pAdvertising->start();
   // BLEDevice::startAdvertising();
+*/
+  NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  // pAdvertising->setScanResponse(true);
+  pAdvertising->start();
+  
+  // Unlock characteristics
+  NimBLEService* pUnlockService = pServer->createService(UNLOCK_SERVICE_UUID);
+  NimBLECharacteristic* pUnlockChar = pUnlockService->createCharacteristic(
+    UNLOCK_CHARACTERISTIC_UUID,
+    NIMBLE_PROPERTY::READ);
+  // statischer Wert – reicht für Trusted Device
+  pUnlockChar->setValue("UNLOCK_OK");
+  // Service starten
+  pUnlockService->start();
+  NimBLEAdvertising* pAdvertisingUnlock = NimBLEDevice::getAdvertising();
+  pAdvertisingUnlock->addServiceUUID(UNLOCK_SERVICE_UUID);
+  pAdvertisingUnlock->start();
 
   return true;
 }
@@ -244,7 +316,8 @@ void BLEAdvertise() {
     if (now - lastNotify > 59000) { // 60 Sekunden
       lastNotify = now;
       // Beispiel: Notify senden
-      BLEService* pService = pServer->getServiceByUUID(SERVICE_UUID);
+/*	  
+      pService = pServer->getServiceByUUID(SERVICE_UUID);
       if (pService) {
         BLECharacteristic* pChar = pService->getCharacteristic(CHARACTERISTIC_UUID);
         if (pChar) {
@@ -253,6 +326,7 @@ void BLEAdvertise() {
           Serial.println("BLE: Notify Ping");
         }
       }
+*/	  
     }
   }
 }

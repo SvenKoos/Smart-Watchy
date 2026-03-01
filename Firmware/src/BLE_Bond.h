@@ -3,10 +3,13 @@
 
 #include "Arduino.h"
 
+/*
 #include <BLE2902.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
+*/
+#include <NimBLEDevice.h>
 
 #include "config.h"
 
@@ -34,9 +37,9 @@ public:
 private:
   String local_name;
 
-  BLEServer *pServer = NULL;
-  BLECharacteristic* pCharacteristic = NULL;
-  BLEService *pService                            = NULL;
+  // BLEServer *pServer = NULL;
+  // BLECharacteristic* pCharacteristic = NULL;
+  // BLEService *pService                            = NULL;
 };
 
 void BLEAdvertise();
