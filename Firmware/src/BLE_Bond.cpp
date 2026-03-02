@@ -1,14 +1,13 @@
 #include "BLE_Bond.h"
 
-#define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
-#define CHARACTERISTIC_UUID "abcd1234-5678-90ab-cdef-1234567890ab"
+// #define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
+// #define CHARACTERISTIC_UUID "abcd1234-5678-90ab-cdef-1234567890ab"
 
 #define UNLOCK_SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
 #define UNLOCK_CHARACTERISTIC_UUID "abcdef01-1234-5678-1234-56789abcdef0"
 
-int bondStatus		= BOND_STATUS_UNDEFINED;
-int bondErrorCode = -1;
-
+volatile int bondStatus		= BOND_STATUS_UNDEFINED;
+// int bondErrorCode = -1;
 static bool deviceConnected = false;
 static NimBLEServer* pServer = nullptr;
 
@@ -172,7 +171,7 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
 
   // Create the BLE Service
   // pService       = pServer->createService(SERVICE_UUID);
-  NimBLEService* pService = pServer->createService(SERVICE_UUID);
+  // NimBLEService* pService = pServer->createService(SERVICE_UUID);
 
   // Create a BLE Characteristic
   /*
@@ -182,6 +181,8 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
                      BLECharacteristic::PROPERTY_WRITE
                    );
   */
+
+/*
   NimBLECharacteristic* pChar = pService->createCharacteristic(
       CHARACTERISTIC_UUID,
       NIMBLE_PROPERTY::READ
@@ -195,6 +196,7 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
 
   // Start the service(s)
   pService->start();
+*/
 
   // Start advertising
 /*
@@ -205,22 +207,35 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
   pAdvertising->start();
   // BLEDevice::startAdvertising();
 */
+/*
   NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
   // pAdvertising->setScanResponse(true);
   pAdvertising->start();
+*/
   
   // Unlock characteristics
   NimBLEService* pUnlockService = pServer->createService(UNLOCK_SERVICE_UUID);
   NimBLECharacteristic* pUnlockChar = pUnlockService->createCharacteristic(
     UNLOCK_CHARACTERISTIC_UUID,
-    NIMBLE_PROPERTY::READ);
+    NIMBLE_PROPERTY::READ_ENC);
   // statischer Wert – reicht für Trusted Device
   pUnlockChar->setValue("UNLOCK_OK");
   // Service starten
   pUnlockService->start();
+  
   NimBLEAdvertising* pAdvertisingUnlock = NimBLEDevice::getAdvertising();
   pAdvertisingUnlock->addServiceUUID(UNLOCK_SERVICE_UUID);
+  
+  // set device name
+  NimBLEAdvertisementData advData;
+  advData.setCompleteServices(NimBLEUUID(UNLOCK_SERVICE_UUID));
+  pAdvertisingUnlock->setAdvertisementData(advData);
+
+  NimBLEAdvertisementData scanData;
+  scanData.setName(localName);
+  pAdvertisingUnlock->setScanResponseData(scanData);
+  
   pAdvertisingUnlock->start();
 
   return true;

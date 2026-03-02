@@ -1324,7 +1324,7 @@ void Watchy::bondBLE() {
   display.println("Watchy BLE");
   display.println(" ");
   display.println("Waiting for");
-  display.println("connection...");
+  display.println("connection 30sec...");
   display.display(true); 
 
   BLE_Bond BT;
@@ -1332,7 +1332,7 @@ void Watchy::bondBLE() {
   int prevStatus = BOND_STATUS_UNDEFINED;
   int currentStatus;
   int count = 0;
-
+/*
   while (1) {
     currentStatus = BT.updateStatus();
     if (prevStatus != currentStatus) {
@@ -1414,7 +1414,10 @@ void Watchy::bondBLE() {
 		break;
     delay(100);
   }
-
+*/
+  
+  delay(30000);
+  
   // turn off radios
   //1 WiFi.mode(WIFI_OFF);
   // SvKo remove
