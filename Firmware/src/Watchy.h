@@ -26,8 +26,6 @@
 
 // SvKo added
 #include <Time.h>
-#include <chrono>
-#include <bits/stdc++.h>
 
 // SvKo added
 #include "BLE_Bond.h"
@@ -42,7 +40,7 @@
 #define TIMESTAMP_LEN 24
 
 // SvKo
-#define ALERT_MAX_NO 20
+#define ALERT_MAX_NO 10
 
 // SvKo
 #define MAX_ACCEL_QUIET 5

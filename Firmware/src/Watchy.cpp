@@ -6,7 +6,9 @@ GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT> Watchy::display(
 
 RTC_DATA_ATTR int guiState;
 RTC_DATA_ATTR int menuIndex;
-RTC_DATA_ATTR BMA423 sensor;
+// SvKo changed
+// RTC_DATA_ATTR BMA423 sensor;
+BMA423 sensor;
 RTC_DATA_ATTR bool WIFI_CONFIGURED;
 RTC_DATA_ATTR bool BLE_CONFIGURED;
 RTC_DATA_ATTR weatherData currentWeather;
