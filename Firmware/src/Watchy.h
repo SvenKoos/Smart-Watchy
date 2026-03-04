@@ -18,7 +18,6 @@
 // #include "BLE_OTA.h"
 #include "bma.h"
 #include "config.h"
-#include "exception.h"
 
 // SvKo added
 #include <esp_system.h>
@@ -35,9 +34,9 @@
 
 // SvKo
 #define NAME_LEN 32
-#define IP_LEN 16
+#define IP_LEN 64
 #define TITLE_LEN 64
-#define LOG_LEN 32
+#define LOG_LEN 128
 #define BODY_LEN 128
 #define MESSAGE_LEN 24
 #define TIMESTAMP_LEN 24
@@ -195,7 +194,7 @@ public:
   
   // SvKo added
   void showAlert(singleAlert alert, int index, int amount);
-  alertData getAlertData(bool darkMode, String gatewayIP, String macAdress);
+  alertData getAlertData(bool darkMode, const String gatewayIP, const String macAdress);
 
   // SvKo added
   accelData getAccelData();

@@ -762,7 +762,8 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
 		// SvKo: added
 		strcpy(currentWeather.name, (const char*)responseObject["name"]);
 		String cityString = Normalize2ASCII(String(currentWeather.name));
-		strcpy(currentWeather.name, cityString.c_str());
+		strncpy(currentWeather.name, cityString.c_str(), sizeof(currentWeather.name) - 1);
+		currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
 		
 		currentWeather.offset = long(responseObject["timezone"]);		
       } else {
@@ -770,7 +771,9 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
 	    // SvKo: added
 	    currentWeather.code = CODE_HTTP_ERROR;
       }
-	  strcpy(currentWeather.log, String(httpResponseCode).c_str());
+	  strncpy(currentWeather.log, String(httpResponseCode).c_str(), sizeof(currentWeather.log) - 1);
+	  currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
+	  
       http.end();
       // turn off radios
 	  // SvKo removed
@@ -848,13 +851,15 @@ weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, 
 		
 		// SvKo: added
 		String cityString = Normalize2ASCII(String(currentWeather.name));
-		strcpy(currentWeather.name, cityString.c_str());
+		strncpy(currentWeather.name, cityString.c_str(), sizeof(currentWeather.name) - 1);
+		currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
       } else {
         // http error
 	    // SvKo: added
 	    currentWeather.code = CODE_HTTP_ERROR;
       }
-	  strcpy(currentWeather.log, String(httpResponseCode).c_str());
+	  strncpy(currentWeather.log, String(httpResponseCode).c_str(), sizeof(currentWeather.log) - 1);
+	  currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
       http.end();
       
 	  // turn off radios
@@ -922,13 +927,16 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
 		// strcpy(currentLocation.gatewayIP, gatewayIP.c_str());
 		
 		String cityString = Normalize2ASCII(String(currentLocation.city));
-		strcpy(currentLocation.city, cityString.c_str());
+		strncpy(currentLocation.city, cityString.c_str(), sizeof(currentLocation.city) - 1);
+	    currentLocation.city[sizeof(currentLocation.city) - 1] = '\0';
       } else {
         // http error
 	    // SvKo: added
 	    currentLocation.code = CODE_HTTP_ERROR;
       }
-	  strcpy(currentLocation.log, String(httpResponseCode).c_str());
+	  strncpy(currentLocation.log, String(httpResponseCode).c_str(), sizeof(currentLocation.log) - 1);
+	  currentLocation.log[sizeof(currentLocation.log) - 1] = '\0';
+	  
       http.end();
       // turn off radios
 	  // SvKo removed
@@ -1470,7 +1478,7 @@ void Watchy::showAlert(singleAlert alert, int index, int amount) {
 }
 
 // SvKo added
-alertData Watchy::getAlertData(bool _darkMode, String gatewayIP, String macAdress) {
+alertData Watchy::getAlertData(bool _darkMode, const String gatewayIP, const String macAdress) {
 	// SvKo removed
 	// String localIP;
 	// String gatewayIP;
@@ -1561,7 +1569,8 @@ alertData Watchy::getAlertData(bool _darkMode, String gatewayIP, String macAdres
 				_string.replace("T", " ");
 				int index = _string.lastIndexOf(".");
 				_string = _string.substring(0, index);
-				strcpy(allAlerts[i].timeStamp, _string.c_str());
+				strncpy(allAlerts[i].timeStamp, _string.c_str(), sizeof(allAlerts[i].timeStamp) - 1);
+				allAlerts[i].timeStamp[sizeof(allAlerts[i].timeStamp) - 1] = '\0';				
 
 				allAlerts[i].id = int(alert["id"]);
 			}
@@ -1574,7 +1583,8 @@ alertData Watchy::getAlertData(bool _darkMode, String gatewayIP, String macAdres
 				newMax = allAlerts[newNo - 1].id;
 				
 				String log = String(newMin) + " " + String(newMax) + " " + String(oldMin) + " " + String(oldMax);
-				strcpy(currentAlerts.log, log.c_str());
+				strncpy(currentAlerts.log, log.c_str(), sizeof(currentAlerts.log) - 1);
+				currentAlerts.log[sizeof(currentAlerts.log) - 1] = '\0';				
 
 				if ((oldNo != newNo) || (oldMin != newMin) || (oldMax != newMax)) {
 					float VBAT = getBatteryVoltage();
@@ -1589,7 +1599,9 @@ alertData Watchy::getAlertData(bool _darkMode, String gatewayIP, String macAdres
 			// SvKo: added
 			currentAlerts.code = CODE_HTTP_ERROR;
 		}
-		strcpy(currentAlerts.log, String(httpResponseCode).c_str());
+		strncpy(currentAlerts.log, String(httpResponseCode).c_str(), sizeof(currentAlerts.log) - 1);
+		currentAlerts.log[sizeof(currentAlerts.log) - 1] = '\0';				
+
 		http.end();
 
 		// turn off radios

@@ -10,7 +10,6 @@ const uint8_t WEATHER_ICON_HEIGHT = 32;
 
 void Watchy7SEG::drawWatchFace(){
     // SvKo added
-    try {
       display.fillScreen(DARKMODE ? GxEPD_BLACK : GxEPD_WHITE);
       display.setTextColor(DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
 
@@ -30,8 +29,10 @@ void Watchy7SEG::drawWatchFace(){
       if (connectWiFi(localIP, gatewayIP, macAdress)) {
         // SvKo added
         locationData currentLocation = getLocation();
-		    strcpy(currentLocation.localIP, localIP.c_str());
-		    strcpy(currentLocation.gatewayIP, gatewayIP.c_str());
+		    strncpy(currentLocation.localIP, localIP.c_str(), sizeof(currentLocation.localIP) - 1);
+	      currentLocation.localIP[sizeof(currentLocation.localIP) - 1] = '\0';
+		    strncpy(currentLocation.gatewayIP, gatewayIP.c_str(), sizeof(currentLocation.gatewayIP) - 1);
+	      currentLocation.gatewayIP[sizeof(currentLocation.gatewayIP) - 1] = '\0';
 
         drawWeather(currentLocation);
 
@@ -40,22 +41,13 @@ void Watchy7SEG::drawWatchFace(){
 
         // SvKo added
         disconnectWifi();
-      }
 
       display.drawBitmap(125, 75, WIFI_CONFIGURED ? wifi : wifioff, 26, 18, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
     }
 
     drawBattery();
-
-      // SvKo added
-    drawStackTrace();
   }
   
-  // SvKo added
-  catch(Exception& ex) {
-    StoreStackTrace(ex.Message());
-  }
-
 // SvKo Removed
 /*
     if(BLE_CONFIGURED){
@@ -249,7 +241,7 @@ locationData Watchy7SEG::getLocation(){
 }
 
 // SvKo: added
-void Watchy7SEG::drawAlerts(String gatewayIP, String macAdress) {
+void Watchy7SEG::drawAlerts(const String gatewayIP, const String macAdress) {
   alertData currentAlerts;
   currentAlerts = getAlertData(DARKMODE, gatewayIP, macAdress);
 
@@ -265,22 +257,4 @@ void Watchy7SEG::drawAlerts(String gatewayIP, String macAdress) {
   // display.setFont(&DSEG7_Classic_Bold_25);
   // display.setCursor(35, 155);
   // display.println(currentAlerts.log);
-}
-
-// SvKo: added
-void Watchy7SEG::drawStackTrace() {
-  char stack[STACK_LEN];
-  strcpy(stack, GetStackTrace());
-
-	if (strlen(stack) > 0) {
-    display.setFullWindow();
-    display.fillScreen(DARKMODE ? GxEPD_BLACK : GxEPD_WHITE);
-    display.setTextColor(DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
-    display.setFont(&Seven_Segment10pt7b);
-
-    display.setCursor(0, 0);
-    display.println(stack);
-
-    CleanStackTrace();
-  }
 }
