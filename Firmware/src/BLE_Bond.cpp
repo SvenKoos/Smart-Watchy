@@ -229,11 +229,13 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
   
   // set device name
   NimBLEAdvertisementData advData;
+  advData.setFlags(BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP);
+  advData.setName(localName);  // ← Name ins Advertising-Paket
   advData.setCompleteServices(NimBLEUUID(UNLOCK_SERVICE_UUID));
   pAdvertisingUnlock->setAdvertisementData(advData);
 
   NimBLEAdvertisementData scanData;
-  scanData.setName(localName);
+  // scanData.setName(localName);
   pAdvertisingUnlock->setScanResponseData(scanData);
   
   pAdvertisingUnlock->start();
