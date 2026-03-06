@@ -26,7 +26,10 @@ void Watchy7SEG::drawWatchFace(){
       String localIP;
 	    String gatewayIP;
 	    String macAdress;
+
       if (connectWiFi(localIP, gatewayIP, macAdress)) {
+        display.drawBitmap(125, 75, WIFI_CONFIGURED ? wifi : wifioff, 26, 18, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
+
         // SvKo added
         locationData currentLocation = getLocation();
 		    strncpy(currentLocation.localIP, localIP.c_str(), sizeof(currentLocation.localIP) - 1);
@@ -41,9 +44,8 @@ void Watchy7SEG::drawWatchFace(){
 
         // SvKo added
         disconnectWifi();
-
+    } else
       display.drawBitmap(125, 75, WIFI_CONFIGURED ? wifi : wifioff, 26, 18, DARKMODE ? GxEPD_WHITE : GxEPD_BLACK);
-    }
 
     drawBattery();
   }

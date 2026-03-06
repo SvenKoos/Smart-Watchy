@@ -27,7 +27,16 @@ RTC_DATA_ATTR bool darkMode = false;
 RTC_DATA_ATTR accelData currentAccel;
 RTC_DATA_ATTR bool quietMode = false;
 
+// SvKo added
+RTC_DATA_ATTR uint32_t rebootCount = 0;
+RTC_DATA_ATTR uint32_t lastRebootReason = 0;
+
+
 void Watchy::init(String datetime) {
+  // SvKo addded
+  lastRebootReason = esp_reset_reason();
+  rebootCount++;
+
   esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause(); // get wake up reason
   Wire.begin(SDA, SCL);                         // init i2c
@@ -384,17 +393,18 @@ void Watchy::showAbout() {
   display.fillScreen(darkMode ? GxEPD_BLACK : GxEPD_WHITE);
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(darkMode ? GxEPD_WHITE : GxEPD_BLACK);
-  display.setCursor(0, 20);
+  display.setCursor(0, 10);
 
   // SvKo removed
   // display.print("LibVer: ");
   // display.println(WATCHY_LIB_VER);
 
-  const char *RTC_HW[3] = {"<UNKNOWN>", "DS3231", "PCF8563"};
-  display.print("RTC: ");
-  display.println(RTC_HW[RTC.rtcType]); // 0 = UNKNOWN, 1 = DS3231, 2 = PCF8563
+  // SvKo removed
+  // const char *RTC_HW[3] = {"<UNKNOWN>", "DS3231", "PCF8563"};
+  // display.print("RTC: ");
+  // display.println(RTC_HW[RTC.rtcType]); // 0 = UNKNOWN, 1 = DS3231, 2 = PCF8563
 
-  display.print("Batt: ");
+  display.print("Battery: ");
   float voltage = getBatteryVoltage();
   display.print(voltage);
   display.println("V");
@@ -404,9 +414,9 @@ void Watchy::showAbout() {
   String macAdress;
 
   if (connectWiFi(localIP, gatewayIP, macAdress)) {
-	display.println("Local IP:"); display.println(localIP);
-    display.println("Gateway IP:"); display.println(gatewayIP);
-    display.println("WiFi MAC Address:"); display.println(macAdress);
+	display.println("Local IP: "); display.println(localIP);
+    display.println("Gateway IP: "); display.println(gatewayIP);
+    display.println("WiFi MAC:"); display.println(macAdress);
 	  
 	//1 WiFi.mode(WIFI_OFF);
 	// SvKo remove
@@ -418,8 +428,15 @@ void Watchy::showAbout() {
   // SvKo added
   uint8_t mac[6];
   esp_read_mac(mac, ESP_MAC_BT);  // ESP_MAC_BT = BLE MAC
-  display.println("BLE MAC Address:");
+  display.println("BLE MAC:");
   display.printf("%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  display.println();
+  
+  // SvKo added
+  display.print("Reboots: ");
+  display.println(rebootCount);
+  display.print("Last reason: ");
+  display.println(lastRebootReason);
 
   display.display(true); // full refresh
 
@@ -735,15 +752,44 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
       if (httpResponseCode == 200) {
         String payload             = http.getString();
         JSONVar responseObject     = JSON.parse(payload);
+		
+		// SvKo added
+		if ((!responseObject.hasOwnProperty("main")) ||
+			(!responseObject["main"].hasOwnProperty("temp")) ||
+			(!responseObject.hasOwnProperty("weather")) ||
+			(JSON.typeof(responseObject["weather"]) != "array") ||
+			(!responseObject.hasOwnProperty("name")) ||
+			(!responseObject.hasOwnProperty("timezone")))
+		{
+			currentWeather.code = CODE_PARSE_ERROR;
+			strncpy(currentWeather.log, "Missing fields", sizeof(currentWeather.log) - 1);
+			currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
+			
+			return currentWeather;
+		}
+		
         currentWeather.temperature = int(responseObject["main"]["temp"]);
-        currentWeather.weatherConditionCode =
-            int(responseObject["weather"][0]["id"]);
-        // SvKo
-		strcpy(currentWeather.weatherDescription, (const char*)responseObject["weather"][0]["main"]);
+        currentWeather.weatherConditionCode = int(responseObject["weather"][0]["id"]);
+        
+		// SvKo
+		// strcpy(currentWeather.weatherDescription, (const char*)responseObject["weather"][0]["main"]);
+		const char* main = (const char*)responseObject["weather"][0]["main"];
+		if (main != nullptr) {
+			strncpy(currentWeather.weatherDescription, main, sizeof(currentWeather.weatherDescription) - 1);
+			currentWeather.weatherDescription[sizeof(currentWeather.weatherDescription) - 1] = '\0';
+		}
+		
         // sync NTP during weather API call and use timezone of city
         syncNTP(long(responseObject["timezone"]));
+		
 		// SvKo: added
-		strcpy(currentWeather.name, (const char*)responseObject["name"]);
+		// strcpy(currentWeather.name, (const char*)responseObject["name"]);
+		const char* name = (const char*)responseObject["name"];
+		if (name != nullptr) {
+			strncpy(currentWeather.name, name, sizeof(currentWeather.name) - 1);
+			currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
+		}
+		
 		String cityString = Normalize2ASCII(String(currentWeather.name));
 		strncpy(currentWeather.name, cityString.c_str(), sizeof(currentWeather.name) - 1);
 		currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
@@ -820,12 +866,41 @@ weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, 
       if (httpResponseCode == 200) {
         String payload             = http.getString();
         JSONVar responseObject     = JSON.parse(payload);
+
+		// SvKo added
+		if ((!responseObject.hasOwnProperty("main")) ||
+			(!responseObject["main"].hasOwnProperty("temp")) ||
+			(!responseObject.hasOwnProperty("weather")) ||
+			(JSON.typeof(responseObject["weather"]) != "array") ||
+			(!responseObject.hasOwnProperty("name")) ||
+			(!responseObject.hasOwnProperty("timezone")))
+		{
+			currentWeather.code = CODE_PARSE_ERROR;
+			strncpy(currentWeather.log, "Missing fields", sizeof(currentWeather.log) - 1);
+			currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
+
+			return currentWeather;
+		}
+		
         currentWeather.temperature = int(responseObject["main"]["temp"]);
-        currentWeather.weatherConditionCode =
-            int(responseObject["weather"][0]["id"]);
+        currentWeather.weatherConditionCode = int(responseObject["weather"][0]["id"]);
+		
         // SvKo
-		strcpy(currentWeather.weatherDescription, (const char*)responseObject["weather"][0]["main"]);
-		strcpy(currentWeather.name, (const char*)responseObject["name"]);
+		// strcpy(currentWeather.weatherDescription, (const char*)responseObject["weather"][0]["main"]);
+		const char* main = (const char*)responseObject["weather"][0]["main"];
+		if (main != nullptr) {
+			strncpy(currentWeather.weatherDescription, main, sizeof(currentWeather.weatherDescription) - 1);
+			currentWeather.weatherDescription[sizeof(currentWeather.weatherDescription) - 1] = '\0';
+		}
+
+		// SvKo changed
+		// strcpy(currentWeather.name, (const char*)responseObject["name"]);
+		const char* name = (const char*)responseObject["name"];
+		if (name != nullptr) {
+			strncpy(currentWeather.name, name, sizeof(currentWeather.name) - 1);
+			currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
+		}
+
         // sync NTP during weather API call and use timezone of city
         syncNTP(long(responseObject["timezone"]));
 
@@ -900,8 +975,35 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
       if (httpResponseCode == 200) {
         String payload             = http.getString();
         JSONVar responseObject     = JSON.parse(payload);
-		strcpy(currentLocation.publicIP, (const char*)responseObject["ip"]);
-        strcpy(currentLocation.city, (const char*)responseObject["city"]);
+		// SvKo added
+		if ((!responseObject.hasOwnProperty("ip")) ||
+		    (!responseObject.hasOwnProperty("city")) ||
+			(!responseObject.hasOwnProperty("latitude")) ||
+			(!responseObject.hasOwnProperty("longitude")) || 
+			(!responseObject.hasOwnProperty("timezone"))
+			){
+			currentLocation.code = CODE_PARSE_ERROR;
+			strncpy(currentLocation.log, "Missing fields", sizeof(currentLocation.log) - 1);
+			currentLocation.log[sizeof(currentLocation.log) - 1] = '\0';
+
+			return currentLocation;
+		}
+
+		// SvKo changed
+		// strcpy(currentLocation.publicIP, (const char*)responseObject["ip"]);
+		const char* ip = (const char*)responseObject["ip"];
+		if (ip != nullptr) {
+			strncpy(currentLocation.publicIP, ip, sizeof(currentLocation.publicIP) - 1);
+			currentLocation.publicIP[sizeof(currentLocation.publicIP) - 1] = '\0';
+		}
+		// SvKo changed
+        // strcpy(currentLocation.city, (const char*)responseObject["city"]);
+		const char* city = (const char*)responseObject["city"];
+		if (city != nullptr) {
+			strncpy(currentLocation.city, city, sizeof(currentLocation.city) - 1);
+			currentLocation.city[sizeof(currentLocation.city) - 1] = '\0';
+		}
+
         currentLocation.latitude = double(responseObject["latitude"]);
         currentLocation.longitude = double(responseObject["longitude"]);
 		currentLocation.offset = long(responseObject["timezone"]["offset"]);
@@ -1107,6 +1209,10 @@ void Watchy::_configModeCallback(WiFiManager *myWiFiManager) {
 }
 
 bool Watchy::connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
+  // SvKo added
+  WiFi.setSleep(false);
+  WiFi.mode(WIFI_STA);
+  
   if (WL_CONNECT_FAILED ==
       WiFi.begin()) { // WiFi not setup, you can also use hard coded credentials
                       // with WiFi.begin(SSID,PASS);
@@ -1121,14 +1227,13 @@ bool Watchy::connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
     } else { // connection failed, time out
       WIFI_CONFIGURED = false;
       // turn off radios
-      //1 WiFi.mode(WIFI_OFF);
+	  disconnectWifi();
 	  // SvKo remove
       // btStop();
     }
 	
-	if ((hostIP.length() == 0) | (gatewayIP.length() == 0) | (macAdress.length() == 0)) {
-      WIFI_CONFIGURED = false;
-      //1 WiFi.mode(WIFI_OFF);
+	if ((hostIP.length() == 0) || (gatewayIP.length() == 0) || (macAdress.length() == 0)) {
+      disconnectWifi();
 	  // SvKo remove
       // btStop();
 	}
@@ -1139,7 +1244,9 @@ bool Watchy::connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
 // SvKo added
 void Watchy::disconnectWifi() {
 	// turn off radios
-	//1 WiFi.mode(WIFI_OFF);
+    WIFI_CONFIGURED = false;
+	WiFi.disconnect(true);
+	WiFi.mode(WIFI_OFF);
 	// SvKo remove
 	// btStop();
 }
@@ -1383,9 +1490,21 @@ alertData Watchy::getAlertData(bool _darkMode, const String gatewayIP, const Str
 			}
 
 			String payload = http.getString();
-			// SvKo alerts
-			// currentAlerts.alerts = JSON.parse(payload);
+			// SvKo added
+			if (payload.length() > 4096) {
+				currentAlerts.code = CODE_PARSE_ERROR;
+				strncpy(currentAlerts.log, "Invalid payload", LOG_LEN-1);
+				return currentAlerts;
+			}
+			
 			alerts = JSON.parse(payload);
+			// SvKo added
+			if (!alerts.hasOwnProperty("data") ||
+				JSON.typeof(alerts["data"]) != "array") {
+				currentAlerts.code = CODE_PARSE_ERROR;
+				return currentAlerts;
+			}
+			
 			alertIndex = -1;
 			
 			// SvKo alerts
@@ -1403,29 +1522,45 @@ alertData Watchy::getAlertData(bool _darkMode, const String gatewayIP, const Str
 				JSONVar alert = alerts["data"][i];
 				
 				String _string = (const char*)alert["appName"];
+				// SvKo changed
+				/*
 				if (_string.length() < NAME_LEN)
 					strcpy(allAlerts[i].appName, _string.c_str());
 				else
 					strcpy(allAlerts[i].appName, (_string.substring(0, NAME_LEN-1)).c_str());
-
+				*/
+				strncpy(allAlerts[i].appName, _string.c_str(), NAME_LEN-1);
+				allAlerts[i].appName[NAME_LEN-1] = '\0';
+				
 				_string = (const char*)alert["title"];
 				if (_string == "null")
 					_string = "";
+				// SvKo changed
+				/*
 				if (_string.length() < TITLE_LEN)
 					strcpy(allAlerts[i].title, _string.c_str());
 				else
 					strcpy(allAlerts[i].title, (_string.substring(0, TITLE_LEN-1)).c_str());
-
+				*/
+				strncpy(allAlerts[i].title, _string.c_str(), TITLE_LEN-1);
+				allAlerts[i].title[TITLE_LEN-1] = '\0';
+				
 				_string = (const char*)alert["body"];
-				// SvKo
-				// _string = Normalize2ASCII(_string);
+				// SvKo changed
+				if (_string == nullptr) _string = "";
+				
 				if ((_string != null) && (_string.length() > 0)) {
 					if (_string == "null")
 						_string = "";
+					// SvKo changed
+					/*
 					if (_string.length() < BODY_LEN)
 						strcpy(allAlerts[i].body, _string.c_str());
 					else
 						strcpy(allAlerts[i].body, (_string.substring(0, BODY_LEN-1)).c_str());
+					*/
+					strncpy(allAlerts[i].body, _string.c_str(), BODY_LEN-1);
+					allAlerts[i].body[BODY_LEN-1] = '\0';
 				} else {
 					strcpy(allAlerts[i].body, "");
 				}
@@ -1439,6 +1574,7 @@ alertData Watchy::getAlertData(bool _darkMode, const String gatewayIP, const Str
 				_string = (const char*)(alert["timestamp"]);
 				_string.replace("T", " ");
 				int index = _string.lastIndexOf(".");
+				if (index < 0) index = _string.length();
 				_string = _string.substring(0, index);
 				strncpy(allAlerts[i].timeStamp, _string.c_str(), sizeof(allAlerts[i].timeStamp) - 1);
 				allAlerts[i].timeStamp[sizeof(allAlerts[i].timeStamp) - 1] = '\0';				

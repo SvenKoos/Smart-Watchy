@@ -66,6 +66,7 @@
 #define CODE_COMM_ERROR	1
 #define CODE_HTTP_ERROR 2
 #define CODE_DATA_ERROR 3
+#define CODE_PARSE_ERROR 4
 
 #define MENU_HEIGHT     25
 #define MENU_LENGTH     7
