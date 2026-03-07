@@ -1491,7 +1491,7 @@ alertData Watchy::getAlertData(bool _darkMode, const String gatewayIP, const Str
 
 			String payload = http.getString();
 			// SvKo added
-			if (payload.length() > 4096) {
+			if (payload.length() > 8192) {
 				currentAlerts.code = CODE_PARSE_ERROR;
 				strncpy(currentAlerts.log, "Invalid payload", LOG_LEN-1);
 				return currentAlerts;

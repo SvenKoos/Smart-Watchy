@@ -40,7 +40,7 @@
 #define TIMESTAMP_LEN 24
 
 // SvKo
-#define ALERT_MAX_NO 10
+#define ALERT_MAX_NO 20
 
 // SvKo
 #define MAX_ACCEL_QUIET 5
