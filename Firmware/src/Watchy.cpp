@@ -10,7 +10,6 @@ RTC_DATA_ATTR int menuIndex;
 // RTC_DATA_ATTR BMA423 sensor;
 BMA423 sensor;
 RTC_DATA_ATTR bool WIFI_CONFIGURED;
-RTC_DATA_ATTR bool BLE_CONFIGURED;
 RTC_DATA_ATTR weatherData currentWeather;
 RTC_DATA_ATTR int weatherIntervalCounter = -1;
 RTC_DATA_ATTR bool displayFullInit = true;
@@ -31,6 +30,8 @@ RTC_DATA_ATTR bool quietMode = false;
 RTC_DATA_ATTR uint32_t rebootCount = 0;
 RTC_DATA_ATTR uint32_t lastRebootReason = 0;
 
+// SvKo added
+RTC_DATA_ATTR bool bleBonded = false;
 
 void Watchy::init(String datetime) {
   // SvKo addded
@@ -69,7 +70,50 @@ void Watchy::init(String datetime) {
     showWatchFace(false); // full update on reset
     break;
   }
-  deepSleep();
+
+  // SvKo extended
+  if (bleBonded)
+	genericSleep(lightSleepMode);
+  else
+	genericSleep(deepSleepMode);
+}
+
+// SvKo added
+void Watchy::genericSleep(int sleepMode) {
+    // Display schlafen legen (wie in deepSleep)
+    display.hibernate();
+
+    // Deep-Sleep-Wakeups deaktivieren (optional, aber sauber)
+    if (displayFullInit)
+        esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+
+    displayFullInit = false;
+
+    // RTC-Alarm-Flag löschen
+    RTC.clearAlarm();
+
+    // GPIOs in sicheren Zustand setzen (wie in deepSleep)
+    const uint64_t ignore = 0b11110001000000110000100111000010;
+    for (int i = 0; i < GPIO_NUM_MAX; i++) {
+        if ((ignore >> i) & 0b1)
+            continue;
+        pinMode(i, INPUT);
+    }
+
+    // Wake-Up-Quellen setzen
+    // 1) RTC-Interrupt (z.B. jede Minute)
+    esp_sleep_enable_ext0_wakeup((gpio_num_t)RTC_INT_PIN, 0);
+
+    // 2) Buttons als Wake-Up
+    esp_sleep_enable_ext1_wakeup(BTN_PIN_MASK, ESP_EXT1_WAKEUP_ANY_HIGH);
+
+    // *** WICHTIG ***
+    // BLE bleibt in Light Sleep aktiv.
+    // Advertising läuft weiter.
+    if (sleepMode == lightSleepMode)
+		esp_light_sleep_start();
+	else if (sleepMode == deepSleepMode)
+		esp_deep_sleep_start();
 }
 
 void Watchy::displayBusyCallback(const void *) {
@@ -431,7 +475,10 @@ void Watchy::showAbout() {
   // SvKo added
   uint8_t mac[6];
   esp_read_mac(mac, ESP_MAC_BT);  // ESP_MAC_BT = BLE MAC
-  display.println("BLE MAC:");
+  if (bleBonded)
+	display.println("BLE Bonded:");
+  else
+	display.println("BLE MAC:");
   display.printf("%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   display.println();
   
@@ -1318,6 +1365,8 @@ void Watchy::bondBLE() {
   display.println("bonding 30sec...");
   display.display(true); 
 
+  bleBonded = false;
+  
   BLE_Bond BT;
   BT.begin(localName);
   
@@ -1339,6 +1388,7 @@ void Watchy::bondBLE() {
   } else
   if (currentStatus == BOND_STATUS_BONDED) {
 	display.println("BLE Bonded!");
+	bleBonded = true;
   } else
   if (currentStatus == BOND_STATUS_FAILED) {
 	display.println("BLE Bonding");

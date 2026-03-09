@@ -67,6 +67,10 @@
 #define BATTERY_V2 3.75
 #define BATTERY_V3 3.95
 
+// SvKo added
+#define lightSleepMode 1
+#define deepSleepMode 2
+
 typedef struct weatherData {
   int8_t temperature;
   int16_t weatherConditionCode;
@@ -201,6 +205,7 @@ public:
   // SvKo
   void bleSetup();
   void bondBLE();
+  void genericSleep(int sleepMode);
 
 private:
   void _bmaConfig();
@@ -217,6 +222,5 @@ extern RTC_DATA_ATTR int guiState;
 extern RTC_DATA_ATTR int menuIndex;
 extern RTC_DATA_ATTR BMA423 sensor;
 extern RTC_DATA_ATTR bool WIFI_CONFIGURED;
-extern RTC_DATA_ATTR bool BLE_CONFIGURED;
 
 #endif
