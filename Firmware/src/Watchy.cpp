@@ -1300,6 +1300,8 @@ void Watchy::showSyncNTP() {
 
 // SvKo added
 void Watchy::bondBLE() {
+  const char* localName = "WatchyUnlock";
+  
   display.setFullWindow();
   display.fillScreen(darkMode ? GxEPD_BLACK : GxEPD_WHITE);
   display.setFont(&FreeMonoBold9pt7b);
@@ -1307,14 +1309,14 @@ void Watchy::bondBLE() {
   display.setCursor(0, 30);
   display.println("Bluetooth Started");
   display.println(" ");
-  display.println("Watchy BLE");
+  display.println(localName);
   display.println(" ");
   display.println("Waiting for");
-  display.println("connection 30sec...");
+  display.println("bonding 30sec...");
   display.display(true); 
 
   BLE_Bond BT;
-  BT.begin("WatchyUnlock");
+  BT.begin(localName);
   int prevStatus = BOND_STATUS_UNDEFINED;
   int currentStatus;
   int count = 0;
