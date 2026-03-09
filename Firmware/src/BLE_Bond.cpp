@@ -3,17 +3,21 @@
 // #define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
 // #define CHARACTERISTIC_UUID "abcd1234-5678-90ab-cdef-1234567890ab"
 
-#define UNLOCK_SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
-#define UNLOCK_CHARACTERISTIC_UUID "abcdef01-1234-5678-1234-56789abcdef0"
+// #define UNLOCK_SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
+// #define UNLOCK_CHARACTERISTIC_UUID "abcdef01-1234-5678-1234-56789abcdef0"
 
-volatile int bondStatus		= BOND_STATUS_UNDEFINED;
+static int bondStatus		= BOND_STATUS_UNDEFINED;
 // int bondErrorCode = -1;
 static bool deviceConnected = false;
 static NimBLEServer* pServer = nullptr;
 
 class ServerCallbacks : public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
-		bondStatus = BOND_STATUS_CONNECTED; 
+		if (connInfo.isBonded()) {
+			bondStatus = BOND_STATUS_BONDED;
+		} else {
+			bondStatus = BOND_STATUS_CONNECTED;
+		}
 		deviceConnected = true;
     }
 
@@ -21,10 +25,11 @@ class ServerCallbacks : public NimBLEServerCallbacks {
 		bondStatus = BOND_STATUS_DISCONNECTED; 
 		deviceConnected = false;		
 
-        NimBLEDevice::startAdvertising();
+        // NimBLEDevice::startAdvertising();
     }
 
     void onAuthenticationComplete(NimBLEConnInfo& connInfo) override {
+/*
         if(!connInfo.isEncrypted()) {
 			bondStatus = BOND_STATUS_FAILED; 
             pServer->disconnect(connInfo.getConnHandle());
@@ -34,6 +39,16 @@ class ServerCallbacks : public NimBLEServerCallbacks {
 			} else {
 				bondStatus = BOND_STATUS_CONNECTED;
 			}
+*/
+		if (!connInfo.isEncrypted()) {
+			bondStatus = BOND_STATUS_FAILED;
+			deviceConnected = false;
+		} else
+		{
+			// Bonding erfolgreich, auch wenn isBonded() noch false ist
+			bondStatus = BOND_STATUS_BONDED;
+			deviceConnected = true;
+		}
     }
 };
 
@@ -118,10 +133,11 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
 */
 
 bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
-NimBLEDevice::init(localName);
     NimBLEDevice::init(localName);
 	
     NimBLEServer* pServer = NimBLEDevice::createServer();
+	pServer->setCallbacks(new ServerCallbacks());
+
     // Wir erstellen einen Standard-Service (Battery Service 0x180F)
     // Das signalisiert Android: "Ich bin ein nützliches Gerät"
     // pServer->createService(NimBLEUUID((uint16_t)0x1812));

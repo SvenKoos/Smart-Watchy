@@ -34,8 +34,11 @@ RTC_DATA_ATTR uint32_t lastRebootReason = 0;
 
 void Watchy::init(String datetime) {
   // SvKo addded
-  lastRebootReason = esp_reset_reason();
-  rebootCount++;
+  esp_reset_reason_t reason = esp_reset_reason();
+  if (reason != ESP_RST_DEEPSLEEP) {
+	lastRebootReason = reason;
+	rebootCount++;
+  }
 
   esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause(); // get wake up reason
@@ -1307,7 +1310,7 @@ void Watchy::bondBLE() {
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(darkMode ? GxEPD_WHITE : GxEPD_BLACK);
   display.setCursor(0, 30);
-  display.println("Bluetooth Started");
+  display.println("Bluetooth started:");
   display.println(" ");
   display.println(localName);
   display.println(" ");
@@ -1317,99 +1320,62 @@ void Watchy::bondBLE() {
 
   BLE_Bond BT;
   BT.begin(localName);
-  int prevStatus = BOND_STATUS_UNDEFINED;
-  int currentStatus;
-  int count = 0;
-/*
-  while (1) {
-    currentStatus = BT.updateStatus();
-    if (prevStatus != currentStatus) {
-	  display.setFullWindow();
-	  display.fillScreen(darkMode ? GxEPD_BLACK : GxEPD_WHITE);
-	  display.setFont(&FreeMonoBold9pt7b);
-	  display.setTextColor(darkMode ? GxEPD_WHITE : GxEPD_BLACK);
-	  display.setCursor(0, 30);
-
-      if (currentStatus == BOND_STATUS_CONNECTED) {
-        display.println("BLE Connected!");
-        display.println(" ");
-        display.println("Waiting for");
-        display.println("bonding...");
-        display.display(true);
-        // delay(1000);
-      } else
-      if (currentStatus == BOND_STATUS_BONDED) {
-        display.println("BLE Bonded!");
-        display.println(" ");
-        display.println("Waiting for");
-        display.println("disconnect...");
-        display.display(true); 
-        // delay(1000);
-        // break;
-      } else
-      if (currentStatus == BOND_STATUS_FAILED) {
-        display.println("BLE Bonding");
-        display.println("failed!");
-        display.println("Exiting...");
-        display.display(true); 
-        // delay(1000);
-        // break;
-      } else
-      if (currentStatus == BOND_STATUS_DISCONNECTED) {
-        display.println("BLE Disconnected!");
-        display.println(" ");
-        display.println("Exiting...");
-        display.display(true); 
-        // delay(1000);
-        // break;
-      } else
-      if (currentStatus == BOND_STATUS_GATTCONNECT) {
-        display.println("BLE GATT");
-        display.println("Connect!");
-        display.display(true); 
-        // delay(1000);
-        // break;
-      } else
-      if (currentStatus == BOND_STATUS_GATTDISCONNECT) {
-        display.println("BLE GATT");
-        display.println("Disconnected!");
-        display.println("Exiting...");
-        display.display(true); 
-        // delay(1000);
-        // break;
-      } else
-      if (currentStatus == BOND_STATUS_SECURITYEVT) {
-        display.println("BLE Security");
-        display.println("Event!");
-        display.display(true); 
-      } else
-      if (currentStatus == BOND_STATUS_AUTHCOMPLETE) {
-        display.println("BLE Auth.");
-        display.println("Complete!");
-        display.display(true); 
-      } else
-      if (currentStatus == BOND_STATUS_UPDATECONNPARAMS) {
-        display.println("BLE Update");
-        display.println("Conn Params!");
-        display.display(true); 
-      } 
-	  
-      prevStatus = currentStatus;
-    }
-
-	count++;
-	if (count > 300)	// stop after 30sec
-		break;
-    delay(100);
-  }
-*/
   
   delay(30000);
+
+  display.setFullWindow();
+  display.fillScreen(darkMode ? GxEPD_BLACK : GxEPD_WHITE);
+  display.setFont(&FreeMonoBold9pt7b);
+  display.setTextColor(darkMode ? GxEPD_WHITE : GxEPD_BLACK);
+  display.setCursor(0, 30);
+
+  int currentStatus = BOND_STATUS_UNDEFINED;
+  currentStatus = BT.updateStatus();
+  if (currentStatus == BOND_STATUS_UNDEFINED) {
+	display.println("Undefined!");
+  } else
+  if (currentStatus == BOND_STATUS_CONNECTED) {
+	display.println("BLE Connected!");
+  } else
+  if (currentStatus == BOND_STATUS_BONDED) {
+	display.println("BLE Bonded!");
+  } else
+  if (currentStatus == BOND_STATUS_FAILED) {
+	display.println("BLE Bonding");
+	display.println("failed!");
+  } else
+  if (currentStatus == BOND_STATUS_DISCONNECTED) {
+	display.println("BLE Disconnected!");
+  } else
+  if (currentStatus == BOND_STATUS_GATTCONNECT) {
+	display.println("BLE GATT");
+	display.println("Connect!");
+  } else
+  if (currentStatus == BOND_STATUS_GATTDISCONNECT) {
+	display.println("BLE GATT");
+	display.println("Disconnected!");
+  } else
+  if (currentStatus == BOND_STATUS_SECURITYEVT) {
+	display.println("BLE Security");
+	display.println("Event!");
+  } else
+  if (currentStatus == BOND_STATUS_AUTHCOMPLETE) {
+	display.println("BLE Auth.");
+	display.println("Complete!");
+  } else
+  if (currentStatus == BOND_STATUS_UPDATECONNPARAMS) {
+	display.println("BLE Update");
+	display.println("Conn Params!");
+  } 
+  display.display(true); 
+
+  delay(1000);
   
   // turn off radios
   //1 WiFi.mode(WIFI_OFF);
   // SvKo remove
   // btStop();
+
   showMenu(menuIndex, false);
 }
 
