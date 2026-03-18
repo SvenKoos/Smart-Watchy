@@ -30,6 +30,11 @@
 // SvKo added
 #include "BLE_Bond.h"
 
+// SvKo added
+#include "esp_pm.h"
+#include "esp_sleep.h"
+#define IS_PRESSED_MASK (1ULL << 26 | 1ULL << 25 | 1ULL << 32 | 1ULL << 4 | 1ULL << 5)
+
 // SvKo
 #define NAME_LEN 32
 #define IP_LEN 64
@@ -156,6 +161,8 @@ public:
   explicit Watchy(const watchySettings &s) : settings(s) {} // constructor
   void init(String datetime = "");
   void deepSleep();
+  // SvKo added
+  void lightSleep();
   static void displayBusyCallback(const void *);
   float getBatteryVoltage();
   void vibMotor(uint8_t intervalMs = 100, uint8_t length = 20);

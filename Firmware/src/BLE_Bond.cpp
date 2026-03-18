@@ -6,6 +6,10 @@
 // #define UNLOCK_SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
 // #define UNLOCK_CHARACTERISTIC_UUID "abcdef01-1234-5678-1234-56789abcdef0"
 
+// b4. UUIDs
+#define SERVICE_UUID        "180A" 
+#define CHARACTERISTIC_UUID "2A29"
+
 static int bondStatus		= BOND_STATUS_UNDEFINED;
 // int bondErrorCode = -1;
 static bool deviceConnected = false;
@@ -14,18 +18,31 @@ static NimBLEServer* pServer = nullptr;
 class ServerCallbacks : public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
 		if (connInfo.isBonded()) {
+			Serial.println("bondBLE Bonded");
 			bondStatus = BOND_STATUS_BONDED;
 		} else {
+			Serial.println("bondBLE Connected");
 			bondStatus = BOND_STATUS_CONNECTED;
 		}
 		deviceConnected = true;
+		
+		// b3. Wir erlauben dem Smartphone eine hohe Latenz (Slave Latency).
+        // Das bedeutet: Der ESP32 muss nicht auf jedes Paket antworten, 
+        // hält die Verbindung aber logisch offen.
+        // pServer->updateConnParams(connInfo.getConnHandle(), 100, 160, 4, 600);
+        // Interval: ~150ms-200ms, Latency: 4 (überspringt 4 Intervalle), Timeout: 6s		
+		// b6. Timeout muss groß genug sein (hier 10s), damit Android nicht nervös wird.
+		pServer->updateConnParams(connInfo.getConnHandle(), 160, 160, 9, 1000);
     }
 
     void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override {
+		Serial.println("bondBLE Disconnected");
 		bondStatus = BOND_STATUS_DISCONNECTED; 
 		deviceConnected = false;		
 
         // NimBLEDevice::startAdvertising();
+		// b4. start Advertizing after disconnect
+		NimBLEDevice::getAdvertising()->start();
     }
 
     void onAuthenticationComplete(NimBLEConnInfo& connInfo) override {
@@ -41,11 +58,13 @@ class ServerCallbacks : public NimBLEServerCallbacks {
 			}
 */
 		if (!connInfo.isEncrypted()) {
+			Serial.println("bondBLE Failed");
 			bondStatus = BOND_STATUS_FAILED;
 			deviceConnected = false;
 		} else
 		{
 			// Bonding erfolgreich, auch wenn isBonded() noch false ist
+			Serial.println("bondBLE Bonded");
 			bondStatus = BOND_STATUS_BONDED;
 			deviceConnected = true;
 		}
@@ -135,8 +154,23 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
 bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
     NimBLEDevice::init(localName);
 	
+	// b1. Security setzen (Wichtig für Extended Unlock!)
+	NimBLEDevice::setSecurityAuth(true, true, true); // Bonding, MITM, Secure Connections
+	NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT); // "Just Works" oder Passkey je nach Wunsch
+	
     NimBLEServer* pServer = NimBLEDevice::createServer();
 	pServer->setCallbacks(new ServerCallbacks());
+	
+	// b2. Minimalen Service erstellen
+	NimBLEService *pService = pServer->createService(SERVICE_UUID);
+	NimBLECharacteristic *pCharacteristic = pService->createCharacteristic(
+                                               CHARACTERISTIC_UUID,
+                                               NIMBLE_PROPERTY::READ | 
+                                               NIMBLE_PROPERTY::READ_ENC | // Verschlüsselung triggern
+                                               NIMBLE_PROPERTY::READ_AUTHEN
+                                             );
+	pCharacteristic->setValue("ESP32-Auth");
+	pService->start();	
 
     // Wir erstellen einen Standard-Service (Battery Service 0x180F)
     // Das signalisiert Android: "Ich bin ein nützliches Gerät"
@@ -149,25 +183,25 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
     // WICHTIG: Alles in EIN Paket, falls Android Scan Responses ignoriert
     NimBLEAdvertisementData advData;
     
-    // 1. Flags (Zwingend)
+    // a1. Flags (Zwingend)
     // advData.setFlags(BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP);
 	advData.setFlags(0x06);
     
-    // 2. Appearance (0x0200 = Generic Tag / 0x0080 = Computer)
+    // a2. Appearance (0x0200 = Generic Tag / 0x0080 = Computer)
     // advData.setAppearance(0x0200); 
 	// advData.setAppearance(0x03C1);
 	advData.setAppearance(0x0200);
 	
-	// 3. Manufacturer Data (Wir nutzen die Microsoft ID 0x0006 als "Tarnung")
+	// a3. Manufacturer Data (Wir nutzen die Microsoft ID 0x0006 als "Tarnung")
     // Das zwingt den Samsung-Scanner oft dazu, das Gerät zu listen
     // std::string mntData = "\x06\x00\x01\x02\x03\x04"; 
     // advData.setManufacturerData(mntData);
     
-    // 3. Service UUID (Battery Service ist sehr "unverfänglich")
+    // a3. Service UUID (Battery Service ist sehr "unverfänglich")
     // advData.addServiceUUID(NimBLEUUID((uint16_t)0x180F));
 	advData.addServiceUUID(NimBLEUUID((uint16_t)0x1812));
 	
-    // 4. Name (Kurz halten!)
+    // a4. Name (Kurz halten!)
     advData.setName(localName);
     pAdvertising->setAdvertisementData(advData);
     
