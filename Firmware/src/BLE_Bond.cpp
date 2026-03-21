@@ -11,9 +11,7 @@
 #define CHARACTERISTIC_UUID "2A29"
 
 static int bondStatus		= BOND_STATUS_UNDEFINED;
-// int bondErrorCode = -1;
-static bool deviceConnected = false;
-static NimBLEServer* pServer = nullptr;
+// static NimBLEServer* pServer = nullptr;
 
 class ServerCallbacks : public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
@@ -24,7 +22,16 @@ class ServerCallbacks : public NimBLEServerCallbacks {
 			Serial.println("bondBLE Connected");
 			bondStatus = BOND_STATUS_CONNECTED;
 		}
-		deviceConnected = true;
+
+		if (connInfo.isEncrypted()) {
+			Serial.println("bondBLE Encrypted");
+		} else {
+			Serial.println("bondBLE Not Encrypted");
+		}		
+		
+		// WICHTIG: Erzwinge das Bonding-Protokoll
+        // Das triggert am Handy das "Koppeln"-Pop-up
+        NimBLEDevice::startSecurity(connInfo.getConnHandle());		
 		
 		// b3. Wir erlauben dem Smartphone eine hohe Latenz (Slave Latency).
         // Das bedeutet: Der ESP32 muss nicht auf jedes Paket antworten, 
@@ -38,7 +45,6 @@ class ServerCallbacks : public NimBLEServerCallbacks {
     void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override {
 		Serial.println("bondBLE Disconnected");
 		bondStatus = BOND_STATUS_DISCONNECTED; 
-		deviceConnected = false;		
 
         // NimBLEDevice::startAdvertising();
 		// b4. start Advertizing after disconnect
@@ -60,13 +66,11 @@ class ServerCallbacks : public NimBLEServerCallbacks {
 		if (!connInfo.isEncrypted()) {
 			Serial.println("bondBLE Failed");
 			bondStatus = BOND_STATUS_FAILED;
-			deviceConnected = false;
 		} else
 		{
 			// Bonding erfolgreich, auch wenn isBonded() noch false ist
 			Serial.println("bondBLE Bonded");
 			bondStatus = BOND_STATUS_BONDED;
-			deviceConnected = true;
 		}
     }
 };
@@ -190,7 +194,8 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
     // a2. Appearance (0x0200 = Generic Tag / 0x0080 = Computer)
     // advData.setAppearance(0x0200); 
 	// advData.setAppearance(0x03C1);
-	advData.setAppearance(0x0200);
+	// advData.setAppearance(0x0200); // funktioniert
+	advData.setAppearance(0x00C1);
 	
 	// a3. Manufacturer Data (Wir nutzen die Microsoft ID 0x0006 als "Tarnung")
     // Das zwingt den Samsung-Scanner oft dazu, das Gerät zu listen
@@ -213,15 +218,3 @@ bool BLE_Bond::begin(const char *localName = "WatchyUnlock") {
 
 int BLE_Bond::updateStatus() { return bondStatus; }
 
-void BLEAdvertise() {
-  // Hier könntest du z.B. alle 60s einen Notify schicken, wenn verbunden
-  static unsigned long lastNotify = 0;
-  if (deviceConnected) {
-    unsigned long now = millis();
-    if (now - lastNotify > 59000) { // 60 Sekunden
-      lastNotify = now;
-      // Beispiel: Notify senden
-
-    }
-  }
-}

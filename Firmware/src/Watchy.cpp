@@ -4,9 +4,6 @@ WatchyRTC Watchy::RTC;
 GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT> Watchy::display(
     GxEPD2_154_D67(DISPLAY_CS, DISPLAY_DC, DISPLAY_RES, DISPLAY_BUSY));
 
-// SvKo added
-RTC_DATA_ATTR bool bleBonded = false;
-
 RTC_DATA_ATTR int guiState;
 RTC_DATA_ATTR int menuIndex;
 // SvKo changed
@@ -33,6 +30,12 @@ RTC_DATA_ATTR bool quietMode = false;
 RTC_DATA_ATTR uint32_t rebootCount = 0;
 RTC_DATA_ATTR uint32_t lastRebootReason = 0;
 
+// SvKo added
+RTC_DATA_ATTR bool bleBonded = false;
+
+// SvKo added
+const char* bleName = "WatchyUnlock";
+
 void Watchy::init(String datetime) {
   // SvKo added
   Serial.begin(115200);
@@ -58,8 +61,6 @@ void Watchy::init(String datetime) {
   Serial.print("init bleBonded: ");
   Serial.println(bleBonded ? "true" : "false");
 
-  esp_sleep_wakeup_cause_t wakeup_reason;
-  wakeup_reason = esp_sleep_get_wakeup_cause(); // get wake up reason
   Wire.begin(SDA, SCL);                         // init i2c
   RTC.init();
 
@@ -68,7 +69,7 @@ void Watchy::init(String datetime) {
   display.init(0, displayFullInit, 10, true); // 10ms by spec, and fast pulldown reset
   display.epd2.setBusyCallback(displayBusyCallback);
 
-  switch (wakeup_reason) {
+  switch (cause) {
   case ESP_SLEEP_WAKEUP_EXT0: // RTC Alarm
     if (guiState == WATCHFACE_STATE) {
       RTC.read(currentTime);
@@ -87,93 +88,11 @@ void Watchy::init(String datetime) {
     break;
   }
 
-  // SvKo extended
-/*
-  if (bleBonded)
-	lightSleep();
-  else
-	deepSleep();
-*/
-}
-
-// SvKo added
-void Watchy::genericSleep(int sleepMode) {
-	Serial.println("genericSleep Start");
-
-    // Display schlafen legen (wie in deepSleep)
-    display.hibernate();
-
-    // Deep-Sleep-Wakeups deaktivieren (optional, aber sauber)
-	if (displayFullInit) 
-		esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-
-    displayFullInit = false;
-
-    // RTC-Alarm-Flag löschen
-    RTC.clearAlarm();
-
-    // GPIOs in sicheren Zustand setzen (wie in deepSleep)
-	
-    const uint64_t ignore = 0b11110001000000110000100111000010;
-    for (int i = 0; i < GPIO_NUM_MAX; i++) {
-        if ((ignore >> i) & 0b1)
-            continue;
-        pinMode(i, INPUT);
-    }
-
-    // Wake-Up-Quellen setzen
-    // 1) RTC-Interrupt (z.B. jede Minute)
-    // Deep Sleep
-	if (sleepMode == deepSleepMode)
-		esp_sleep_enable_ext0_wakeup((gpio_num_t)RTC_INT_PIN, 0);
-	else {
-		// light sleep
-		esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_EXT0);
-		esp_sleep_enable_timer_wakeup(60ULL * 1000000ULL);
-	}
-
-    // 2) Buttons als Wake-Up
-    esp_sleep_enable_ext1_wakeup(BTN_PIN_MASK, ESP_EXT1_WAKEUP_ANY_HIGH);
-
-    // *** WICHTIG ***
-    // BLE bleibt in Light Sleep aktiv.
-    // Advertising läuft weiter.
-    if (sleepMode == lightSleepMode) {
-		Serial.println("genericSleep Start Light Sleep");
-		esp_light_sleep_start();
-		esp_restart();   // wichtig!
-	}
-	else if (sleepMode == deepSleepMode) {
-		Serial.println("genericSleep Start Deep Sleep");
-		esp_deep_sleep_start();
-	}
-
-	Serial.println("genericSleep Wake-up after Light Sleep");
-}
-
-// SvKo added
-void Watchy::lightSleep() {
-	Serial.println("lightSleep start");
-
-	// EXT0 MUSS deaktiviert sein (RTC-Alarm)
-	// esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_EXT0);
-
-	// Buttons erlauben (EXT1)
-	esp_sleep_enable_ext1_wakeup(BTN_PIN_MASK, ESP_EXT1_WAKEUP_ANY_HIGH);
-
-	// Timer als Ersatz für RTC-Alarm (z.B. 60 Sekunden)
-	esp_sleep_enable_timer_wakeup(60ULL * 1000000ULL);
-
-	// Display schlafen legen (optional)
-	display.hibernate();
-	displayFullInit = false;
-
-	Serial.println("lightSleep entering light sleep");
-	esp_light_sleep_start();
-
-	// Wird nur erreicht, wenn Light Sleep normal zurückkehrt
-	Serial.println("lightSleep woke, restarting");
-	esp_restart();
+  startBLE();
+  delay(5000);  // 5 Sekunden Advertising-Fenster
+  stopBLE();
+  
+  deepSleep();
 }
 
 void Watchy::displayBusyCallback(const void *) {
@@ -208,7 +127,7 @@ void Watchy::deepSleep() {
 
 void Watchy::handleButtonPress() {
   Serial.println("handleButtonPress start");
-
+  
   uint64_t wakeupBit = esp_sleep_get_ext1_wakeup_status();
   
   // Menu Button
@@ -268,11 +187,6 @@ void Watchy::handleButtonPress() {
 		locationIntervalCounter = -1;
 		showWatchFace(true);
 	  }
-	  // SvKo extended
-	  if (bleBonded)
-		lightSleep();
-	  else
-		deepSleep();
 
       return;
     }
@@ -293,11 +207,6 @@ void Watchy::handleButtonPress() {
 			alertIndex = currentAlerts.count - 1;
 			showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 		}	
-	  // SvKo extended
-	  if (bleBonded)
-		lightSleep();
-	  else
-		deepSleep();
 
 	  return;
     } else if (guiState == ALERT_STATE) {
@@ -308,10 +217,6 @@ void Watchy::handleButtonPress() {
 			}
 		}	
 	  // SvKo extended
-	  if (bleBonded)
-		lightSleep();
-	  else
-		deepSleep();
 
       return;
     }
@@ -332,11 +237,6 @@ void Watchy::handleButtonPress() {
 			alertIndex = 0;
 			showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 		}
-	  // SvKo extended
-	  if (bleBonded)
-		lightSleep();
-	  else
-		deepSleep();
 
       return;
     } else if (guiState == ALERT_STATE) {
@@ -346,11 +246,6 @@ void Watchy::handleButtonPress() {
 				showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 			}
 		}
-	  // SvKo extended
-	  if (bleBonded)
-		lightSleep();
-	  else
-		deepSleep();
 
       return;
     }
@@ -457,12 +352,6 @@ void Watchy::handleButtonPress() {
       }
     }
   }
-  
-  // SvKo extended
-  if (bleBonded)
-	lightSleep();
-  else
-	deepSleep();
 }
 
 void Watchy::showMenu(byte menuIndex, bool partialRefresh) {
@@ -506,7 +395,7 @@ void Watchy::showMenu(byte menuIndex, bool partialRefresh) {
 
 void Watchy::showFastMenu(byte menuIndex) {
   Serial.println("showFastMenu Start");
-
+  
   display.setFullWindow();
   display.fillScreen(darkMode ? GxEPD_BLACK : GxEPD_WHITE);
   display.setFont(&FreeMonoBold9pt7b);
@@ -568,10 +457,6 @@ void Watchy::showAbout() {
 	display.println("Local IP: "); display.println(localIP);
     display.println("Gateway IP: "); display.println(gatewayIP);
     display.println("WiFi MAC:"); display.println(macAdress);
-	  
-	//1 WiFi.mode(WIFI_OFF);
-	// SvKo remove
-	// btStop();	  
   } else {
     display.println("WiFi Not Configured");
   }
@@ -854,12 +739,6 @@ void Watchy::showWatchFace(bool partialRefresh) {
   drawWatchFace();
   display.display(partialRefresh); // partial refresh
   guiState = WATCHFACE_STATE;
-  
-    // SvKo extended
-  if (bleBonded)
-	lightSleep();
-  else
-	deepSleep();
 }
 
 void Watchy::drawWatchFace() {
@@ -966,23 +845,7 @@ weatherData Watchy::getWeatherData(String cityID, String units, String lang, Str
 	  currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
 	  
       http.end();
-      // turn off radios
-	  // SvKo removed
-	  // WiFi.mode(WIFI_OFF);
-	  // btStop();
-// SvKo removed
-/*	  
-    } else { // No WiFi, use internal temperature sensor
-      uint8_t temperature = sensor.readTemperature(); // celsius
-      if (!currentWeather.isMetric) {
-        temperature = temperature * 9. / 5. + 32.; // fahrenheit
-      }
-      currentWeather.temperature          = temperature; // SvKo commented out
-	  currentWeather.code = CODE_COMM_ERROR;
-	  strcpy(currentWeather.log, String(CODE_COMM_ERROR).c_str());
-    }
-*/	
-    weatherIntervalCounter = 0;
+      weatherIntervalCounter = 0;
   } else {
     weatherIntervalCounter++;
   }
@@ -1081,26 +944,7 @@ weatherData Watchy::getWeatherDataByLocation(double latitude, double longitude, 
 	  strncpy(currentWeather.log, String(httpResponseCode).c_str(), sizeof(currentWeather.log) - 1);
 	  currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
       http.end();
-      
-	  // turn off radios
-	  // SvKo remove
-	  // WiFi.mode(WIFI_OFF);
-	  // btStop();
-// SvKo removed
-/*
-    } else { // No WiFi, use internal temperature sensor
-      uint8_t temperature = sensor.readTemperature(); // celsius
-      if (!currentWeather.isMetric) {
-        temperature = temperature * 9. / 5. + 32.; // fahrenheit
-      }
-      currentWeather.temperature = temperature; // SvKo commented out
-	  currentWeather.code = CODE_COMM_ERROR;
-	  strcpy(currentWeather.log, String(CODE_COMM_ERROR).c_str());
-      // SvKo changed
-      currentWeather.weatherConditionCode = 0;
-    }
-*/
-    weatherIntervalCounter = 0;
+      weatherIntervalCounter = 0;
   } else {
     weatherIntervalCounter++;
   }
@@ -1185,10 +1029,6 @@ locationData Watchy::getLocationData(String url, uint8_t updateInterval) {
 	  currentLocation.log[sizeof(currentLocation.log) - 1] = '\0';
 	  
       http.end();
-      // turn off radios
-	  // SvKo removed
-	  // WiFi.mode(WIFI_OFF);
-	  // btStop();
 // SvKo removed
 /*	  
     } else {
@@ -1347,10 +1187,6 @@ void Watchy::setupWifi() {
     display.println(WiFi.SSID());
   }
   display.display(false); // full refresh
-  // turn off radios
-  //1 WiFi.mode(WIFI_OFF);
-  // SvKo remove
-  // btStop();
   display.epd2.setBusyCallback(displayBusyCallback); // enable lightsleep on
                                                      // busy
   guiState = APP_STATE;
@@ -1372,7 +1208,7 @@ void Watchy::_configModeCallback(WiFiManager *myWiFiManager) {
 
 bool Watchy::connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
   Serial.println("connectWiFi Start");
-
+  
   // SvKo added
   WiFi.setSleep(false);
   WiFi.mode(WIFI_STA);
@@ -1392,16 +1228,13 @@ bool Watchy::connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
       WIFI_CONFIGURED = false;
       // turn off radios
 	  disconnectWifi();
-	  // SvKo remove
-      // btStop();
     }
 	
 	if ((hostIP.length() == 0) || (gatewayIP.length() == 0) || (macAdress.length() == 0)) {
       disconnectWifi();
-	  // SvKo remove
-      // btStop();
 	}
   }
+
   return WIFI_CONFIGURED;
 }
 
@@ -1413,10 +1246,26 @@ void Watchy::disconnectWifi() {
     WIFI_CONFIGURED = false;
 	WiFi.disconnect(true);
 	WiFi.mode(WIFI_OFF);
-	// SvKo remove
-	// btStop();
 }
 
+// SvKo added
+void Watchy::stopBLE() {
+    Serial.println("stopBLE deinit BLE");
+    
+	NimBLEDevice::deinit(true);   // true = free memory
+	
+    delay(100);
+}
+
+// SvKo added
+void Watchy::startBLE() {
+    Serial.println("startBLE init BLE");
+    
+	BLE_Bond BT;
+	BT.begin(bleName);
+	
+    delay(100);
+}
 
 void Watchy::showSyncNTP() {
   display.setFullWindow();
@@ -1468,8 +1317,6 @@ void Watchy::showSyncNTP() {
 void Watchy::bondBLE() {
   Serial.println("bondBLE Start");
 
-  const char* localName = "WatchyUnlock";
-  
   display.setFullWindow();
   display.fillScreen(darkMode ? GxEPD_BLACK : GxEPD_WHITE);
   display.setFont(&FreeMonoBold9pt7b);
@@ -1477,7 +1324,7 @@ void Watchy::bondBLE() {
   display.setCursor(0, 30);
   display.println("Bluetooth started:");
   display.println(" ");
-  display.println(localName);
+  display.println(bleName);
   display.println(" ");
   display.println("Waiting for");
   display.println("bonding 30sec...");
@@ -1486,7 +1333,7 @@ void Watchy::bondBLE() {
   bleBonded = false;
   
   BLE_Bond BT;
-  BT.begin(localName);
+  BT.begin(bleName);
   
   delay(30000);
 
@@ -1539,11 +1386,6 @@ void Watchy::bondBLE() {
 
   delay(1000);
   
-  // turn off radios
-  //1 WiFi.mode(WIFI_OFF);
-  // SvKo remove
-  // btStop();
-
   Serial.print("bondBLE End bleBonded: ");
   Serial.println(bleBonded ? "true" : "false");
 
@@ -1749,11 +1591,6 @@ alertData Watchy::getAlertData(bool _darkMode, const String gatewayIP, const Str
 		currentAlerts.log[sizeof(currentAlerts.log) - 1] = '\0';				
 
 		http.end();
-
-		// turn off radios
-		// SvKo removed
-		// WiFi.mode(WIFI_OFF);
-		// btStop();
 // SvKo removed
 /*
 	} else {

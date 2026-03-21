@@ -161,8 +161,6 @@ public:
   explicit Watchy(const watchySettings &s) : settings(s) {} // constructor
   void init(String datetime = "");
   void deepSleep();
-  // SvKo added
-  void lightSleep();
   static void displayBusyCallback(const void *);
   float getBatteryVoltage();
   void vibMotor(uint8_t intervalMs = 100, uint8_t length = 20);
@@ -212,8 +210,9 @@ public:
   // SvKo
   void bleSetup();
   void bondBLE();
-  void genericSleep(int sleepMode);
-
+  void stopBLE();
+  void startBLE();
+  
 private:
   void _bmaConfig();
   static void _configModeCallback(WiFiManager *myWiFiManager);

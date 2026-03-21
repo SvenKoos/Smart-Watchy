@@ -42,6 +42,4 @@ private:
   // BLEService *pService                            = NULL;
 };
 
-void BLEAdvertise();
-
 #endif
