@@ -61,6 +61,12 @@ void Watchy::init(String datetime) {
   Serial.print("init bleBonded: ");
   Serial.println(bleBonded ? "true" : "false");
 
+  if (cause != ESP_SLEEP_WAKEUP_EXT1) {
+	startBLE();
+	delay(5000);  // 5 Sekunden Advertising-Fenster
+	stopBLE();
+  }
+  
   Wire.begin(SDA, SCL);                         // init i2c
   RTC.init();
 
@@ -88,10 +94,6 @@ void Watchy::init(String datetime) {
     break;
   }
 
-  startBLE();
-  delay(5000);  // 5 Sekunden Advertising-Fenster
-  stopBLE();
-  
   deepSleep();
 }
 

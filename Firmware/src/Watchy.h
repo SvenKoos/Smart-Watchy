@@ -212,6 +212,7 @@ public:
   void bondBLE();
   void stopBLE();
   void startBLE();
+  void advertiseBLE();
   
 private:
   void _bmaConfig();
