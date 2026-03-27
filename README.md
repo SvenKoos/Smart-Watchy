@@ -58,12 +58,14 @@ Build the firmware with Arduino IDE and deploy it to your Watchy.
 
 ## Features under development
 
-### Android Smart Lock support
-The Watchy should be used as Trusted device for Android Smart Lock functionality.
+### Android Smart Lock / Extended Unlock support
+The Watchy should be used as Trusted device for Android Smart Lock / Extended Unlock functionality.
 
-The Watchy must be paired / bonded to the mobile device (new item in Watchy menu).
+The Watchy must be paired / bonded to the mobile device (new item in Watchy menu) and registered as trusted device in Extended Unlock.
 
-Watchy will advertise via BLE to support Smart Lock unlock.
+Watchy is advertising via BLE to support Extended Unlock.
+In most of the cases this is not sufficient to fulfill the requirements for Extended Unlock (constant connection via BLE, active GATT service).
+Working with WiFi and BLE in parallel and constant way (for BLE) on ESP32 creates several issues with acceptable powermanagement.
 
 ## Hints
 Location discovery: If mobile device is in roaming zone, IP address is still received from home mobile service provider, which results in home weather report on watch face.

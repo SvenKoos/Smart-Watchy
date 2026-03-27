@@ -211,7 +211,7 @@ public:
   void bleSetup();
   void bondBLE();
   void stopBLE();
-  void startBLE();
+  void startBLE(BLE_Bond BT);
   void advertiseBLE();
   
 private:

@@ -60,13 +60,16 @@ void Watchy::init(String datetime) {
   
   Serial.print("init bleBonded: ");
   Serial.println(bleBonded ? "true" : "false");
-
+  
   if (cause != ESP_SLEEP_WAKEUP_EXT1) {
-	startBLE();
-	delay(5000);  // 5 Sekunden Advertising-Fenster
+	BLE_Bond BT;
+	startBLE(BT);
+  
+	delay(5000);
+	
 	stopBLE();
   }
-  
+
   Wire.begin(SDA, SCL);                         // init i2c
   RTC.init();
 
@@ -1260,10 +1263,9 @@ void Watchy::stopBLE() {
 }
 
 // SvKo added
-void Watchy::startBLE() {
+void Watchy::startBLE(BLE_Bond BT) {
     Serial.println("startBLE init BLE");
     
-	BLE_Bond BT;
 	BT.begin(bleName);
 	
     delay(100);
@@ -1335,7 +1337,7 @@ void Watchy::bondBLE() {
   bleBonded = false;
   
   BLE_Bond BT;
-  BT.begin(bleName);
+  startBLE(BT);
   
   delay(30000);
 
@@ -1390,6 +1392,8 @@ void Watchy::bondBLE() {
   
   Serial.print("bondBLE End bleBonded: ");
   Serial.println(bleBonded ? "true" : "false");
+  
+  stopBLE();
 
   showMenu(menuIndex, false);
 }
