@@ -158,11 +158,15 @@ void showAlert(singleAlert alert, lv_obj_t *screen, lv_style_t style) {
   lv_obj_t *labelTitle = lv_label_create(screen);
   lv_obj_add_style(labelTitle, &style, LV_PART_MAIN);
   lv_label_set_text(labelTitle, alert.title);
-  lv_obj_align(labelTitle, LV_ALIGN_TOP_LEFT, 5, 5);
+  lv_obj_align(labelTitle, LV_ALIGN_TOP_LEFT, 5, 35);
 
   // body
   lv_obj_t *labelBody = lv_label_create(screen);
   lv_obj_add_style(labelBody, &style, LV_PART_MAIN);
+  // WICHTIG: Long Mode auf WRAP setzen, damit der Text in die Breite passt
+  // und stattdessen die Höhe des Objekts wächst
+  lv_label_set_long_mode(labelBody, LV_LABEL_LONG_WRAP);
+  lv_obj_set_width(labelBody, lv_pct(90)); // 90% der Screenbreite nutzen
   lv_label_set_text(labelBody, alert.body);
-  lv_obj_align(labelBody, LV_ALIGN_TOP_LEFT, 5, 5);
+  lv_obj_align(labelBody, LV_ALIGN_TOP_LEFT, 5, 50);
 }

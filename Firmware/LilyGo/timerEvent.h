@@ -22,7 +22,10 @@
  * GLOBAL PROTOTYPES
  **********************/
 lv_timer_t timerEventWatchface(void);
-lv_timer_t timerEventBrightness(void);
+esp_timer_handle_t timerEventBrightness(void);
+static void timerBrightness_cb(void* arg);
+void startBrightnessTimer(esp_timer_handle_t brightness_timer);
+void stopBrightnessTimer(esp_timer_handle_t brightness_timer);
 
 /**********************
  *      MACROS

@@ -93,13 +93,15 @@ void drawWatchFace() {
   // Remove borders
   lv_obj_set_style_border_width(screen, 0, LV_PART_MAIN);
   // Den aktuell aktiven Bildschirm weiß färben
-  lv_obj_set_style_bg_color(lv_screen_active(), lv_color_white(), 0);
+  lv_obj_set_style_bg_color(screen, lv_color_white(), 0);
   // Sicherstellen, dass die Deckkraft auf 100% steht
-  lv_obj_set_style_bg_opa(lv_screen_active(), LV_OPA_COVER, 0);
+  lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
   // Scrollbars abschalten
-  lv_obj_set_scrollbar_mode(lv_screen_active(), LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_scrollbar_mode(screen, LV_SCROLLBAR_MODE_OFF);
   // Scrolling abschalten
-  lv_obj_clear_flag(lv_screen_active(), LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
+  // Inhalt des Screens löschen
+  lv_obj_clean(screen);
 
   // bottom layer
   // Make Bottom Layer Transparent
@@ -224,7 +226,7 @@ void drawIcons(bool isConnected) {
   char buf[4];
   snprintf(buf, sizeof(buf), "%d", currentPower.batteryPercent);
   lv_label_set_text(labelBatteryPercentage, buf);
-  lv_obj_align(labelBatteryPercentage, LV_ALIGN_TOP_LEFT, 185, 35);
+  lv_obj_align(labelBatteryPercentage, LV_ALIGN_TOP_LEFT, 185, 30);
 }
 
 void drawWeather() {
@@ -256,8 +258,8 @@ void drawWeather() {
   } else {
     return;
   }
-  lv_image_set_scale(imgWeather, 150);
-  lv_obj_align(imgWeather, LV_ALIGN_TOP_LEFT, 155, 155);
+  lv_image_set_scale(imgWeather, 200);
+  lv_obj_align(imgWeather, LV_ALIGN_TOP_LEFT, 140, 155);
 
   // temperature
   lv_obj_t *labelTemperature = lv_label_create(screen);
@@ -265,7 +267,7 @@ void drawWeather() {
   char buf[3];
   snprintf(buf, sizeof(buf), "%d", currentWeather.temperature);
   lv_label_set_text(labelTemperature, buf);
-  lv_obj_align(labelTemperature, LV_ALIGN_TOP_LEFT, 150, 130);
+  lv_obj_align(labelTemperature, LV_ALIGN_TOP_LEFT, 145, 130);
 
   // unit
   lv_obj_t *labelUnit = lv_label_create(screen);

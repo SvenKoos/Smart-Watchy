@@ -26,8 +26,7 @@
 #include "config.h"
 
 RTC_DATA_ATTR lv_timer_t watchfaceTimer;
-RTC_DATA_ATTR lv_timer_t brightnessTimer;
-RTC_DATA_ATTR lv_timer_t collectionTimer;
+RTC_DATA_ATTR esp_timer_handle_t brightnessTimer;
 
 RTC_DATA_ATTR uint32_t stepCounter;
 
@@ -63,15 +62,6 @@ void setup() {
   // take settings
   settings = setSetting();
   Serial.println("setup Settings loaded");
-
-/*
-  // Problem
-  // start timer for watch face
-  watchfaceTimer = timerEventWatchface();
-
-  // start timer for minmal brightness
-  brightnessTimer = timerEventBrightness();
-*/
 
   // Clear all interrupt status
   instance.pmu.clearIrqStatus();
@@ -128,9 +118,17 @@ void setup() {
   // draw the watch face initially
   watchFaceSetup();
   drawWatchFace();
+/*
+  // Problem
+  // start timer for watch face
+  watchfaceTimer = timerEventWatchface();
+*/
+  // start timer for minimal brightness
+  brightnessTimer = timerEventBrightness();
 }
 
 void loop() {
+  instance.loop();
   lv_task_handler();
   delay(5);
 }
