@@ -92,6 +92,14 @@ void drawWatchFace() {
   // lv_obj_set_style_text_color(screen, lv_color_black(), LV_PART_MAIN);
   // Remove borders
   lv_obj_set_style_border_width(screen, 0, LV_PART_MAIN);
+  // Den aktuell aktiven Bildschirm weiß färben
+  lv_obj_set_style_bg_color(lv_screen_active(), lv_color_white(), 0);
+  // Sicherstellen, dass die Deckkraft auf 100% steht
+  lv_obj_set_style_bg_opa(lv_screen_active(), LV_OPA_COVER, 0);
+  // Scrollbars abschalten
+  lv_obj_set_scrollbar_mode(lv_screen_active(), LV_SCROLLBAR_MODE_OFF);
+  // Scrolling abschalten
+  lv_obj_clear_flag(lv_screen_active(), LV_OBJ_FLAG_SCROLLABLE);
 
   // bottom layer
   // Make Bottom Layer Transparent
@@ -192,13 +200,13 @@ void drawIcons(bool isConnected) {
   if (currentAlerts.count > 0) {
     lv_obj_t *imgAlerts = lv_image_create(screen);
     lv_image_set_src(imgAlerts, &iconNotify);
-    lv_obj_align(imgAlerts, LV_ALIGN_TOP_LEFT, 135, 80);
+    lv_obj_align(imgAlerts, LV_ALIGN_TOP_LEFT, 165, 80);
   }
 
   if (isConnected) {
     lv_obj_t *imgWifi = lv_image_create(screen);
     lv_image_set_src(imgWifi, &iconWifi);
-    lv_obj_align(imgWifi, LV_ALIGN_TOP_LEFT, 165, 80);
+    lv_obj_align(imgWifi, LV_ALIGN_TOP_LEFT, 195, 80);
   }
 
   lv_obj_t *imgBattery = lv_image_create(screen);
@@ -209,14 +217,14 @@ void drawIcons(bool isConnected) {
   } else {
     lv_image_set_src(imgBattery, &iconBatteryEmpty);
   }
-  lv_obj_align(imgBattery, LV_ALIGN_TOP_LEFT, 200, 80);
+  lv_obj_align(imgBattery, LV_ALIGN_TOP_LEFT, 200, 10);
 
   lv_obj_t *labelBatteryPercentage = lv_label_create(screen);
   lv_obj_add_style(labelBatteryPercentage, &styleSmall, LV_PART_MAIN);
   char buf[4];
   snprintf(buf, sizeof(buf), "%d", currentPower.batteryPercent);
   lv_label_set_text(labelBatteryPercentage, buf);
-  lv_obj_align(labelBatteryPercentage, LV_ALIGN_TOP_LEFT, 185, 45);
+  lv_obj_align(labelBatteryPercentage, LV_ALIGN_TOP_LEFT, 185, 35);
 }
 
 void drawWeather() {
@@ -225,23 +233,6 @@ void drawWeather() {
   lv_obj_add_style(labelLocation, &styleSmall, LV_PART_MAIN);
   lv_label_set_text(labelLocation, currentLocation.cityShort);
   lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 5, 150);
-
-  // temperature
-  lv_obj_t *labelTemperature = lv_label_create(screen);
-  lv_obj_add_style(labelTemperature, &styleLarge, LV_PART_MAIN);
-  char buf[3];
-  snprintf(buf, sizeof(buf), "%d", currentWeather.temperature);
-  lv_label_set_text(labelTemperature, buf);
-  lv_obj_align(labelTemperature, LV_ALIGN_TOP_LEFT, 150, 130);
-
-  // unit
-  lv_obj_t *labelUnit = lv_label_create(screen);
-  lv_obj_add_style(labelUnit, &styleSmall, LV_PART_MAIN);
-  if (currentWeather.isMetric)
-    lv_label_set_text(labelUnit, "°C");
-  else
-    lv_label_set_text(labelUnit, "°F");
-  lv_obj_align(labelUnit, LV_ALIGN_TOP_LEFT, 200, 135);
 
   int16_t weatherConditionCode = currentWeather.weatherConditionCode;
   lv_obj_t *imgWeather = lv_image_create(screen);
@@ -266,6 +257,23 @@ void drawWeather() {
     return;
   }
   lv_image_set_scale(imgWeather, 150);
-  lv_obj_align(imgWeather, LV_ALIGN_TOP_LEFT, 150, 150);
+  lv_obj_align(imgWeather, LV_ALIGN_TOP_LEFT, 155, 155);
+
+  // temperature
+  lv_obj_t *labelTemperature = lv_label_create(screen);
+  lv_obj_add_style(labelTemperature, &styleLarge, LV_PART_MAIN);
+  char buf[3];
+  snprintf(buf, sizeof(buf), "%d", currentWeather.temperature);
+  lv_label_set_text(labelTemperature, buf);
+  lv_obj_align(labelTemperature, LV_ALIGN_TOP_LEFT, 150, 130);
+
+  // unit
+  lv_obj_t *labelUnit = lv_label_create(screen);
+  lv_obj_add_style(labelUnit, &styleSmall, LV_PART_MAIN);
+  if (currentWeather.isMetric)
+    lv_label_set_text(labelUnit, "°C");
+  else
+    lv_label_set_text(labelUnit, "°F");
+  lv_obj_align(labelUnit, LV_ALIGN_TOP_LEFT, 200, 135);
 }
 
