@@ -135,38 +135,17 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
 }
 
 void vibMotor() {
-  instance.drv.setWaveform(0, 10);  // play effect: 0...10
-  instance.drv.setWaveform(1, 0);   // end waveform ?
+  instance.drv.setWaveform(0, 47);  // slot: 0...7, effect: 1...123
+  // ID Effekt-Name Gefühl
+  // 1  Strong Click Kräftiges Bestätigen
+  // 7  Soft Bump Dezenter Hinweis
+  // 12 Triple Click  Alarm oder kritischer Fehler
+  // 14 Soft Fuzz Leichtes Zittern
+  // 47 Buzz 100% Klassischer Vibrationsalarm (lang)
+  // 51 Transition Hum  Sanftes Ansteigen
+  // 58 Long Buzz Für Anrufe / Wecker
+  instance.drv.setWaveform(1, 0);   // effect 0: finish
   // play the effect
   instance.drv.run();
 }
 
-void showAlert(singleAlert alert, lv_obj_t *screen, lv_style_t style) {
-  // timestamp
-  lv_obj_t *labelTimestamp = lv_label_create(screen);
-  lv_obj_add_style(labelTimestamp, &style, LV_PART_MAIN);
-  lv_label_set_text_fmt(labelTimestamp, "%.16s", alert.timeStamp);
-  lv_obj_align(labelTimestamp, LV_ALIGN_TOP_LEFT, 5, 5);
-
-  // app
-  lv_obj_t *labelApp = lv_label_create(screen);
-  lv_obj_add_style(labelApp, &style, LV_PART_MAIN);
-  lv_label_set_text(labelApp, alert.appName);
-  lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 5, 20);
-
-  // title
-  lv_obj_t *labelTitle = lv_label_create(screen);
-  lv_obj_add_style(labelTitle, &style, LV_PART_MAIN);
-  lv_label_set_text(labelTitle, alert.title);
-  lv_obj_align(labelTitle, LV_ALIGN_TOP_LEFT, 5, 35);
-
-  // body
-  lv_obj_t *labelBody = lv_label_create(screen);
-  lv_obj_add_style(labelBody, &style, LV_PART_MAIN);
-  // WICHTIG: Long Mode auf WRAP setzen, damit der Text in die Breite passt
-  // und stattdessen die Höhe des Objekts wächst
-  lv_label_set_long_mode(labelBody, LV_LABEL_LONG_WRAP);
-  lv_obj_set_width(labelBody, lv_pct(90)); // 90% der Screenbreite nutzen
-  lv_label_set_text(labelBody, alert.body);
-  lv_obj_align(labelBody, LV_ALIGN_TOP_LEFT, 5, 50);
-}

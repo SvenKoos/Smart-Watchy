@@ -73,7 +73,7 @@ void watchFaceSetup() {
 }
 
 void drawWatchFace() {
-  bool move = false;
+	Serial.println("drawWatchFace Start");
 
   // display
   // 1. Get the current display
@@ -239,7 +239,9 @@ void drawWeather() {
   int16_t weatherConditionCode = currentWeather.weatherConditionCode;
   lv_obj_t *imgWeather = lv_image_create(screen);
   //openweathermap.org/weather-conditions
-  if (weatherConditionCode > 801) {  //Cloudy, 03d / 03n (802), 04d / 04n (803, 804)
+  if (weatherConditionCode > 802) {  //Cloudy, 04d / 04n (803, 804)
+    lv_image_set_src(imgWeather, &map04d);
+  } else if (weatherConditionCode == 802) {  //Few Clouds, 03d / 03n
     lv_image_set_src(imgWeather, &map03d);
   } else if (weatherConditionCode == 801) {  //Few Clouds, 02d / 02n
     lv_image_set_src(imgWeather, &map02d);

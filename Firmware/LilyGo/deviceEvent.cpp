@@ -3,8 +3,8 @@
 #include <WiFiManager.h>
 
 #include "dataCollection.h"
-#include "deviceEvent.h"
 #include "alertData.h"
+#include "deviceEvent.h"
 #include "config.h"
 #include "watchFace.h"
 #include "timerEvent.h"
@@ -14,9 +14,17 @@ extern alertData currentAlerts;
 extern singleAlert allAlerts[ALERT_MAX_NO];
 extern int guiState;
 
-RTC_DATA_ATTR int alertIndex = -1;
-RTC_DATA_ATTR lv_obj_t* screenAlerts;
-RTC_DATA_ATTR lv_style_t styleAlerts;
+int alertIndex = -1;
+
+lv_style_t styleAlerts;
+
+lv_obj_t* labelTimestamp;
+lv_obj_t* labelIndex;
+lv_obj_t* labelApp;
+lv_obj_t* labelTitle;
+lv_obj_t* labelBody;
+
+uint32_t last_gesture_time = 0;
 
 void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
   if (event == POWER_EVENT) {
@@ -45,6 +53,8 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         // set brightness
         instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
         startBrightnessTimer();
+
+        guiState = WATCHFACE_STATE;
 
         // GUI state
         // guiState = MENU_STATE;
@@ -105,43 +115,32 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         startBrightnessTimer();
 
         if (guiState == WATCHFACE_STATE) {
+          Serial.println("DoubleTap event: watchface state");
+
           // show the  alerts
           if (currentAlerts.count > 0) {
+            // prepare the  screen object
+            prepareAlertScreen();
+
             // GUI state
             guiState = ALERT_STATE;
 
-            // screen
-            // Create the new screen object
-            screenAlerts = createAlertScreen();
-            // register gestures
-            // https://docs.lvgl.io/master/main-modules/indev/gestures.html
-            lv_obj_add_event_cb(screenAlerts, alertEventCB, LV_EVENT_GESTURE, NULL);
-            // Load the screen
-            lv_scr_load(screenAlerts);
-
-            // style
-            lv_style_init(&styleAlerts);
-            lv_style_set_text_font(&styleAlerts, &lv_font_montserrat_12);
-            // lv_style_set_bg_opa(&styleAlerts, LV_OPA_TRANSP);
-            // lv_style_set_text_color(&styleAlerts, lv_color_black());
-            lv_style_set_border_width(&styleAlerts, 0);
-
             // alert
             alertIndex = 0;
-            showAlert(allAlerts[alertIndex], screenAlerts, styleAlerts);
-          } else if (guiState == ALERT_STATE) {
-            guiState = WATCHFACE_STATE;
-            drawWatchFace();
-          } else if (guiState == DARK_STATE) {
-            guiState = WATCHFACE_STATE;
+            showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
           }
         } else if (guiState == ALERT_STATE) {
-          // Alert Screen removal
-          // ...
-          // switch to watch face
-          drawWatchFace();
-        }
+          Serial.println("DoubleTap event: alert state");
 
+          guiState = WATCHFACE_STATE;
+
+          // draw the watchface screen
+          drawWatchFace();
+        } else if (guiState == DARK_STATE) {
+          Serial.println("DoubleTap event: dark state");
+
+          guiState = WATCHFACE_STATE;
+        }
         break;
       case SENSOR_ANY_MOTION_DETECTED:
         // Serial.println("Any motion / no motion event");
@@ -157,24 +156,31 @@ void alertEventCB(lv_event_t* e) {
   instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
   startBrightnessTimer();
 
-  if (guiState == ALERT_STATE) {
-    // lv_obj_t * screen = (lv_obj_t*) lv_event_get_current_target(e);
+  if ((guiState == ALERT_STATE) && (lv_event_get_code(e) == LV_EVENT_GESTURE)) {
+    // 500ms Sperrzeit nach der letzten erfolgreichen Geste
+    if(lv_tick_elaps(last_gesture_time) < 500) {
+        return; 
+    }
 
     lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_active());
     switch (dir) {
       case LV_DIR_LEFT:
+        last_gesture_time = lv_tick_get(); // Zeitstempel setzen
+
         if (currentAlerts.count > 0) {
           if (alertIndex < currentAlerts.count - 1) {
             alertIndex++;
-            showAlert(allAlerts[alertIndex], screenAlerts, styleAlerts);
+            showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
           }
         }
         break;
       case LV_DIR_RIGHT:
+        last_gesture_time = lv_tick_get(); // Zeitstempel setzen
+
         if (currentAlerts.count > 0) {
           if (alertIndex > 0) {
             alertIndex--;
-            showAlert(allAlerts[alertIndex], screenAlerts, styleAlerts);
+            showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
           }
         }
         break;
@@ -186,10 +192,12 @@ void alertEventCB(lv_event_t* e) {
   }
 }
 
-lv_obj_t* createAlertScreen() {
-  // 1. Neuen Screen erstellen
-  lv_obj_t* alert_scr = lv_obj_create(NULL);
-  lv_obj_set_style_bg_color(alert_scr, lv_color_white(), 0);
+lv_obj_t* prepareAlertScreen() {
+  // get active screen
+  lv_obj_t* alert_scr = lv_screen_active();
+
+  // clean the screen
+  lv_obj_clean(alert_scr);
 
   // 2. Scroll-Verhalten aktivieren
   // Wir erlauben vertikales Scrollen, schalten aber horizontales aus
@@ -199,5 +207,64 @@ lv_obj_t* createAlertScreen() {
   // Scrollbalken dezent anzeigen (nur während des Scrollens)
   lv_obj_set_scrollbar_mode(alert_scr, LV_SCROLLBAR_MODE_AUTO);
 
+  // register gestures
+  // https://docs.lvgl.io/master/main-modules/indev/gestures.html
+  lv_obj_add_event_cb(alert_scr, alertEventCB, LV_EVENT_GESTURE, NULL);
+
+  // style
+  lv_style_init(&styleAlerts);
+  lv_style_set_text_font(&styleAlerts, &lv_font_montserrat_16);
+  // lv_style_set_bg_opa(&styleAlerts, LV_OPA_TRANSP);
+  // lv_style_set_text_color(&styleAlerts, lv_color_black());
+  lv_style_set_border_width(&styleAlerts, 0);
+
+  // timestamp
+  labelTimestamp = lv_label_create(alert_scr);
+  lv_obj_add_style(labelTimestamp, &styleAlerts, LV_PART_MAIN);
+  lv_obj_align(labelTimestamp, LV_ALIGN_TOP_LEFT, 5, 5);
+
+  // Index
+  labelIndex = lv_label_create(alert_scr);
+  lv_obj_add_style(labelIndex, &styleAlerts, LV_PART_MAIN);
+  lv_obj_align(labelIndex, LV_ALIGN_TOP_LEFT, 180, 5);
+
+  // app
+  labelApp = lv_label_create(alert_scr);
+  lv_obj_add_style(labelApp, &styleAlerts, LV_PART_MAIN);
+  lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 5, 25);
+
+  // title
+  labelTitle = lv_label_create(alert_scr);
+  lv_obj_add_style(labelTitle, &styleAlerts, LV_PART_MAIN);
+  lv_label_set_long_mode(labelTitle, LV_LABEL_LONG_WRAP);
+  lv_obj_set_width(labelTitle, lv_pct(95));  // 90% der Screenbreite nutzen
+  lv_obj_align(labelTitle, LV_ALIGN_TOP_LEFT, 5, 45);
+
+  // body
+  labelBody = lv_label_create(alert_scr);
+  lv_obj_add_style(labelBody, &styleAlerts, LV_PART_MAIN);
+  // WICHTIG: Long Mode auf WRAP setzen, damit der Text in die Breite passt
+  // und stattdessen die Höhe des Objekts wächst
+  lv_label_set_long_mode(labelBody, LV_LABEL_LONG_WRAP);
+  lv_obj_set_width(labelBody, lv_pct(95));  // 90% der Screenbreite nutzen
+  lv_obj_align(labelBody, LV_ALIGN_TOP_LEFT, 5, 100);
+  /*
+  // Load the screen
+  lv_scr_load(screenAlerts);
+*/
+  last_gesture_time = 0;
+
   return alert_scr;
+}
+
+void showAlert(singleAlert alert, int index, int count) {
+  lv_label_set_text_fmt(labelTimestamp, "%.16s", alert.timeStamp);
+
+  lv_label_set_text_fmt(labelIndex, "%d / %d", index + 1, count);
+
+  lv_label_set_text(labelApp, alert.appName);
+
+  lv_label_set_text(labelTitle, alert.title);
+
+  lv_label_set_text(labelBody, alert.body);
 }

@@ -13,14 +13,14 @@
 
 #include "timerEvent.h"
 #include "watchFace.h"
-#include "deviceEvent.h"
 #include "dataCollection.h"
+#include "alertData.h"
+#include "deviceEvent.h"
 #include "accellData.h"
 #include "settings.h"
 #include "locationData.h"
 #include "weatherData.h"
 #include "syncNTP.h"
-#include "alertData.h"
 #include "powerData.h"
 #include "ble.h"
 #include "config.h"
@@ -141,11 +141,10 @@ void loop() {
     // get the data
     collectData();
 
-    // GUI state
-    guiState = WATCHFACE_STATE;
-
-    // draw watch face
-    drawWatchFace();
+    if (guiState == WATCHFACE_STATE) {
+      // draw watch face
+      drawWatchFace();
+    }
   }
 
   delay(10);
