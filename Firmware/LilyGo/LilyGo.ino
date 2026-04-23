@@ -25,8 +25,7 @@
 #include "ble.h"
 #include "config.h"
 
-RTC_DATA_ATTR lv_timer_t watchfaceTimer;
-RTC_DATA_ATTR esp_timer_handle_t brightnessTimer;
+RTC_DATA_ATTR bool update_gui_request;
 
 RTC_DATA_ATTR uint32_t stepCounter;
 
@@ -118,17 +117,36 @@ void setup() {
   // draw the watch face initially
   watchFaceSetup();
   drawWatchFace();
-/*
-  // Problem
-  // start timer for watch face
-  watchfaceTimer = timerEventWatchface();
-*/
+
+  // start timer for watch face - Problem
+  update_gui_request = false;
+  timerEventWatchface();
+
   // start timer for minimal brightness
-  brightnessTimer = timerEventBrightness();
+  timerEventBrightness();
 }
 
 void loop() {
   instance.loop();
+
   lv_task_handler();
-  delay(5);
+  lv_timer_handler();  // Verarbeitet die Timer
+
+  // 2. Prüfen, ob der Hardware-Timer die Flag gesetzt hat
+  if (update_gui_request) {
+    Serial.println("loop update watchface");
+
+    update_gui_request = false;  // Flag sofort zurücksetzen
+
+    // get the data
+    collectData();
+
+    // GUI state
+    guiState = WATCHFACE_STATE;
+
+    // draw watch face
+    drawWatchFace();
+  }
+
+  delay(10);
 }

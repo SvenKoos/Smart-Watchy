@@ -9,7 +9,6 @@
 #include "watchFace.h"
 #include "timerEvent.h"
 
-extern esp_timer_handle_t brightnessTimer;
 extern uint32_t stepCounter;
 extern alertData currentAlerts;
 extern singleAlert allAlerts[ALERT_MAX_NO];
@@ -45,7 +44,7 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
 
         // set brightness
         instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
-        startBrightnessTimer(brightnessTimer);
+        startBrightnessTimer();
 
         // GUI state
         // guiState = MENU_STATE;
@@ -103,7 +102,7 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
 
         // set brightness
         instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
-        startBrightnessTimer(brightnessTimer);
+        startBrightnessTimer();
 
         if (guiState == WATCHFACE_STATE) {
           // show the  alerts
@@ -156,7 +155,7 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
 void alertEventCB(lv_event_t* e) {
   // set brightness
   instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
-  startBrightnessTimer(brightnessTimer);
+  startBrightnessTimer();
 
   if (guiState == ALERT_STATE) {
     // lv_obj_t * screen = (lv_obj_t*) lv_event_get_current_target(e);

@@ -188,7 +188,7 @@ void drawDate() {
 void drawSteps() {
   lv_obj_t *img = lv_image_create(screen);
   lv_image_set_src(img, &iconSteps);
-  lv_obj_align(img, LV_ALIGN_TOP_LEFT, 5, 195);
+  lv_obj_align(img, LV_ALIGN_TOP_LEFT, 5, 197);
 
   lv_obj_t *labelSteps = lv_label_create(screen);
   lv_obj_add_style(labelSteps, &styleMedium, LV_PART_MAIN);
