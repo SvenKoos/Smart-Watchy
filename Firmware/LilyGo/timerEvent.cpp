@@ -28,7 +28,7 @@ void timerEventWatchface(void) {
   // Erstellen und direkt periodisch starten
   esp_err_t err = esp_timer_create(&timer_args, &minute_timer);
   if (err == ESP_OK) {
-    esp_timer_start_periodic(minute_timer, 1000 * 1000000);   // 60sec
+    esp_timer_start_periodic(minute_timer, 60 * 1000000);   // 60sec
   }
 }
 
@@ -52,7 +52,6 @@ void timerEventBrightness(void) {
   esp_timer_create(&brightness_timer_args, &brightness_timer);
 
   startBrightnessTimer();
-
 }
 
 void startBrightnessTimer() {
@@ -62,7 +61,7 @@ void startBrightnessTimer() {
     esp_timer_stop(brightness_timer);
   }
 
-  esp_timer_start_once(brightness_timer, 1000 * 1000000); // 15 sec
+  esp_timer_start_once(brightness_timer, 15 * 1000000); // 15 sec
 
   Serial.println("startBrightnessTimer Start");
 }

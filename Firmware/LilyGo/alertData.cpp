@@ -120,12 +120,15 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
       }
     }
 
-    Serial.print("getAlertData No. of alerts: "); Serial.println(currentAlerts.count, DEC);
+    Serial.print("getAlertData No. of alerts: "); Serial.print(currentAlerts.count, DEC);
+    Serial.print(" Min. ID: "); Serial.print(newMin, DEC);
+    Serial.print(" Max. ID: "); Serial.println(newMax, DEC);
   } else {
     // http error
     currentAlerts.code = CODE_HTTP_ERROR;
 
-    Serial.print("getAlertData Error code: "); Serial.println(currentAlerts.code, DEC);
+    Serial.print("getAlertData Error code: ");
+    Serial.println(currentAlerts.code, DEC);
   }
   strncpy(currentAlerts.log, String(httpResponseCode).c_str(), sizeof(currentAlerts.log) - 1);
   currentAlerts.log[sizeof(currentAlerts.log) - 1] = '\0';
@@ -135,7 +138,12 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
 }
 
 void vibMotor() {
-  instance.drv.setWaveform(0, 47);  // slot: 0...7, effect: 1...123
+  // from firmware src
+  // instance.drv.selectLibrary(1);
+  // instance.drv.setMode(SensorDRV2605::MODE_INTTRIG);
+  // instance.drv.useERM();
+  // set wave
+  instance.drv.setWaveform(0, 80);  // slot: 0...7, effect: 1...123
   // ID Effekt-Name Gefühl
   // 1  Strong Click Kräftiges Bestätigen
   // 7  Soft Bump Dezenter Hinweis
@@ -144,8 +152,7 @@ void vibMotor() {
   // 47 Buzz 100% Klassischer Vibrationsalarm (lang)
   // 51 Transition Hum  Sanftes Ansteigen
   // 58 Long Buzz Für Anrufe / Wecker
-  instance.drv.setWaveform(1, 0);   // effect 0: finish
+  instance.drv.setWaveform(1, 0);  // effect 0: finish
   // play the effect
   instance.drv.run();
 }
-

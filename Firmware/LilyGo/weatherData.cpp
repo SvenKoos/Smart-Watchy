@@ -32,6 +32,7 @@ weatherData getWeatherData(String cityID, String units, String lang, String url,
 	}
 	if (weatherIntervalCounter >= updateInterval) {  // only update if WEATHER_UPDATE_INTERVAL has elapsed
 		                                               // i.e. 30 minutes
+  	Serial.println("getWeatherData Get");
 
 		currentWeather.weatherConditionCode = 0;
 

@@ -4,6 +4,7 @@
 
 #include "dataCollection.h"
 #include "alertData.h"
+#include "accellData.h"
 #include "deviceEvent.h"
 #include "config.h"
 #include "watchFace.h"
@@ -13,6 +14,7 @@ extern uint32_t stepCounter;
 extern alertData currentAlerts;
 extern singleAlert allAlerts[ALERT_MAX_NO];
 extern int guiState;
+extern accellData currentAccelleration;
 
 int alertIndex = -1;
 
@@ -55,6 +57,8 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         startBrightnessTimer();
 
         guiState = WATCHFACE_STATE;
+        currentAccelleration.isMoved = true;
+        drawWatchFace();
 
         // GUI state
         // guiState = MENU_STATE;
@@ -126,7 +130,7 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
             guiState = ALERT_STATE;
 
             // alert
-            alertIndex = 0;
+            alertIndex = currentAlerts.count - 1;
             showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
           }
         } else if (guiState == ALERT_STATE) {
@@ -140,6 +144,8 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
           Serial.println("DoubleTap event: dark state");
 
           guiState = WATCHFACE_STATE;
+          currentAccelleration.isMoved = true;
+          drawWatchFace();
         }
         break;
       case SENSOR_ANY_MOTION_DETECTED:
@@ -213,7 +219,7 @@ lv_obj_t* prepareAlertScreen() {
 
   // style
   lv_style_init(&styleAlerts);
-  lv_style_set_text_font(&styleAlerts, &lv_font_montserrat_16);
+  lv_style_set_text_font(&styleAlerts, &lv_font_montserrat_18);
   // lv_style_set_bg_opa(&styleAlerts, LV_OPA_TRANSP);
   // lv_style_set_text_color(&styleAlerts, lv_color_black());
   lv_style_set_border_width(&styleAlerts, 0);
@@ -226,19 +232,20 @@ lv_obj_t* prepareAlertScreen() {
   // Index
   labelIndex = lv_label_create(alert_scr);
   lv_obj_add_style(labelIndex, &styleAlerts, LV_PART_MAIN);
-  lv_obj_align(labelIndex, LV_ALIGN_TOP_LEFT, 180, 5);
+  lv_obj_set_style_text_align(labelIndex, LV_TEXT_ALIGN_RIGHT, 0);
+  lv_obj_align(labelIndex, LV_ALIGN_TOP_RIGHT, -10, 5);
 
   // app
   labelApp = lv_label_create(alert_scr);
   lv_obj_add_style(labelApp, &styleAlerts, LV_PART_MAIN);
-  lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 5, 25);
+  lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 5, 30);
 
   // title
   labelTitle = lv_label_create(alert_scr);
   lv_obj_add_style(labelTitle, &styleAlerts, LV_PART_MAIN);
   lv_label_set_long_mode(labelTitle, LV_LABEL_LONG_WRAP);
   lv_obj_set_width(labelTitle, lv_pct(95));  // 90% der Screenbreite nutzen
-  lv_obj_align(labelTitle, LV_ALIGN_TOP_LEFT, 5, 45);
+  lv_obj_align(labelTitle, LV_ALIGN_TOP_LEFT, 5, 55);
 
   // body
   labelBody = lv_label_create(alert_scr);
@@ -247,7 +254,7 @@ lv_obj_t* prepareAlertScreen() {
   // und stattdessen die Höhe des Objekts wächst
   lv_label_set_long_mode(labelBody, LV_LABEL_LONG_WRAP);
   lv_obj_set_width(labelBody, lv_pct(95));  // 90% der Screenbreite nutzen
-  lv_obj_align(labelBody, LV_ALIGN_TOP_LEFT, 5, 100);
+  lv_obj_align(labelBody, LV_ALIGN_TOP_LEFT, 5, 125);
   /*
   // Load the screen
   lv_scr_load(screenAlerts);

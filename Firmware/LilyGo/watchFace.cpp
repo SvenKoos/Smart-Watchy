@@ -223,10 +223,11 @@ void drawIcons(bool isConnected) {
 
   lv_obj_t *labelBatteryPercentage = lv_label_create(screen);
   lv_obj_add_style(labelBatteryPercentage, &styleSmall, LV_PART_MAIN);
+  lv_obj_set_style_text_align(labelBatteryPercentage, LV_TEXT_ALIGN_RIGHT, 0);
   char buf[4];
   snprintf(buf, sizeof(buf), "%d", currentPower.batteryPercent);
   lv_label_set_text(labelBatteryPercentage, buf);
-  lv_obj_align(labelBatteryPercentage, LV_ALIGN_TOP_LEFT, 185, 30);
+  lv_obj_align(labelBatteryPercentage, LV_ALIGN_TOP_RIGHT, -15, 30);
 }
 
 void drawWeather() {
@@ -269,7 +270,7 @@ void drawWeather() {
   char buf[3];
   snprintf(buf, sizeof(buf), "%d", currentWeather.temperature);
   lv_label_set_text(labelTemperature, buf);
-  lv_obj_align(labelTemperature, LV_ALIGN_TOP_LEFT, 145, 130);
+  lv_obj_align(labelTemperature, LV_ALIGN_TOP_RIGHT, -40, 130);
 
   // unit
   lv_obj_t *labelUnit = lv_label_create(screen);

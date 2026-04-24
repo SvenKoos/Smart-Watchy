@@ -30,6 +30,8 @@ locationData getLocationData(String url, uint8_t updateInterval) {
   }
   if (locationIntervalCounter >= updateInterval) {  // only update if UPDATE_INTERVAL has elapsed
                                                     // i.e. 30 minutes
+    Serial.println("getLocationData Get");
+
     HTTPClient http;                                // Use location API if WiFi is connected
     http.setConnectTimeout(3000);                   // 3 second max timeout
     String locationQueryURL = url;
