@@ -24,6 +24,7 @@
 #include "powerData.h"
 #include "ble.h"
 #include "config.h"
+#include "timerEvent.h"
 
 RTC_DATA_ATTR bool update_gui_request;
 
@@ -100,7 +101,8 @@ void setup() {
   // Set brightness to MAX
   // T-LoRa-Pager brightness level is 0 ~ 16
   // T-Watch-S3 , T-Watch-S3-Plus , T-Watch-Ultra brightness level is 0 ~ 255
-  instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+  // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+  displayWakup();
   Serial.println("setup Brightness set to Max");
 
   // setup NTP time sync
@@ -124,13 +126,18 @@ void setup() {
 
   // start timer for minimal brightness
   timerEventBrightness();
+
+  // CPU clock
+  setCpuFrequencyMhz(80);
 }
 
 void loop() {
   instance.loop();
 
-  lv_task_handler();
-  lv_timer_handler();  // Verarbeitet die Timer
+  if (guiState != DARK_STATE) {
+    // lv_task_handler();
+    lv_timer_handler();  // Verarbeitet die Timer
+  }
 
   // 2. Prüfen, ob der Hardware-Timer die Flag gesetzt hat
   if (update_gui_request) {

@@ -53,7 +53,8 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         Serial.println("Power button is clicked");
 
         // set brightness
-        instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+        // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+        displayWakup();
         startBrightnessTimer();
 
         guiState = WATCHFACE_STATE;
@@ -115,7 +116,8 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         Serial.println("DoubleTap event");
 
         // set brightness
-        instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+        // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+        displayWakup();
         startBrightnessTimer();
 
         if (guiState == WATCHFACE_STATE) {
@@ -159,7 +161,8 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
 
 void alertEventCB(lv_event_t* e) {
   // set brightness
-  instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+  // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+  displayWakup();
   startBrightnessTimer();
 
   if ((guiState == ALERT_STATE) && (lv_event_get_code(e) == LV_EVENT_GESTURE)) {
@@ -255,10 +258,7 @@ lv_obj_t* prepareAlertScreen() {
   lv_label_set_long_mode(labelBody, LV_LABEL_LONG_WRAP);
   lv_obj_set_width(labelBody, lv_pct(95));  // 90% der Screenbreite nutzen
   lv_obj_align(labelBody, LV_ALIGN_TOP_LEFT, 5, 125);
-  /*
-  // Load the screen
-  lv_scr_load(screenAlerts);
-*/
+
   last_gesture_time = 0;
 
   return alert_scr;

@@ -139,11 +139,18 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
 
 void vibMotor() {
   // from firmware src
-  // instance.drv.selectLibrary(1);
-  // instance.drv.setMode(SensorDRV2605::MODE_INTTRIG);
-  // instance.drv.useERM();
+  instance.drv.selectLibrary(1);
+  instance.drv.setMode(SensorDRV2605::MODE_INTTRIG);
+  instance.drv.useERM();
   // set wave
-  instance.drv.setWaveform(0, 80);  // slot: 0...7, effect: 1...123
+/*
+  instance.drv.setWaveform(0, 47);  // slot: 0...7, effect: 1...123
+  instance.drv.setWaveform(1, 0);  // effect 0: finish
+*/
+  instance.drv.setWaveform(0, 1);  // Starker Klick 100%
+  instance.drv.setWaveform(1, 134); // Pause (ca. 100ms)
+  instance.drv.setWaveform(2, 1);  // Starker Klick 100%
+  instance.drv.setWaveform(3, 0);  // Ende der Sequenz
   // ID Effekt-Name Gefühl
   // 1  Strong Click Kräftiges Bestätigen
   // 7  Soft Bump Dezenter Hinweis
@@ -152,7 +159,6 @@ void vibMotor() {
   // 47 Buzz 100% Klassischer Vibrationsalarm (lang)
   // 51 Transition Hum  Sanftes Ansteigen
   // 58 Long Buzz Für Anrufe / Wecker
-  instance.drv.setWaveform(1, 0);  // effect 0: finish
   // play the effect
   instance.drv.run();
 }

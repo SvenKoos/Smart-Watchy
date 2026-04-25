@@ -27,6 +27,8 @@ static void timerBrightness_cb(void* arg);
 static void timerWatchface_cb(void *arg);
 void startBrightnessTimer();
 void stopBrightnessTimer();
+void displayWakup();
+void displayGoToSleep();
 
 /**********************
  *      MACROS
