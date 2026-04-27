@@ -21,9 +21,7 @@
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-bool syncNTP(long gmt, const char *ntpServer);
-void setupNTPSync();
-void timeavailable(struct timeval *t);
+void syncNTP(long gmt, const char *ntpServer);
 
 /**********************
  *      MACROS

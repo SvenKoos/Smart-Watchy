@@ -73,7 +73,7 @@ void watchFaceSetup() {
 }
 
 void drawWatchFace() {
-	Serial.println("drawWatchFace Start");
+  Serial.println("drawWatchFace Start");
 
   // display
   // 1. Get the current display
@@ -237,30 +237,44 @@ void drawWeather() {
   lv_label_set_text(labelLocation, currentLocation.cityShort);
   lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 5, 150);
 
-  int16_t weatherConditionCode = currentWeather.weatherConditionCode;
   lv_obj_t *imgWeather = lv_image_create(screen);
-  //openweathermap.org/weather-conditions
-  if (weatherConditionCode > 802) {  //Cloudy, 04d / 04n (803, 804)
-    lv_image_set_src(imgWeather, &map04d);
-  } else if (weatherConditionCode == 802) {  //Few Clouds, 03d / 03n
-    lv_image_set_src(imgWeather, &map03d);
-  } else if (weatherConditionCode == 801) {  //Few Clouds, 02d / 02n
-    lv_image_set_src(imgWeather, &map02d);
-  } else if (weatherConditionCode == 800) {  //Clear sky, 01d / 01n
+  if (strcmp(currentWeather.weatherIcon, "01d") == 0)
     lv_image_set_src(imgWeather, &map01d);
-  } else if (weatherConditionCode >= 700) {  //Atmosphere, 50d / 50n
-    lv_image_set_src(imgWeather, &map50d);
-  } else if (weatherConditionCode >= 600) {  //Snow, 13d / 13n
-    lv_image_set_src(imgWeather, &map13d);
-  } else if (weatherConditionCode >= 500) {  //Rain, 10d / 10n
-    lv_image_set_src(imgWeather, &map10d);
-  } else if (weatherConditionCode >= 300) {  //Drizzle, 09d / 09n
+  else if (strcmp(currentWeather.weatherIcon, "01n") == 0)
+    lv_image_set_src(imgWeather, &map01n);
+  else if (strcmp(currentWeather.weatherIcon, "02d") == 0)
+    lv_image_set_src(imgWeather, &map02d);
+  else if (strcmp(currentWeather.weatherIcon, "02n") == 0)
+    lv_image_set_src(imgWeather, &map02n);
+  else if (strcmp(currentWeather.weatherIcon, "03d") == 0)
+    lv_image_set_src(imgWeather, &map03d);
+  else if (strcmp(currentWeather.weatherIcon, "03n") == 0)
+    lv_image_set_src(imgWeather, &map03n);
+  else if (strcmp(currentWeather.weatherIcon, "04d") == 0)
+    lv_image_set_src(imgWeather, &map04d);
+  else if (strcmp(currentWeather.weatherIcon, "04n") == 0)
+    lv_image_set_src(imgWeather, &map04n);
+  else if (strcmp(currentWeather.weatherIcon, "09d") == 0)
     lv_image_set_src(imgWeather, &map09d);
-  } else if (weatherConditionCode >= 200) {  //Thunderstorm, 11d / 11n
+  else if (strcmp(currentWeather.weatherIcon, "09n") == 0)
+    lv_image_set_src(imgWeather, &map09n);
+  else if (strcmp(currentWeather.weatherIcon, "10d") == 0)
+    lv_image_set_src(imgWeather, &map10d);
+  else if (strcmp(currentWeather.weatherIcon, "10n") == 0)
+    lv_image_set_src(imgWeather, &map10n);
+  else if (strcmp(currentWeather.weatherIcon, "11d") == 0)
     lv_image_set_src(imgWeather, &map11d);
-  } else {
-    return;
-  }
+  else if (strcmp(currentWeather.weatherIcon, "11n") == 0)
+    lv_image_set_src(imgWeather, &map11n);
+  else if (strcmp(currentWeather.weatherIcon, "13d") == 0)
+    lv_image_set_src(imgWeather, &map13d);
+  else if (strcmp(currentWeather.weatherIcon, "13n") == 0)
+    lv_image_set_src(imgWeather, &map13n);
+  else if (strcmp(currentWeather.weatherIcon, "50d") == 0)
+    lv_image_set_src(imgWeather, &map50d);
+  else if (strcmp(currentWeather.weatherIcon, "50n") == 0)
+    lv_image_set_src(imgWeather, &map50n);
+
   lv_image_set_scale(imgWeather, 200);
   lv_obj_align(imgWeather, LV_ALIGN_TOP_LEFT, 140, 155);
 
@@ -281,4 +295,3 @@ void drawWeather() {
     lv_label_set_text(labelUnit, "°F");
   lv_obj_align(labelUnit, LV_ALIGN_TOP_LEFT, 200, 135);
 }
-

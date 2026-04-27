@@ -147,10 +147,13 @@ void vibMotor() {
   instance.drv.setWaveform(0, 47);  // slot: 0...7, effect: 1...123
   instance.drv.setWaveform(1, 0);  // effect 0: finish
 */
-  instance.drv.setWaveform(0, 1);  // Starker Klick 100%
-  instance.drv.setWaveform(1, 134); // Pause (ca. 100ms)
-  instance.drv.setWaveform(2, 1);  // Starker Klick 100%
-  instance.drv.setWaveform(3, 0);  // Ende der Sequenz
+// Wir nutzen "Sharp Tick" (ID 4) oder "Strong Buzz" (ID 47)
+  // Aber wir lassen die Pausen (134) weg, um die Trägheit zu überwinden
+  instance.drv.setWaveform(0, 47); // Buzz 100% (lang)
+  instance.drv.setWaveform(1, 47); // Direkt nochmal ohne Pause
+  instance.drv.setWaveform(2, 47); // Und ein drittes Mal
+  instance.drv.setWaveform(3, 12); // Triple Click als "Abschluss-Rüttler"
+  instance.drv.setWaveform(4, 0);  // Ende
   // ID Effekt-Name Gefühl
   // 1  Strong Click Kräftiges Bestätigen
   // 7  Soft Bump Dezenter Hinweis

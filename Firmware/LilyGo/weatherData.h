@@ -24,6 +24,7 @@ typedef struct weatherData {
   char weatherDescription[NAME_LEN];
   char name[NAME_LEN];
   long offset;
+  char weatherIcon[NAME_LEN];
   char log[LOG_LEN];
   int code;
 } weatherData;

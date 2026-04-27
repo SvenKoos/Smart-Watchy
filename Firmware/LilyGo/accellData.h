@@ -33,6 +33,7 @@ typedef struct accellData {
  **********************/
 accellData getAccellData();
 void resetAccellData();
+void setupAccellData();
 
 /**********************
  *      MACROS

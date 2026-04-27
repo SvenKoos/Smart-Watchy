@@ -55,7 +55,9 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         // set brightness
         // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
         displayWakup();
-        startBrightnessTimer();
+        startBrightnessTimer(10);
+
+        handle_button_emergency_reset();
 
         guiState = WATCHFACE_STATE;
         currentAccelleration.isMoved = true;
@@ -107,10 +109,10 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         Serial.printf("Step count interrupt,step Counter:%u\n", stepCounter);
         break;
       case SENSOR_ACTIVITY_DETECTED:
-        // Serial.println("Activity event");
+        Serial.println("Activity event");
         break;
       case SENSOR_TILT_DETECTED:
-        // Serial.println("Tilt event");
+        Serial.println("Tilt event");
         break;
       case SENSOR_DOUBLE_TAP_DETECTED:
         Serial.println("DoubleTap event");
@@ -118,7 +120,7 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         // set brightness
         // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
         displayWakup();
-        startBrightnessTimer();
+        startBrightnessTimer(10);
 
         if (guiState == WATCHFACE_STATE) {
           Serial.println("DoubleTap event: watchface state");
@@ -151,7 +153,7 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         }
         break;
       case SENSOR_ANY_MOTION_DETECTED:
-        // Serial.println("Any motion / no motion event");
+        Serial.println("Any motion / no motion event");
         break;
       default:
         break;
@@ -163,18 +165,18 @@ void alertEventCB(lv_event_t* e) {
   // set brightness
   // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
   displayWakup();
-  startBrightnessTimer();
+  startBrightnessTimer(10);
 
   if ((guiState == ALERT_STATE) && (lv_event_get_code(e) == LV_EVENT_GESTURE)) {
     // 500ms Sperrzeit nach der letzten erfolgreichen Geste
-    if(lv_tick_elaps(last_gesture_time) < 500) {
-        return; 
+    if (lv_tick_elaps(last_gesture_time) < 500) {
+      return;
     }
 
     lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_active());
     switch (dir) {
       case LV_DIR_LEFT:
-        last_gesture_time = lv_tick_get(); // Zeitstempel setzen
+        last_gesture_time = lv_tick_get();  // Zeitstempel setzen
 
         if (currentAlerts.count > 0) {
           if (alertIndex < currentAlerts.count - 1) {
@@ -184,7 +186,7 @@ void alertEventCB(lv_event_t* e) {
         }
         break;
       case LV_DIR_RIGHT:
-        last_gesture_time = lv_tick_get(); // Zeitstempel setzen
+        last_gesture_time = lv_tick_get();  // Zeitstempel setzen
 
         if (currentAlerts.count > 0) {
           if (alertIndex > 0) {
@@ -274,4 +276,26 @@ void showAlert(singleAlert alert, int index, int count) {
   lv_label_set_text(labelTitle, alert.title);
 
   lv_label_set_text(labelBody, alert.body);
+}
+
+void handle_button_emergency_reset() {
+  // 1. Check: Reagiert der Touch auf I2C?
+  Wire.beginTransmission(0x38);
+  if (Wire.endTransmission() != 0) {
+    Serial.println("Touch frozen! Power-cycling DLDO1...");
+
+    // Die korrekten Public-Funktionen für den AXP2101:
+    instance.pmu.disableDLDO1();
+    delay(100);
+
+    // Spannung sicherheitshalber setzen und wieder einschalten
+    instance.pmu.setDLDO1Voltage(3300);
+    instance.pmu.enableDLDO1();
+
+    delay(200);  // Warten auf Chip-Boot
+
+    if (instance.begin()) {
+      Serial.println("handle_button_emergency_reset Touch recovered!");
+    }
+  }
 }

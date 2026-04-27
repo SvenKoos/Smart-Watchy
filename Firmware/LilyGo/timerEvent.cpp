@@ -43,7 +43,7 @@ void timerBrightness_cb(void *arg) {
   guiState = DARK_STATE;
 }
 
-void timerEventBrightness(void) {
+void timerEventBrightness(uint seconds) {
   const esp_timer_create_args_t brightness_timer_args = {
     .callback = &timerBrightness_cb,
     .arg = (void *)brightness_timer,
@@ -52,17 +52,17 @@ void timerEventBrightness(void) {
 
   esp_timer_create(&brightness_timer_args, &brightness_timer);
 
-  startBrightnessTimer();
+  startBrightnessTimer(seconds);
 }
 
-void startBrightnessTimer() {
+void startBrightnessTimer(uint seconds) {
   // Falls der Timer bereits läuft, stoppen wir ihn erst,
   // um ihn mit neuen 10 Sekunden frisch zu starten.
   if (esp_timer_is_active(brightness_timer)) {
     esp_timer_stop(brightness_timer);
   }
 
-  esp_timer_start_once(brightness_timer, 15 * 1000000);  // 15 sec
+  esp_timer_start_once(brightness_timer, seconds * 1000000);  // 15 sec
 
   Serial.println("startBrightnessTimer Start");
 }

@@ -21,11 +21,11 @@
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-void timerEventWatchface(void);
-void timerEventBrightness(void);
+void timerEventWatchface();
+void timerEventBrightness(uint seconds);
 static void timerBrightness_cb(void* arg);
-static void timerWatchface_cb(void *arg);
-void startBrightnessTimer();
+static void timerWatchface_cb(void* arg);
+void startBrightnessTimer(uint seconds);
 void stopBrightnessTimer();
 void displayWakup();
 void displayGoToSleep();

@@ -15,7 +15,6 @@
 #include "locationData.h"
 #include "config.h"
 #include "settings.h"
-#include "syncNTP.h"
 
 RTC_DATA_ATTR int locationIntervalCounter = -1;
 extern locationData currentLocation;

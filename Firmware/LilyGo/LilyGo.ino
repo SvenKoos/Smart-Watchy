@@ -79,6 +79,7 @@ void setup() {
   instance.sensor.configAccelerometer();
   instance.sensor.enableAccelerometer();
   instance.sensor.enablePedometer();
+  setupAccellData();
   Serial.println("setup Accelerometer initialized");
 
   //Enable or Disable PMU Feature
@@ -105,10 +106,6 @@ void setup() {
   displayWakup();
   Serial.println("setup Brightness set to Max");
 
-  // setup NTP time sync
-  Serial.println("setup NTP sync setup");
-  setupNTPSync();
-
   // initial operation:
   // get the data initially
   Serial.println("setup Collect data");
@@ -125,7 +122,7 @@ void setup() {
   timerEventWatchface();
 
   // start timer for minimal brightness
-  timerEventBrightness();
+  timerEventBrightness(10);
 
   // CPU clock
   setCpuFrequencyMhz(80);

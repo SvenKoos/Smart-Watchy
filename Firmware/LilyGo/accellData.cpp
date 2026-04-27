@@ -9,6 +9,7 @@
 #include <Time.h>
 #include <TimeLib.h>
 #include <esp_sntp.h>
+#include <SensorBMA423.hpp>
 
 #include "config.h"
 #include "dataCollection.h"
@@ -51,4 +52,29 @@ accellData getAccellData() {
 
 void resetAccellData() {
   instance.sensor.resetPedometer();
+}
+
+void setupAccellData() {
+  // Default 4G ,200HZ
+  instance.sensor.configAccelerometer();
+  instance.sensor.enableAccelerometer();
+  instance.sensor.enablePedometer();
+
+  instance.sensor.configInterrupt();
+
+  // NUR die Features aktivieren, die wir wirklich wollen.
+  // FEATURE_WAKEUP ist bei LilyGo oft das Synonym für Double Tap.
+  // Wir entfernen: ANY_MOTION, NO_MOTION, ACTIVITY und TILT.
+  instance.sensor.enableFeature(SensorBMA423::FEATURE_STEP_CNTR | SensorBMA423::FEATURE_WAKEUP,
+                       true);
+
+  // INTERRUPTS: Hier entscheiden wir, was den ESP32-S3 wecken darf.
+  // Wir schalten die "Dauerfeuer"-Interrupts aus:
+  instance.sensor.disablePedometerIRQ();    // Schritte werden intern trotzdem gezählt
+  instance.sensor.disableTiltIRQ();         // Kein Wecken beim Armdrehen
+  instance.sensor.disableActivityIRQ();     // Kein Wecken bei Gehen/Laufen-Wechsel
+  instance.sensor.disableAnyNoMotionIRQ();  // DAS spart den meisten Strom unterwegs!
+
+  // Nur Wakeup (Double Tap) darf den Hardware-Pin triggern
+  instance.sensor.enableWakeupIRQ();
 }

@@ -63,9 +63,14 @@ weatherData getWeatherData(String cityID, String units, String lang, String url,
 				currentWeather.weatherDescription[sizeof(currentWeather.weatherDescription) - 1] = '\0';
 			}
 
+			const char* icon = (const char*)responseObject["weather"][0]["icon"];
+			if (icon != nullptr) {
+				strncpy(currentWeather.weatherIcon, icon, sizeof(currentWeather.weatherIcon) - 1);
+				currentWeather.weatherIcon[sizeof(currentWeather.weatherIcon) - 1] = '\0';
+			}
+
 			// sync NTP during weather API call and use timezone of city
-			// Problem
-			// syncNTP(long(responseObject["timezone"]), settings.ntpServer.c_str());
+			syncNTP(long(responseObject["timezone"]), settings.ntpServer.c_str());
 
 			const char* name = (const char*)responseObject["name"];
 			if (name != nullptr) {
@@ -79,7 +84,7 @@ weatherData getWeatherData(String cityID, String units, String lang, String url,
 
 			currentWeather.offset = long(responseObject["timezone"]);
 
-      Serial.print("getWeatherData Weather: "); Serial.println(currentWeather.weatherDescription);
+      Serial.print("getWeatherData Weather: "); Serial.print(currentWeather.weatherIcon); Serial.println(currentWeather.weatherDescription);
 		} else {
 			// http error
 			currentWeather.code = CODE_HTTP_ERROR;
@@ -143,6 +148,12 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 				currentWeather.weatherDescription[sizeof(currentWeather.weatherDescription) - 1] = '\0';
 			}
 
+			const char* icon = (const char*)responseObject["weather"][0]["icon"];
+			if (icon != nullptr) {
+				strncpy(currentWeather.weatherIcon, icon, sizeof(currentWeather.weatherIcon) - 1);
+				currentWeather.weatherIcon[sizeof(currentWeather.weatherIcon) - 1] = '\0';
+			}
+
 			const char* name = (const char*)responseObject["name"];
 			if (name != nullptr) {
 				strncpy(currentWeather.name, name, sizeof(currentWeather.name) - 1);
@@ -150,8 +161,7 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 			}
 
 			// sync NTP during weather API call and use timezone of city
-			// Problem
-			// syncNTP(long(responseObject["timezone"]), settings.ntpServer.c_str());
+			syncNTP(long(responseObject["timezone"]), settings.ntpServer.c_str());
 
 			currentWeather.offset = long(responseObject["timezone"]);
 
@@ -159,7 +169,7 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 			strncpy(currentWeather.name, cityString.c_str(), sizeof(currentWeather.name) - 1);
 			currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
 
-      Serial.print("getWeatherDataByLocation Weather: "); Serial.println(currentWeather.weatherDescription);
+      Serial.print("getWeatherData Weather: "); Serial.print(currentWeather.weatherIcon); Serial.println(currentWeather.weatherDescription);
 		} else {
 			// http error
 			currentWeather.code = CODE_HTTP_ERROR;

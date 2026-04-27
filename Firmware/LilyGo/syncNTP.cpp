@@ -9,10 +9,13 @@
 #include <Time.h>
 #include <TimeLib.h>
 #include <esp_sntp.h>
+#include <WiFiUdp.h>
 
 #include "syncNTP.h"
 
-bool syncNTP(long gmt, const char *ntpServer) {
+WiFiUDP ntpUDP;
+
+void syncNTP(long gmt, const char *ntpServer) {
   struct tm hwTimeinfo;
 
   Serial.println("syncNTP Start");
@@ -22,29 +25,36 @@ bool syncNTP(long gmt, const char *ntpServer) {
   Serial.print("syncNTP hardware clock:");
   Serial.println(&hwTimeinfo, "%A, %B %d %Y %H:%M:%S");
 
-  Serial.print("syncNTP uses ntpServer ");
-  Serial.println(ntpServer);
-  configTime(gmt, 0, ntpServer);
-  Serial.println("syncNTP synchronising time");
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("syncNTP uses ntpServer ");
+    Serial.println(ntpServer);
+
+    // NTPClient(udp, server, offset_in_seconds, update_interval_in_ms)
+    NTPClient timeClient(ntpUDP, ntpServer, gmt);  // 3600 = GMT+1
+
+    timeClient.begin();
+    if (timeClient.update()) {
+      Serial.println("NTP Sync erfolgreich!");
+      unsigned long epochTime = timeClient.getEpochTime();
+
+      // Jetzt die interne ESP32-Zeit (RTC) setzen
+      struct timeval tv;
+      tv.tv_sec = epochTime;
+      tv.tv_usec = 0;
+      settimeofday(&tv, NULL);
+
+      // OPTIONAL: Falls du eine externe Hardware-RTC nutzt (wie den BM8563 auf der Watch)
+      // instance.rtc.setDateTime(timeClient.getFormattedTime());
+    }
+    timeClient.end();
+  }
 
   // system clock
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo)) {
     Serial.println("syncNTP No time available (yet)");
   } else {
-    Serial.print("syncNTP system clock:");
+    Serial.print("syncNTP system clock: ");
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
   }
-}
-
-void setupNTPSync() {
-  sntp_set_time_sync_notification_cb(timeavailable);
-}
-
-// Callback function (get's called when time adjusts via NTP)
-void timeavailable(struct timeval *t) {
-  Serial.println("syncNTP got time adjustment from NTP, write the hardware clock");
-
-  // Write synchronization time to hardware
-  instance.rtc.hwClockWrite();
 }
