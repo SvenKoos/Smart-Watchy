@@ -16,6 +16,37 @@
 
 extern powerData currentPower;
 
+void setupPowerMgt() {
+  // Clear all interrupt status
+  instance.pmu.clearIrqStatus();
+
+  // Enable the required interrupt function
+  instance.pmu.enableIRQ(
+    XPOWERS_AXP2101_BAT_INSERT_IRQ | XPOWERS_AXP2101_BAT_REMOVE_IRQ |     // BATTERY
+    XPOWERS_AXP2101_VBUS_INSERT_IRQ | XPOWERS_AXP2101_VBUS_REMOVE_IRQ |   // VBUS
+    XPOWERS_AXP2101_PKEY_SHORT_IRQ | XPOWERS_AXP2101_PKEY_LONG_IRQ |      // POWER KEY
+    XPOWERS_AXP2101_BAT_CHG_DONE_IRQ | XPOWERS_AXP2101_BAT_CHG_START_IRQ  // CHARGE
+  );
+
+  //Enable or Disable PMU Feature
+  instance.pmu.enableBattDetection();
+  instance.pmu.enableVbusVoltageMeasure();
+  instance.pmu.enableBattVoltageMeasure();
+  instance.pmu.enableSystemVoltageMeasure();
+
+  instance.pmu.disableDC3();   // GPS aus
+  instance.pmu.disableBLDO1();  // GPS aus
+  instance.pmu.disableALDO4();  // Radio (Falls du nur BLE nutzt, prüfe ob das nötig ist. Oft ist das die Versorgung für externe Funkmodule)  
+
+  // CPU clock
+  setCpuFrequencyMhz(80);
+
+  // alle Kommunikationskanäle stoppen
+  btStop();
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+}
+
 powerData getPowerData() {
   Serial.println("getPowerData Start");
 
@@ -32,4 +63,12 @@ powerData getPowerData() {
   Serial.print("getPowerData Battery Percent: "); Serial.println(currentPower.batteryPercent, DEC);
 
   return currentPower;
+}
+
+void verifyPowerMgt() {
+  Serial.printf("DC3 Enabled: %s\n", instance.pmu.isEnableDC3() ? "YES" : "NO");
+  Serial.printf("BLDO1 Enabled: %s\n", instance.pmu.isEnableBLDO1() ? "YES" : "NO");
+  Serial.printf("ALDO4 Enabled: %s\n", instance.pmu.isEnableALDO4() ? "YES" : "NO");
+  uint32_t freq = getCpuFrequencyMhz();
+  Serial.printf("CPU Frequency: %u MHz\n", freq);
 }

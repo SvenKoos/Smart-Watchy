@@ -17,7 +17,6 @@
 /**********************
  *      TYPEDEFS
  **********************/
-
 typedef struct accellData {
   uint32_t stepCounter;
   int16_t xAccell;

@@ -36,7 +36,6 @@ void timerBrightness_cb(void *arg) {
   Serial.println("timerBrightness_cb Start");
   // Set brightness to MIN
   // T-Watch-S3 , T-Watch-S3-Plus , T-Watch-Ultra brightness level is 0 ~ 255
-  // instance.setBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
   displayGoToSleep();
 
   // GUI state
@@ -82,7 +81,7 @@ void displayWakup() {
   // 2. WICHTIG: Wartezeit für die Ladungspumpen des Displays
   // Laut MIPI-Spezifikation sind 120ms sicher, oft reichen 5-20ms.
   // delay(120);
-/*
+  /*
   // 3. LVGL Re-Aktivieren
   lv_display_t *disp = lv_display_get_default();
   if (disp) {
@@ -92,6 +91,9 @@ void displayWakup() {
     lv_display_trigger_activity(disp);
   }
 */
+  instance.pmu.enableALDO2();  // Erst Strom an...
+  delay(5);                    // Ganz kurzes Warten für stabile Spannung
+  
   // 4. Licht wieder an
   instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
 }
@@ -99,7 +101,9 @@ void displayWakup() {
 void displayGoToSleep() {
   // 1. Licht aus (Soforteffekt)
   instance.setBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
-/*
+
+  instance.pmu.disableALDO2();  // Schaltet die Stromversorgung der LEDs physisch ab
+  /*
   // 2. LVGL-Rendering für dieses Display stoppen
   lv_display_t *disp = lv_display_get_default();
   if (disp) {

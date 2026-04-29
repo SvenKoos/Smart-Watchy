@@ -1,11 +1,3 @@
-/**
- * @file      event.ino
- * @author    Lewis He (lewishe@outlook.com)
- * @license   MIT
- * @copyright Copyright (c) 2023  Shenzhen Xinyuan Electronic Technology Co., Ltd
- * @date      2023-04-30
- *
- */
 #include <LilyGoLib.h>
 #include <LV_Helper.h>
 #include <WiFi.h>
@@ -63,46 +55,22 @@ void setup() {
   settings = setSetting();
   Serial.println("setup Settings loaded");
 
-  // Clear all interrupt status
-  instance.pmu.clearIrqStatus();
-  // Enable the required interrupt function
-  instance.pmu.enableIRQ(
-    XPOWERS_AXP2101_BAT_INSERT_IRQ | XPOWERS_AXP2101_BAT_REMOVE_IRQ |     // BATTERY
-    XPOWERS_AXP2101_VBUS_INSERT_IRQ | XPOWERS_AXP2101_VBUS_REMOVE_IRQ |   // VBUS
-    XPOWERS_AXP2101_PKEY_SHORT_IRQ | XPOWERS_AXP2101_PKEY_LONG_IRQ |      // POWER KEY
-    XPOWERS_AXP2101_BAT_CHG_DONE_IRQ | XPOWERS_AXP2101_BAT_CHG_START_IRQ  // CHARGE
-  );
-  Serial.println("setup Interrupts initialized");
-
   // Accelerator
-  // Default 4G ,200HZ
-  instance.sensor.configAccelerometer();
-  instance.sensor.enableAccelerometer();
-  instance.sensor.enablePedometer();
   setupAccellData();
-  Serial.println("setup Accelerometer initialized");
-
-  //Enable or Disable PMU Feature
-  instance.pmu.enableBattDetection();
-  // instance.disableBattDetection();
-  instance.pmu.enableVbusVoltageMeasure();
-  // instance.disableVbusVoltageMeasure();
-  instance.pmu.enableBattVoltageMeasure();
-  // instance.disableBattVoltageMeasure();
-  instance.pmu.enableSystemVoltageMeasure();
-  // instance.disableSystemVoltageMeasure();
-  Serial.println("setup PMU feature enabled");
+  Serial.println("setup Accelerometer");
 
   // Register power event
-  // instance.onEvent(device_event_cb, POWER_EVENT, NULL);
   // Register sensor event
-  instance.onEvent(device_event_cb);
+  setupDeviceEvent();
   Serial.println("setup Power events registered");
+
+  // setup power management
+  setupPowerMgt();
+  Serial.println("setup power management");
 
   // Set brightness to MAX
   // T-LoRa-Pager brightness level is 0 ~ 16
   // T-Watch-S3 , T-Watch-S3-Plus , T-Watch-Ultra brightness level is 0 ~ 255
-  // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
   displayWakup();
   Serial.println("setup Brightness set to Max");
 
@@ -123,9 +91,6 @@ void setup() {
 
   // start timer for minimal brightness
   timerEventBrightness(10);
-
-  // CPU clock
-  setCpuFrequencyMhz(80);
 }
 
 void loop() {
@@ -144,6 +109,9 @@ void loop() {
 
     // get the data
     collectData();
+
+    // verify power mgt setup
+    verifyPowerMgt();
 
     if (guiState == WATCHFACE_STATE) {
       // draw watch face

@@ -29,26 +29,17 @@ static lv_style_t styleLarge;
 
 void watchFaceSetup() {
   // styles
-  // Set to built-in UNSCII 8
+  // Set to built-in SMALL
   lv_style_init(&styleSmall);
-  // lv_style_set_text_font(&styleUNSCII8, &lv_font_unscii_8);
   lv_style_set_text_font(&styleSmall, &lv_font_montserrat_24);
-  // lv_style_set_bg_opa(&styleUNSCII8, LV_OPA_TRANSP);
-  // lv_style_set_text_color(&styleUNSCII8, lv_color_black());
   lv_style_set_border_width(&styleSmall, 0);
-  // Set to built-in UNSCII 16
+  // Set to built-in MEDIUM
   lv_style_init(&styleMedium);
-  // lv_style_set_text_font(&styleUNSCII16, &lv_font_unscii_16);
   lv_style_set_text_font(&styleMedium, &lv_font_montserrat_36);
-  // lv_style_set_bg_opa(&styleUNSCII16, LV_OPA_TRANSP);
-  // lv_style_set_text_color(&styleUNSCII16, lv_color_black());
   lv_style_set_border_width(&styleMedium, 0);
-  // Set to built-in UNSCII 24
+  // Set to built-in LARGE
   lv_style_init(&styleLarge);
-  // lv_style_set_text_font(&styleUNSCII24, &lv_font_montserrat_24);
   lv_style_set_text_font(&styleLarge, &lv_font_montserrat_48);
-  // lv_style_set_bg_opa(&styleUNSCII24, LV_OPA_TRANSP);
-  // lv_style_set_text_color(&styleUNSCII24, lv_color_black());
   lv_style_set_border_width(&styleLarge, 0);
 
   // weather
@@ -78,18 +69,10 @@ void drawWatchFace() {
   // display
   // 1. Get the current display
   display = lv_display_get_default();
-  // 2. Set display to ARGB8888 for alpha support
-  // lv_display_set_color_format(display, LV_COLOR_FORMAT_ARGB8888);
-  // 3. Set background opacity to transparent - not supported
-  // lv_display_set_bg_opa(display, LV_OPA_TRANSP);
 
   // screen
   // get active screen
   screen = lv_screen_active();
-  // 4. Set current screen to transparent
-  // lv_obj_set_style_bg_opa(screen, LV_OPA_TRANSP, LV_PART_MAIN);
-  // Change the active screen's background and text color - no impact
-  // lv_obj_set_style_text_color(screen, lv_color_black(), LV_PART_MAIN);
   // Remove borders
   lv_obj_set_style_border_width(screen, 0, LV_PART_MAIN);
   // Den aktuell aktiven Bildschirm weiß färben
@@ -102,10 +85,6 @@ void drawWatchFace() {
   lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
   // Inhalt des Screens löschen
   lv_obj_clean(screen);
-
-  // bottom layer
-  // Make Bottom Layer Transparent
-  // lv_obj_set_style_bg_opa(lv_layer_bottom(), LV_OPA_TRANSP, LV_PART_MAIN);
 
   drawTime();
 

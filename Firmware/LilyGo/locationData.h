@@ -17,7 +17,6 @@
 /**********************
  *      TYPEDEFS
  **********************/
-
 typedef struct locationData {
   double latitude;
   double longitude;

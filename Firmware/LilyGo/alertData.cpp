@@ -143,11 +143,7 @@ void vibMotor() {
   instance.drv.setMode(SensorDRV2605::MODE_INTTRIG);
   instance.drv.useERM();
   // set wave
-/*
-  instance.drv.setWaveform(0, 47);  // slot: 0...7, effect: 1...123
-  instance.drv.setWaveform(1, 0);  // effect 0: finish
-*/
-// Wir nutzen "Sharp Tick" (ID 4) oder "Strong Buzz" (ID 47)
+  // Wir nutzen "Sharp Tick" (ID 4) oder "Strong Buzz" (ID 47)
   // Aber wir lassen die Pausen (134) weg, um die Trägheit zu überwinden
   instance.drv.setWaveform(0, 47); // Buzz 100% (lang)
   instance.drv.setWaveform(1, 47); // Direkt nochmal ohne Pause

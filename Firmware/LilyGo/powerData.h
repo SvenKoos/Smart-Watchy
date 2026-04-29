@@ -33,6 +33,8 @@ typedef struct powerData {
  * GLOBAL PROTOTYPES
  **********************/
 powerData getPowerData();
+void setupPowerMgt();
+void verifyPowerMgt();
 
 /**********************
  *      MACROS

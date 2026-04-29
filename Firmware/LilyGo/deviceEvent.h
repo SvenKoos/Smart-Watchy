@@ -26,6 +26,7 @@ void alertEventCB(lv_event_t * e);
 lv_obj_t* prepareAlertScreen();
 void showAlert(singleAlert alert, int index, int count);
 void handle_button_emergency_reset();
+void setupDeviceEvent();
 
 /**********************
  *      MACROS

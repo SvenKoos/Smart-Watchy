@@ -108,7 +108,6 @@ bool connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
   return WIFI_CONFIGURED;
 }
 
-// SvKo added
 void disconnectWifi() {
   Serial.println("disconnectWifi Start");
 

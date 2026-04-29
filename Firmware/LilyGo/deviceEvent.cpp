@@ -28,6 +28,10 @@ lv_obj_t* labelBody;
 
 uint32_t last_gesture_time = 0;
 
+void setupDeviceEvent() {
+  instance.onEvent(device_event_cb);
+}
+
 void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
   if (event == POWER_EVENT) {
     switch (instance.getPMUEventType(params)) {
@@ -53,7 +57,6 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         Serial.println("Power button is clicked");
 
         // set brightness
-        // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
         displayWakup();
         startBrightnessTimer(10);
 
@@ -97,7 +100,7 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         // Serial.println("Battery charging finish");
         break;
       case PMU_EVENT_BAT_FET_OVER_CURRENT:
-        Serial.println("Battery FET over-current detected");
+        // Serial.println("Battery FET over-current detected");
         break;
       default:
         break;
@@ -109,16 +112,15 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         Serial.printf("Step count interrupt,step Counter:%u\n", stepCounter);
         break;
       case SENSOR_ACTIVITY_DETECTED:
-        Serial.println("Activity event");
+        // Serial.println("Activity event");
         break;
       case SENSOR_TILT_DETECTED:
-        Serial.println("Tilt event");
+        // Serial.println("Tilt event");
         break;
       case SENSOR_DOUBLE_TAP_DETECTED:
         Serial.println("DoubleTap event");
 
         // set brightness
-        // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
         displayWakup();
         startBrightnessTimer(10);
 
@@ -153,7 +155,7 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
         }
         break;
       case SENSOR_ANY_MOTION_DETECTED:
-        Serial.println("Any motion / no motion event");
+        // Serial.println("Any motion / no motion event");
         break;
       default:
         break;
@@ -163,7 +165,6 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
 
 void alertEventCB(lv_event_t* e) {
   // set brightness
-  // instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
   displayWakup();
   startBrightnessTimer(10);
 
@@ -212,7 +213,6 @@ lv_obj_t* prepareAlertScreen() {
 
   // 2. Scroll-Verhalten aktivieren
   // Wir erlauben vertikales Scrollen, schalten aber horizontales aus
-  // lv_obj_set_scroll_dir(alert_scr, LV_SCROLL_DIR_VER); - not supported
   lv_obj_add_flag(alert_scr, LV_OBJ_FLAG_SCROLLABLE);
 
   // Scrollbalken dezent anzeigen (nur während des Scrollens)
@@ -225,8 +225,6 @@ lv_obj_t* prepareAlertScreen() {
   // style
   lv_style_init(&styleAlerts);
   lv_style_set_text_font(&styleAlerts, &lv_font_montserrat_18);
-  // lv_style_set_bg_opa(&styleAlerts, LV_OPA_TRANSP);
-  // lv_style_set_text_color(&styleAlerts, lv_color_black());
   lv_style_set_border_width(&styleAlerts, 0);
 
   // timestamp
