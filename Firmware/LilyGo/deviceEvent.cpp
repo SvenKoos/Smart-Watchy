@@ -23,8 +23,7 @@ lv_style_t styleAlerts;
 lv_obj_t* labelTimestamp;
 lv_obj_t* labelIndex;
 lv_obj_t* labelApp;
-lv_obj_t* labelTitle;
-lv_obj_t* labelBody;
+lv_obj_t* labelTitleBody;
 
 uint32_t last_gesture_time = 0;
 
@@ -243,21 +242,14 @@ lv_obj_t* prepareAlertScreen() {
   lv_obj_add_style(labelApp, &styleAlerts, LV_PART_MAIN);
   lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 5, 30);
 
-  // title
-  labelTitle = lv_label_create(alert_scr);
-  lv_obj_add_style(labelTitle, &styleAlerts, LV_PART_MAIN);
-  lv_label_set_long_mode(labelTitle, LV_LABEL_LONG_WRAP);
-  lv_obj_set_width(labelTitle, lv_pct(95));  // 90% der Screenbreite nutzen
-  lv_obj_align(labelTitle, LV_ALIGN_TOP_LEFT, 5, 55);
-
-  // body
-  labelBody = lv_label_create(alert_scr);
-  lv_obj_add_style(labelBody, &styleAlerts, LV_PART_MAIN);
+  // title + body
+  labelTitleBody = lv_label_create(alert_scr);
+  lv_obj_add_style(labelTitleBody, &styleAlerts, LV_PART_MAIN);
   // WICHTIG: Long Mode auf WRAP setzen, damit der Text in die Breite passt
   // und stattdessen die Höhe des Objekts wächst
-  lv_label_set_long_mode(labelBody, LV_LABEL_LONG_WRAP);
-  lv_obj_set_width(labelBody, lv_pct(95));  // 90% der Screenbreite nutzen
-  lv_obj_align(labelBody, LV_ALIGN_TOP_LEFT, 5, 125);
+  lv_label_set_long_mode(labelTitleBody, LV_LABEL_LONG_WRAP);
+  lv_obj_set_width(labelTitleBody, lv_pct(95));  // 90% der Screenbreite nutzen
+  lv_obj_align(labelTitleBody, LV_ALIGN_TOP_LEFT, 5, 55);
 
   last_gesture_time = 0;
 
@@ -265,15 +257,19 @@ lv_obj_t* prepareAlertScreen() {
 }
 
 void showAlert(singleAlert alert, int index, int count) {
+  char text[TITLE_LEN + BODY_LEN] = "";
+
   lv_label_set_text_fmt(labelTimestamp, "%.16s", alert.timeStamp);
 
   lv_label_set_text_fmt(labelIndex, "%d / %d", index + 1, count);
 
   lv_label_set_text(labelApp, alert.appName);
 
-  lv_label_set_text(labelTitle, alert.title);
-
-  lv_label_set_text(labelBody, alert.body);
+  // lv_label_set_text(labelTitle, alert.title);
+  strcpy(text, alert.title);
+  strcat(text, "\n");
+  strcat(text, alert.body);
+  lv_label_set_text(labelTitleBody, text);
 }
 
 void handle_button_emergency_reset() {

@@ -6,9 +6,11 @@
 #include "watchFace.h"
 #include "dataCollection.h"
 #include "config.h"
+#include "weatherData.h"
 
 extern bool update_gui_request;
 extern int guiState;
+extern weatherData currentWeather;
 
 esp_timer_handle_t brightness_timer;
 esp_timer_handle_t minute_timer;
@@ -93,9 +95,14 @@ void displayWakup() {
 */
   instance.pmu.enableALDO2();  // Erst Strom an...
   delay(5);                    // Ganz kurzes Warten für stabile Spannung
-  
+
   // 4. Licht wieder an
-  instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
+  uint brightness = DEVICE_MAX_BRIGHTNESS_LEVEL;
+  if (currentWeather.weatherIcon[2] == 'd')
+    brightness = 150;
+  else if (currentWeather.weatherIcon[2] == 'n')
+    brightness = 100;
+  instance.setBrightness(brightness);
 }
 
 void displayGoToSleep() {

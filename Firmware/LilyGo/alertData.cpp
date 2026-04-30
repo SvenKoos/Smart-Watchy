@@ -15,11 +15,14 @@
 #include "config.h"
 #include "settings.h"
 #include "powerData.h"
+#include "timerEvent.h"
+#include "deviceEvent.h"
 
 extern alertData currentAlerts;
 extern singleAlert allAlerts[ALERT_MAX_NO];
-
 extern powerData currentPower;
+extern int guiState;
+
 
 alertData getAlertData(const String gatewayIP, const String macAdress) {
   JSONVar alerts;
@@ -117,12 +120,30 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
         if (currentPower.batteryPercent > 10) {
           vibMotor();
         }
+        if (guiState == DARK_STATE) {
+          // set brightness
+          displayWakup();
+          startBrightnessTimer(5);
+
+          // GUI state
+          guiState = ALERT_STATE;
+
+          // prepare the  screen object
+          prepareAlertScreen();
+
+          // show the alert
+          int alertIndex = currentAlerts.count - 1;
+          showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
+        }
       }
     }
 
-    Serial.print("getAlertData No. of alerts: "); Serial.print(currentAlerts.count, DEC);
-    Serial.print(" Min. ID: "); Serial.print(newMin, DEC);
-    Serial.print(" Max. ID: "); Serial.println(newMax, DEC);
+    Serial.print("getAlertData No. of alerts: ");
+    Serial.print(currentAlerts.count, DEC);
+    Serial.print(" Min. ID: ");
+    Serial.print(newMin, DEC);
+    Serial.print(" Max. ID: ");
+    Serial.println(newMax, DEC);
   } else {
     // http error
     currentAlerts.code = CODE_HTTP_ERROR;
@@ -145,11 +166,11 @@ void vibMotor() {
   // set wave
   // Wir nutzen "Sharp Tick" (ID 4) oder "Strong Buzz" (ID 47)
   // Aber wir lassen die Pausen (134) weg, um die Trägheit zu überwinden
-  instance.drv.setWaveform(0, 47); // Buzz 100% (lang)
-  instance.drv.setWaveform(1, 47); // Direkt nochmal ohne Pause
-  instance.drv.setWaveform(2, 47); // Und ein drittes Mal
-  instance.drv.setWaveform(3, 12); // Triple Click als "Abschluss-Rüttler"
-  instance.drv.setWaveform(4, 0);  // Ende
+  instance.drv.setWaveform(0, 47);  // Buzz 100% (lang)
+  instance.drv.setWaveform(1, 47);  // Direkt nochmal ohne Pause
+  instance.drv.setWaveform(2, 47);  // Und ein drittes Mal
+  instance.drv.setWaveform(3, 12);  // Triple Click als "Abschluss-Rüttler"
+  instance.drv.setWaveform(4, 0);   // Ende
   // ID Effekt-Name Gefühl
   // 1  Strong Click Kräftiges Bestätigen
   // 7  Soft Bump Dezenter Hinweis
