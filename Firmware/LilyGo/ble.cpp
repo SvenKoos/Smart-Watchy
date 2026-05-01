@@ -20,7 +20,7 @@ extern lilygoSettings settings;
 
 extern bool bleBonded;
 
-const char* bleName = "LilGoUnlock";
+const char* bleName = WIFI_AP_SSID;
 
 void stopBLE() {
   Serial.println("stopBLE deinit BLE");

@@ -6,7 +6,7 @@
 #define DISPLAY_HEIGHT 200
 // wifi
 #define WIFI_AP_TIMEOUT 60
-#define WIFI_AP_SSID    "LilyGo AP"
+#define WIFI_AP_SSID    "LilyGo"
 // menu
 #define DARK_STATE 0
 #define WATCHFACE_STATE 1

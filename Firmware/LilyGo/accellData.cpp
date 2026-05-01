@@ -9,7 +9,6 @@
 #include <Time.h>
 #include <TimeLib.h>
 #include <esp_sntp.h>
-#include <SensorBMA423.hpp>
 
 #include "config.h"
 #include "dataCollection.h"

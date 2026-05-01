@@ -9,6 +9,7 @@
 #include "config.h"
 #include "watchFace.h"
 #include "timerEvent.h"
+#include "menuHandler.h"
 
 extern uint32_t stepCounter;
 extern alertData currentAlerts;
@@ -61,14 +62,17 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
 
         handle_button_emergency_reset();
 
-        guiState = WATCHFACE_STATE;
-        currentAccelleration.isMoved = true;
-        drawWatchFace();
+        if (guiState == DARK_STATE) {
+          guiState = WATCHFACE_STATE;
+          currentAccelleration.isMoved = true;
+          drawWatchFace();
+        } else if (guiState == WATCHFACE_STATE) {
+          // GUI state
+          guiState = MENU_STATE;
 
-        // GUI state
-        // guiState = MENU_STATE;
-
-        // call the menu
+          // call the menu
+          menuHandler();
+        }
 
         break;
       case PMU_EVENT_KEY_LONG_PRESSED:

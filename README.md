@@ -71,3 +71,8 @@ Working with WiFi and BLE in parallel and constant way (for BLE) on ESP32 create
 Location discovery: If mobile device is in roaming zone, IP address is still received from home mobile service provider, which results in home weather report on watch face.
 
 Quiet mode: Exit by pressing the left up button.
+
+# Smart Watchy goes LilyGo
+The Smart Watchy firmware is now available on LilyGo.
+It is compatible with the existing companion mobile app for Android.
+The firmware directory contains appropriate directories for both versions.
