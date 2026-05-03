@@ -33,8 +33,6 @@
 void collectData(void);
 bool connectWiFi(String &hostIP, String &gatewayIP, String &macAdress);
 void disconnectWifi();
-bool setupWifi();
-void configModeCallback(WiFiManager *myWiFiManager);
 
 /**********************
  *      MACROS

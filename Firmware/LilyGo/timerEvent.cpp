@@ -15,7 +15,7 @@ extern weatherData currentWeather;
 esp_timer_handle_t brightness_timer;
 esp_timer_handle_t minute_timer;
 
-void timerWatchface_cb(void *arg) {
+static void timerWatchface_cb(void *arg) {
   Serial.println("timerWatchface_cb Start");
 
   update_gui_request = true;
@@ -34,7 +34,7 @@ void timerEventWatchface(void) {
   }
 }
 
-void timerBrightness_cb(void *arg) {
+static void timerBrightness_cb(void *arg) {
   Serial.println("timerBrightness_cb Start");
   // Set brightness to MIN
   // T-Watch-S3 , T-Watch-S3-Plus , T-Watch-Ultra brightness level is 0 ~ 255

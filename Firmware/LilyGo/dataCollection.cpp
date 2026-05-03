@@ -116,28 +116,3 @@ void disconnectWifi() {
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
 }
-
-bool setupWifi() {
-  WiFiManager wifiManager;
-  wifiManager.resetSettings();
-  wifiManager.setTimeout(WIFI_AP_TIMEOUT);
-  wifiManager.setAPCallback(configModeCallback);
-
-  if (!wifiManager.autoConnect(WIFI_AP_SSID)) {
-    // WiFi setup failed
-    return false;
-  } else {
-    settings.wifiApSSID = String(WiFi.SSID());
-    return true;
-  }
-}
-
-void configModeCallback(WiFiManager *myWiFiManager) {
-/*
-  display.println("Connect to");
-  display.print("SSID: ");
-  display.println(WIFI_AP_SSID);
-  display.print("IP: ");
-  display.println(WiFi.softAPIP());
-*/
-}

@@ -32,7 +32,7 @@ void setupDeviceEvent() {
   instance.onEvent(device_event_cb);
 }
 
-void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
+static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
   if (event == POWER_EVENT) {
     switch (instance.getPMUEventType(params)) {
       case PMU_EVENT_BATTERY_LOW_TEMP:
@@ -166,7 +166,7 @@ void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
   }
 }
 
-void alertEventCB(lv_event_t* e) {
+static void alertEventCB(lv_event_t* e) {
   // set brightness
   displayWakup();
   startBrightnessTimer(10);
@@ -276,7 +276,7 @@ void showAlert(singleAlert alert, int index, int count) {
   lv_label_set_text(labelTitleBody, text);
 }
 
-void handle_button_emergency_reset() {
+static void handle_button_emergency_reset() {
   // 1. Check: Reagiert der Touch auf I2C?
   Wire.beginTransmission(0x38);
   if (Wire.endTransmission() != 0) {
