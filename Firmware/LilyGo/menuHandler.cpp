@@ -22,6 +22,8 @@ static void back_event_handler(lv_event_t *e) {
   lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
   lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
 
+  Serial.println("Back pressed");
+
   if (lv_menu_back_button_is_root(menu, obj)) {
     startBrightnessTimer(10);
 
@@ -40,11 +42,16 @@ static void eventFunction1CB(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
 
   // 2. Den Code prüfen
-  if (code == LV_EVENT_PRESSED) {
+  if (code == LV_EVENT_CLICKED) {
     Serial.println("About Pressed");
 
     startBrightnessTimer(10);
   }
+}
+
+static void start_wifi_manager_timer_cb(lv_timer_t *t) {
+  // Diese Funktion wird erst aufgerufen, wenn LVGL mit dem Seitenwechsel fertig ist
+  setupWifi();
 }
 
 // sub 2: Wifi
@@ -56,17 +63,20 @@ static void eventFunction2CB(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
 
   // 2. Den Code prüfen
-  if (code == LV_EVENT_PRESSED) {
+  if (code == LV_EVENT_CLICKED) {
     Serial.println("WiFi Pressed");
 
-    startBrightnessTimer(10);
+    startBrightnessTimer(WIFI_AP_TIMEOUT + 10);
 
-    setupWifi();
+    lv_timer_t *timer = lv_timer_create(start_wifi_manager_timer_cb, 100, NULL);
+    lv_timer_set_repeat_count(timer, 1);
   }
 }
 
 // sub 2: Configure WiFi page
 static lv_obj_t *sub2Function(lv_obj_t *menu) {
+  Serial.println("Sub2 function started");
+
   // spinner
   lv_timer_handler();
 
@@ -79,9 +89,10 @@ static lv_obj_t *sub2Function(lv_obj_t *menu) {
   lv_obj_set_width(labelWifi, lv_pct(95));
   lv_label_set_long_mode(labelWifi, LV_LABEL_LONG_WRAP);
 
-  char wifiText[128] = "Connect to\nSSID: ";
+  char wifiText[128] = "Configure WiFi:\n - Connect to SSID\n   ";
   strcat(wifiText, WIFI_AP_SSID);
-
+  strcat(wifiText, "\n - Connect to Portal IP\n   192.168.4.1");
+  strcat(wifiText, "\n - Waiting for 60sec.\n - Don't press the Back button!");
   lv_label_set_text(labelWifi, wifiText);
 
   return pageSub;
@@ -89,6 +100,8 @@ static lv_obj_t *sub2Function(lv_obj_t *menu) {
 
 // sub 1: About page
 static lv_obj_t *sub1Function(lv_obj_t *menu) {
+  Serial.println("Sub1 function started");
+
   // spinner
   lv_timer_handler();
 
@@ -108,15 +121,12 @@ static lv_obj_t *sub1Function(lv_obj_t *menu) {
 
   // connect WiFi
   if (connectWiFi(localIP, gatewayIP, macAdress)) {
-    strcpy(aboutText, "Local IP ");
+    strcpy(aboutText, "About Smart Watchy:\n - Local IP\n   ");
     strcat(aboutText, localIP.c_str());
-    strcat(aboutText, "\n");
-    strcat(aboutText, "Router IP ");
+    strcat(aboutText, "\n - Router IP\n   ");
     strcat(aboutText, gatewayIP.c_str());
-    strcat(aboutText, "\n");
-    strcat(aboutText, "WiFi MAC ");
+    strcat(aboutText, "\n - WiFi MAC\n   ");
     strcat(aboutText, macAdress.c_str());
-    strcat(aboutText, "\n");
   } else {
     strcpy(aboutText, "WiFi Not Configured\n");
   }
@@ -130,7 +140,7 @@ static lv_obj_t *sub1Function(lv_obj_t *menu) {
   uint8_t mac[6];
   char bleMAC[128] = "";
   esp_read_mac(mac, ESP_MAC_BT);  // ESP_MAC_BT = BLE MAC
-  snprintf(bleMAC, 128, "BLE MAC %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  snprintf(bleMAC, 128, "\n - BLE MAC\n   %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   strcat(aboutText, bleMAC);
 
   lv_label_set_text(labelAbout, aboutText);
@@ -186,20 +196,40 @@ void menuHandler() {
 }
 
 bool setupWifi() {
+  Serial.println("Setup WiFi started");
+
+  // Hardware-Reset für sauberen AP-Start
+  WiFi.softAPdisconnect(true);
+  WiFi.disconnect();
+  delay(100);
+
   WiFiManager wifiManager;
   wifiManager.resetSettings();
   wifiManager.setTimeout(WIFI_AP_TIMEOUT);
-  wifiManager.setAPCallback(configModeCallback);
+  wifiManager.setConfigPortalBlocking(false);
 
-  char wifiText[128] = "";
-  if (!wifiManager.autoConnect(WIFI_AP_SSID)) {
-    // WiFi setup failed
-    strcpy(wifiText, "Failed to configure WiFi AP: ");
-    strcat(wifiText, WIFI_AP_SSID);
-    lv_label_set_text(labelWifi, wifiText);
+  // Portal starten (kehrt bei non-blocking sofort zurück)
+  wifiManager.startConfigPortal(WIFI_AP_SSID);
+  delay(500);
 
-    return false;
-  } else {
+  // Eigene Schleife, solange das Portal aktiv ist
+  // wifiManager.process() muss regelmäßig aufgerufen werden!
+  while (wifiManager.getConfigPortalActive()) {
+    wifiManager.process();  // Verarbeitet WiFi-Anfragen (Webseite)
+    lv_timer_handler();     // Hält LVGL/Display am Leben
+
+    // Optional: Ein kleines delay entlastet die CPU
+    yield();
+    delay(10);
+
+    // Hier könntest du prüfen, ob der User am Display "Abbrechen" drückt
+  }
+
+  char wifiText[256] = "";
+  // Nachdem das Portal geschlossen wurde (durch Timeout oder Erfolg):
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("WiFi connected");
+
     settings.wifiApSSID = String(WiFi.SSID());
 
     strcpy(wifiText, "Connected to SSID: ");
@@ -207,8 +237,13 @@ bool setupWifi() {
     lv_label_set_text(labelWifi, wifiText);
 
     return true;
-  }
-}
+  } else {
+    Serial.println("WiFi connection failed");
 
-void configModeCallback(WiFiManager *myWiFiManager) {
+    strcpy(wifiText, "Failed to configure WiFi AP: ");
+    strcat(wifiText, WIFI_AP_SSID);
+    lv_label_set_text(labelWifi, wifiText);
+
+    return false;
+  }
 }

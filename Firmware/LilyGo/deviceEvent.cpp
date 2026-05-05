@@ -86,9 +86,23 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
         break;
       case PMU_EVENT_USBC_REMOVE:
         // Serial.println("Power adapter removed");
+        displayWakup();
+        startBrightnessTimer(10);
+
+        // draw the watchface screen
+        guiState = WATCHFACE_STATE;
+        drawWatchFace();
+
         break;
       case PMU_EVENT_USBC_INSERT:
         // Serial.println("Power adapter plugged in");
+        displayWakup();
+        startBrightnessTimer(10);
+
+        // draw the watchface screen
+        guiState = WATCHFACE_STATE;
+        drawWatchFace();
+
         break;
       case PMU_EVENT_BATTERY_OVER_VOLTAGE:
         // Serial.println("Battery over-voltage protection warning");

@@ -28,7 +28,6 @@ static void eventFunction2CB(lv_event_t *e);
 static lv_obj_t *sub1Function(lv_obj_t *menu);
 static lv_obj_t *sub2Function(lv_obj_t *menu);
 bool setupWifi();
-void configModeCallback(WiFiManager *myWiFiManager);
 
 /**********************
  *      MACROS

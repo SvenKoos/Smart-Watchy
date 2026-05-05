@@ -1,9 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-//display
-#define DISPLAY_WIDTH 200
-#define DISPLAY_HEIGHT 200
 // wifi
 #define WIFI_AP_TIMEOUT 60
 #define WIFI_AP_SSID    "LilyGo"
