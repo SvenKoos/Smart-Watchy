@@ -158,7 +158,7 @@ void drawDate() {
     int wday = timeinfo.tm_wday;  // 0–6
     lv_label_set_text(labelDayWeek, weekday_names[wday]);
 
-    lv_obj_align(labelDay, LV_ALIGN_TOP_LEFT, 5, 100);
+    lv_obj_align(labelDay, LV_ALIGN_TOP_RIGHT, -185, 98);
     lv_obj_align(labelMonth, LV_ALIGN_TOP_LEFT, 60, 100);
     lv_obj_align(labelDayWeek, LV_ALIGN_TOP_LEFT, 5, 70);
   }
@@ -216,61 +216,63 @@ void drawWeather() {
   lv_label_set_text(labelLocation, currentLocation.cityShort);
   lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 5, 150);
 
-  lv_obj_t *imgWeather = lv_image_create(screen);
-  if (strcmp(currentWeather.weatherIcon, "01d") == 0)
-    lv_image_set_src(imgWeather, &map01d);
-  else if (strcmp(currentWeather.weatherIcon, "01n") == 0)
-    lv_image_set_src(imgWeather, &map01n);
-  else if (strcmp(currentWeather.weatherIcon, "02d") == 0)
-    lv_image_set_src(imgWeather, &map02d);
-  else if (strcmp(currentWeather.weatherIcon, "02n") == 0)
-    lv_image_set_src(imgWeather, &map02n);
-  else if (strcmp(currentWeather.weatherIcon, "03d") == 0)
-    lv_image_set_src(imgWeather, &map03d);
-  else if (strcmp(currentWeather.weatherIcon, "03n") == 0)
-    lv_image_set_src(imgWeather, &map03n);
-  else if (strcmp(currentWeather.weatherIcon, "04d") == 0)
-    lv_image_set_src(imgWeather, &map04d);
-  else if (strcmp(currentWeather.weatherIcon, "04n") == 0)
-    lv_image_set_src(imgWeather, &map04n);
-  else if (strcmp(currentWeather.weatherIcon, "09d") == 0)
-    lv_image_set_src(imgWeather, &map09d);
-  else if (strcmp(currentWeather.weatherIcon, "09n") == 0)
-    lv_image_set_src(imgWeather, &map09n);
-  else if (strcmp(currentWeather.weatherIcon, "10d") == 0)
-    lv_image_set_src(imgWeather, &map10d);
-  else if (strcmp(currentWeather.weatherIcon, "10n") == 0)
-    lv_image_set_src(imgWeather, &map10n);
-  else if (strcmp(currentWeather.weatherIcon, "11d") == 0)
-    lv_image_set_src(imgWeather, &map11d);
-  else if (strcmp(currentWeather.weatherIcon, "11n") == 0)
-    lv_image_set_src(imgWeather, &map11n);
-  else if (strcmp(currentWeather.weatherIcon, "13d") == 0)
-    lv_image_set_src(imgWeather, &map13d);
-  else if (strcmp(currentWeather.weatherIcon, "13n") == 0)
-    lv_image_set_src(imgWeather, &map13n);
-  else if (strcmp(currentWeather.weatherIcon, "50d") == 0)
-    lv_image_set_src(imgWeather, &map50d);
-  else if (strcmp(currentWeather.weatherIcon, "50n") == 0)
-    lv_image_set_src(imgWeather, &map50n);
+  if (currentWeather.code == CODE_NO_ERROR) {
+    lv_obj_t *imgWeather = lv_image_create(screen);
+    if (strcmp(currentWeather.weatherIcon, "01d") == 0)
+      lv_image_set_src(imgWeather, &map01d);
+    else if (strcmp(currentWeather.weatherIcon, "01n") == 0)
+      lv_image_set_src(imgWeather, &map01n);
+    else if (strcmp(currentWeather.weatherIcon, "02d") == 0)
+      lv_image_set_src(imgWeather, &map02d);
+    else if (strcmp(currentWeather.weatherIcon, "02n") == 0)
+      lv_image_set_src(imgWeather, &map02n);
+    else if (strcmp(currentWeather.weatherIcon, "03d") == 0)
+      lv_image_set_src(imgWeather, &map03d);
+    else if (strcmp(currentWeather.weatherIcon, "03n") == 0)
+      lv_image_set_src(imgWeather, &map03n);
+    else if (strcmp(currentWeather.weatherIcon, "04d") == 0)
+      lv_image_set_src(imgWeather, &map04d);
+    else if (strcmp(currentWeather.weatherIcon, "04n") == 0)
+      lv_image_set_src(imgWeather, &map04n);
+    else if (strcmp(currentWeather.weatherIcon, "09d") == 0)
+      lv_image_set_src(imgWeather, &map09d);
+    else if (strcmp(currentWeather.weatherIcon, "09n") == 0)
+      lv_image_set_src(imgWeather, &map09n);
+    else if (strcmp(currentWeather.weatherIcon, "10d") == 0)
+      lv_image_set_src(imgWeather, &map10d);
+    else if (strcmp(currentWeather.weatherIcon, "10n") == 0)
+      lv_image_set_src(imgWeather, &map10n);
+    else if (strcmp(currentWeather.weatherIcon, "11d") == 0)
+      lv_image_set_src(imgWeather, &map11d);
+    else if (strcmp(currentWeather.weatherIcon, "11n") == 0)
+      lv_image_set_src(imgWeather, &map11n);
+    else if (strcmp(currentWeather.weatherIcon, "13d") == 0)
+      lv_image_set_src(imgWeather, &map13d);
+    else if (strcmp(currentWeather.weatherIcon, "13n") == 0)
+      lv_image_set_src(imgWeather, &map13n);
+    else if (strcmp(currentWeather.weatherIcon, "50d") == 0)
+      lv_image_set_src(imgWeather, &map50d);
+    else if (strcmp(currentWeather.weatherIcon, "50n") == 0)
+      lv_image_set_src(imgWeather, &map50n);
 
-  lv_image_set_scale(imgWeather, 200);
-  lv_obj_align(imgWeather, LV_ALIGN_TOP_LEFT, 140, 155);
+    lv_image_set_scale(imgWeather, 200);
+    lv_obj_align(imgWeather, LV_ALIGN_TOP_LEFT, 140, 155);
 
-  // temperature
-  lv_obj_t *labelTemperature = lv_label_create(screen);
-  lv_obj_add_style(labelTemperature, &styleLarge, LV_PART_MAIN);
-  char buf[3];
-  snprintf(buf, sizeof(buf), "%d", currentWeather.temperature);
-  lv_label_set_text(labelTemperature, buf);
-  lv_obj_align(labelTemperature, LV_ALIGN_TOP_RIGHT, -40, 130);
+    // temperature
+    lv_obj_t *labelTemperature = lv_label_create(screen);
+    lv_obj_add_style(labelTemperature, &styleLarge, LV_PART_MAIN);
+    char buf[3];
+    snprintf(buf, sizeof(buf), "%d", currentWeather.temperature);
+    lv_label_set_text(labelTemperature, buf);
+    lv_obj_align(labelTemperature, LV_ALIGN_TOP_RIGHT, -40, 130);
 
-  // unit
-  lv_obj_t *labelUnit = lv_label_create(screen);
-  lv_obj_add_style(labelUnit, &styleSmall, LV_PART_MAIN);
-  if (currentWeather.isMetric)
-    lv_label_set_text(labelUnit, "°C");
-  else
-    lv_label_set_text(labelUnit, "°F");
-  lv_obj_align(labelUnit, LV_ALIGN_TOP_LEFT, 200, 135);
+    // unit
+    lv_obj_t *labelUnit = lv_label_create(screen);
+    lv_obj_add_style(labelUnit, &styleSmall, LV_PART_MAIN);
+    if (currentWeather.isMetric)
+      lv_label_set_text(labelUnit, "°C");
+    else
+      lv_label_set_text(labelUnit, "°F");
+    lv_obj_align(labelUnit, LV_ALIGN_TOP_LEFT, 200, 135);
+  }
 }

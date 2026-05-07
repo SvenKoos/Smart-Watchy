@@ -18,7 +18,7 @@
 #include "config.h"
 #include "timerEvent.h"
 
-RTC_DATA_ATTR bool update_gui_request;
+RTC_DATA_ATTR volatile bool update_gui_request;
 
 RTC_DATA_ATTR uint32_t stepCounter;
 
@@ -41,6 +41,8 @@ RTC_DATA_ATTR weatherData currentWeather;
 RTC_DATA_ATTR powerData currentPower;
 
 RTC_DATA_ATTR bool bleBonded = false;
+
+uint8_t batteryHistory[1440];
 
 void setup() {
   Serial.begin(115200);
@@ -99,6 +101,12 @@ void loop() {
   if (guiState != DARK_STATE) {
     // lv_task_handler();
     lv_timer_handler();  // Verarbeitet die Timer
+  } else {
+    if (instance.pmu.getBatteryPercent() != 100) {
+      // light sleep mode test with timer
+      esp_sleep_enable_timer_wakeup(1000 * 1000);
+      esp_light_sleep_start();
+    }
   }
 
   // 2. Prüfen, ob der Hardware-Timer die Flag gesetzt hat

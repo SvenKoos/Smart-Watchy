@@ -8,7 +8,7 @@
 #include "config.h"
 #include "weatherData.h"
 
-extern bool update_gui_request;
+extern volatile bool update_gui_request;
 extern int guiState;
 extern weatherData currentWeather;
 
@@ -83,7 +83,7 @@ void displayWakup() {
   // 2. WICHTIG: Wartezeit für die Ladungspumpen des Displays
   // Laut MIPI-Spezifikation sind 120ms sicher, oft reichen 5-20ms.
   // delay(120);
-  /*
+/*
   // 3. LVGL Re-Aktivieren
   lv_display_t *disp = lv_display_get_default();
   if (disp) {
@@ -102,15 +102,17 @@ void displayWakup() {
     brightness = 150;
   else if (currentWeather.weatherIcon[2] == 'n')
     brightness = 100;
+  // instance.incrementalBrightness(brightness);
   instance.setBrightness(brightness);
 }
 
 void displayGoToSleep() {
   // 1. Licht aus (Soforteffekt)
-  instance.setBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
+  // instance.setBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
+  instance.decrementBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
 
   instance.pmu.disableALDO2();  // Schaltet die Stromversorgung der LEDs physisch ab
-  /*
+/*
   // 2. LVGL-Rendering für dieses Display stoppen
   lv_display_t *disp = lv_display_get_default();
   if (disp) {

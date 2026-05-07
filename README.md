@@ -1,4 +1,4 @@
-# Smart Watchy - smart watch functionality on Watchy
+# Smart Watchy - smart watch functionality on Watchy and LilyGo
 
 ## Functional principles
 Smart Watchy and companion are app using WiFi to communicate to each other.
@@ -8,11 +8,12 @@ Smart messages are transferred ones per minute from mobile app to Watchy.
 ### Smart messages from mobile device on Watchy
 New messages detected on mobile device and filtered by companion app configuration are forwarded to Watchy and indicated by icon on wtach face.
 
-Use the right up and down buttons on Watchy to open and change the messages; use left up button to get back to watch face.
+Use the right up and down buttons on Watchy to open and change between the messages; use left up button to get back to watch face.
+Double-tap on LilyGo watch face to open and change between the messages; Double-tap to leave the message view back to watch face.
 
 The list of messages is limited to last 20 entries.
 
-A single message is shortend to the size of the Watchy display (no scrolling).
+A single message is shortend to the size of the watch display (no scrolling).
 
 ## Mobile app: ESP-Alerts-for-Android
 
@@ -39,7 +40,7 @@ Configure the behavior of mobile app in the Settings section of the app (optiona
 ### Setup mobile hotspot
 Use a secure password for tethering.
 
-## Watchy firmware: Smart Watchy
+## Smart Watchy firmware for Watchy
 
 The firmware is based on Watchy package 1.4.x, the 7-segment watch face and adds several features:
 - dynamic discovery of location based on IP address
@@ -54,7 +55,7 @@ Build the firmware with Arduino IDE and deploy it to your Watchy.
 
 ### Configuration
 - WiFi MAC address of the Watchy is shown in the About view (to optionally limit the access to companion app).
-- Connect the Watchy to the hotspot of your mobile device.
+- Connect the Watchy to the hotspot of your mobile device with Wifi Manager available from menu.
 
 ## Features under development
 
@@ -75,4 +76,6 @@ Quiet mode: Exit by pressing the left up button.
 # Smart Watchy goes LilyGo
 The Smart Watchy firmware is now available on LilyGo.
 It is compatible with the existing companion mobile app for Android.
-The firmware directory contains appropriate directories for both versions.
+The firmware directory contains appropriate directories for Watchy and LilyGo versions.
+Smart Watchy firmware for LilyGo is running on LilyGo T-Watch-S3 and T-Watch-S3 Ultra.
+The firmware is based on LilyGo library 0.1.0 sharing the same features as firmware for Watchy.

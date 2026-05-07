@@ -15,6 +15,7 @@
 #include "powerData.h"
 
 extern powerData currentPower;
+extern uint8_t batteryHistory[1440];
 
 void setupPowerMgt() {
   // Clear all interrupt status
@@ -34,9 +35,9 @@ void setupPowerMgt() {
   instance.pmu.enableBattVoltageMeasure();
   instance.pmu.enableSystemVoltageMeasure();
 
-  instance.pmu.disableDC3();   // GPS aus
+  instance.pmu.disableDC3();    // GPS aus
   instance.pmu.disableBLDO1();  // GPS aus
-  instance.pmu.disableALDO4();  // Radio (Falls du nur BLE nutzt, prüfe ob das nötig ist. Oft ist das die Versorgung für externe Funkmodule)  
+  instance.pmu.disableALDO4();  // Radio (Falls du nur BLE nutzt, prüfe ob das nötig ist. Oft ist das die Versorgung für externe Funkmodule)
 
   // CPU clock
   setCpuFrequencyMhz(80);
@@ -45,6 +46,11 @@ void setupPowerMgt() {
   btStop();
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
+
+  // Battery history
+  for (int i = 0; i < 1440; i++) {
+    batteryHistory[i] = 0;
+  }
 }
 
 powerData getPowerData() {
@@ -60,7 +66,15 @@ powerData getPowerData() {
 
   currentPower.code = CODE_NO_ERROR;
 
-  Serial.print("getPowerData Battery Percent: "); Serial.println(currentPower.batteryPercent, DEC);
+  Serial.print("getPowerData Battery Percent: ");
+  Serial.println(currentPower.batteryPercent, DEC);
+
+  struct tm timeinfo;
+  int currentMinuteIndex = 0;
+  if (getLocalTime(&timeinfo)) {
+    currentMinuteIndex = timeinfo.tm_hour * 60 + timeinfo.tm_min;
+  }
+  batteryHistory[currentMinuteIndex] = currentPower.batteryPercent;
 
   return currentPower;
 }
