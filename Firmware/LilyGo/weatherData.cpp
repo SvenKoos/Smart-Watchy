@@ -35,6 +35,7 @@ weatherData getWeatherData(String cityID, String units, String lang, String url,
   	Serial.println("getWeatherData Get");
 
 		currentWeather.weatherConditionCode = 0;
+		currentWeather.offset = settings.gmtOffset;
 
 		HTTPClient http;               // Use Weather API for live data if WiFi is connected
 		http.setConnectTimeout(3000);  // 3 second max timeout

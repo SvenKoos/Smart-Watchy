@@ -8,7 +8,7 @@
 #include "config.h"
 #include "weatherData.h"
 
-extern volatile bool update_gui_request;
+extern bool update_gui_request;
 extern int guiState;
 extern weatherData currentWeather;
 

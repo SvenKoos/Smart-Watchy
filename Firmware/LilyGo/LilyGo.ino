@@ -17,8 +17,9 @@
 #include "ble.h"
 #include "config.h"
 #include "timerEvent.h"
+#include "TOTP.h"
 
-RTC_DATA_ATTR volatile bool update_gui_request;
+RTC_DATA_ATTR bool update_gui_request;
 
 RTC_DATA_ATTR uint32_t stepCounter;
 
@@ -41,6 +42,9 @@ RTC_DATA_ATTR weatherData currentWeather;
 RTC_DATA_ATTR powerData currentPower;
 
 RTC_DATA_ATTR bool bleBonded = false;
+
+RTC_DATA_ATTR uint8_t binKey[32];
+RTC_DATA_ATTR int keyLen = 0;
 
 uint8_t batteryHistory[1440];
 
@@ -70,6 +74,12 @@ void setup() {
   setupPowerMgt();
   Serial.println("setup power management");
 
+  // setup data collection
+  setupDataCollection();
+
+  // setup TOTP
+  setupTOTP(settings.totpSecret);
+
   // Set brightness to MAX
   // T-LoRa-Pager brightness level is 0 ~ 16
   // T-Watch-S3 , T-Watch-S3-Plus , T-Watch-Ultra brightness level is 0 ~ 255
@@ -96,17 +106,16 @@ void setup() {
 }
 
 void loop() {
-  instance.loop();
+  bool isPluggedIn = instance.pmu.isVbusIn();
 
-  if (guiState != DARK_STATE) {
-    // lv_task_handler();
+  if ((guiState != DARK_STATE) || isPluggedIn) {
+    instance.loop();
+
     lv_timer_handler();  // Verarbeitet die Timer
   } else {
-    if (instance.pmu.getBatteryPercent() != 100) {
-      // light sleep mode test with timer
-      esp_sleep_enable_timer_wakeup(1000 * 1000);
-      esp_light_sleep_start();
-    }
+    // light sleep mode test with timer
+    esp_sleep_enable_timer_wakeup(1000 * 1000);
+    esp_light_sleep_start();
   }
 
   // 2. Prüfen, ob der Hardware-Timer die Flag gesetzt hat

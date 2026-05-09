@@ -31,6 +31,10 @@ extern alertData currentAlerts;
 extern powerData currentPower;
 extern accellData currentAccelleration;
 
+void setupDataCollection() {
+  WiFi.persistent(false);
+}
+
 void collectData(void) {
   String localIP;
   String gatewayIP;
@@ -72,14 +76,22 @@ void collectData(void) {
 
 bool connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
   Serial.println("connectWiFi Start");
+  Serial.print("SSID ");
+  Serial.println(settings.wifiSSID);
+  Serial.print("Pwd ");
+  Serial.println(settings.wifiPwd);
 
-  // SvKo added
   WiFi.setSleep(false);
   WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
 
   if (WL_CONNECT_FAILED == WiFi.begin(settings.wifiSSID, settings.wifiPwd)) {  // WiFi not setup: WiFi.begin(),
                                                                                // you can also use hard coded credentials: WiFi.begin(SSID,PASS);
     WIFI_CONFIGURED = false;
+
+    Serial.print("Wifi failed: ");
+    Serial.println(WiFi.status(), DEC);
   } else {
     if (WL_CONNECTED == WiFi.waitForConnectResult()) {  // attempt to connect for 10s
       WIFI_CONFIGURED = true;
@@ -88,13 +100,16 @@ bool connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
       macAdress = String(WiFi.macAddress());
 
       Serial.print("connectWiFi Host Gateway MAC ");
-      Serial.print(hostIP); Serial.print(" ");
-      Serial.print(gatewayIP); Serial.print(" ");
+      Serial.print(hostIP);
+      Serial.print(" ");
+      Serial.print(gatewayIP);
+      Serial.print(" ");
       Serial.println(macAdress);
     } else {  // connection failed, time out
       WIFI_CONFIGURED = false;
 
-      Serial.print("Failed: "); Serial.println(WiFi.status(), DEC);
+      Serial.print("Connection failed: ");
+      Serial.println(WiFi.status(), DEC);
 
       // turn off radios
       disconnectWifi();

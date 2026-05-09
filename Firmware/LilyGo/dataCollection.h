@@ -30,6 +30,7 @@
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
+void setupDataCollection();
 void collectData(void);
 bool connectWiFi(String &hostIP, String &gatewayIP, String &macAdress);
 void disconnectWifi();

@@ -19,6 +19,8 @@ lilygoSettings setSetting() {
   settings.locationUpdateInterval = LOCATION_UPDATE_INTERVAL;
   settings.wifiSSID = WIFI_SSID;
   settings.wifiPwd = WIFI_PWD;
+  settings.totpAccount = TOTP_ACCOUNT;
+  settings.totpSecret = TOTP_SECRET;
 
   return settings;
 }
