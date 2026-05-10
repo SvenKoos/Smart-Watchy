@@ -106,11 +106,11 @@ void setup() {
 }
 
 void loop() {
+  instance.loop();
+
   bool isPluggedIn = instance.pmu.isVbusIn();
 
   if ((guiState != DARK_STATE) || isPluggedIn) {
-    instance.loop();
-
     lv_timer_handler();  // Verarbeitet die Timer
   } else {
     // light sleep mode test with timer

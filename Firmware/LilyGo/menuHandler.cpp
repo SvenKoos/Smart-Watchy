@@ -39,8 +39,8 @@ static void back_event_handler(lv_event_t *e) {
   }
 }
 
-// sub CB: About
-static void eventFunctionAboutCB(lv_event_t *e) {
+// sub CB: Default (About, Battery)
+static void eventFunctionDefaultCB(lv_event_t *e) {
   lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
   lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
 
@@ -49,8 +49,6 @@ static void eventFunctionAboutCB(lv_event_t *e) {
 
   // 2. Den Code prüfen
   if (code == LV_EVENT_CLICKED) {
-    Serial.println("About Pressed");
-
     startBrightnessTimer(10);
   }
 }
@@ -79,22 +77,6 @@ static void eventFunctionWifiCB(lv_event_t *e) {
   }
 }
 
-// sub CB: Battery
-static void eventFunctionBatteryCB(lv_event_t *e) {
-  lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
-  lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
-
-  // 1. Den Event-Code abrufen
-  lv_event_code_t code = lv_event_get_code(e);
-
-  // 2. Den Code prüfen
-  if (code == LV_EVENT_CLICKED) {
-    Serial.println("Battery Pressed");
-
-    startBrightnessTimer(10);
-  }
-}
-
 // sub CB: TOTP
 static void eventFunctionTotpCB(lv_event_t *e) {
   lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
@@ -113,10 +95,10 @@ static void eventFunctionTotpCB(lv_event_t *e) {
   }
 }
 
-// sub x: Scroll
+// sub x: Scroll (Menu, About, Battery, Wifi)
 static void eventSubScroll(lv_event_t *e) {
   lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
-  lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
+  lv_obj_t *obj = (lv_obj_t *)lv_event_get_user_data(e);
 
   // 1. Den Event-Code abrufen
   lv_event_code_t code = lv_event_get_code(e);
@@ -125,7 +107,9 @@ static void eventSubScroll(lv_event_t *e) {
   Serial.print("Scroll event code: ");
   Serial.println(code, DEC);
 
-  startBrightnessTimer(10);
+  if (code == LV_EVENT_SCROLL_END) {
+    startBrightnessTimer(10);
+  }
 }
 
 // sub page: About page
@@ -357,6 +341,7 @@ void menuHandler() {
   lv_obj_add_event_cb(menu, back_event_handler, LV_EVENT_CLICKED, menu);
   lv_obj_set_size(menu, lv_display_get_horizontal_resolution(NULL) - 10, lv_display_get_vertical_resolution(NULL) - 10);
   lv_obj_center(menu);
+  lv_obj_add_event_cb(menu, eventSubScroll, LV_EVENT_ALL, (void *)menu);
 
   // style
   lv_obj_set_style_text_font(menu, &lv_font_montserrat_36, LV_PART_MAIN);
@@ -377,12 +362,31 @@ void menuHandler() {
   //Create a main page
   lv_obj_t *pageMain = lv_menu_page_create(menu, NULL);
 
+  // menu item TOTP
+  cont = lv_menu_cont_create(pageMain);
+  lv_obj_add_event_cb(cont, eventFunctionTotpCB, LV_EVENT_ALL, menu);
+  label = lv_label_create(cont);
+  lv_label_set_text(label, "    TOTP");
+  lv_menu_set_load_page_event(menu, cont, subTotpFunction(menu));
+
   // menu item About
   cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventFunctionAboutCB, LV_EVENT_ALL, menu);
+  lv_obj_add_event_cb(cont, eventFunctionDefaultCB, LV_EVENT_ALL, menu);
   label = lv_label_create(cont);
   lv_label_set_text(label, "    About");
   lv_menu_set_load_page_event(menu, cont, subAboutFunction(menu));
+
+  // menu item battery history
+  cont = lv_menu_cont_create(pageMain);
+  lv_obj_add_event_cb(cont, eventFunctionDefaultCB, LV_EVENT_ALL, menu);
+  label = lv_label_create(cont);
+  lv_label_set_text(label, "    Battery");
+  lv_menu_set_load_page_event(menu, cont, subBatteryFunction(menu));
+
+  // separator
+  cont = lv_menu_cont_create(pageMain);
+  label = lv_label_create(cont);
+  lv_label_set_text(label, "    _______");
 
   // menu item Configure WiFi
   cont = lv_menu_cont_create(pageMain);
@@ -390,20 +394,6 @@ void menuHandler() {
   label = lv_label_create(cont);
   lv_label_set_text(label, "    WiFi");
   lv_menu_set_load_page_event(menu, cont, subWifiFunction(menu));
-
-  // menu item battery history
-  cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventFunctionBatteryCB, LV_EVENT_ALL, menu);
-  label = lv_label_create(cont);
-  lv_label_set_text(label, "    Battery");
-  lv_menu_set_load_page_event(menu, cont, subBatteryFunction(menu));
-
-  // menu item TOTP
-  cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventFunctionTotpCB, LV_EVENT_ALL, menu);
-  label = lv_label_create(cont);
-  lv_label_set_text(label, "    TOTP");
-  lv_menu_set_load_page_event(menu, cont, subTotpFunction(menu));
 
   // spinner
   lv_obj_delete(spinner);

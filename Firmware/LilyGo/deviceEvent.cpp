@@ -91,6 +91,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
 
         // draw the watchface screen
         guiState = WATCHFACE_STATE;
+        currentAccelleration.isMoved = true;
         drawWatchFace();
 
         break;
@@ -101,6 +102,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
 
         // draw the watchface screen
         guiState = WATCHFACE_STATE;
+        currentAccelleration.isMoved = true;
         drawWatchFace();
 
         break;
