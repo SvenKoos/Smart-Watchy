@@ -13,7 +13,7 @@ Double-tap on LilyGo watch face to open and change between the messages; Double-
 
 The list of messages is limited to last 20 entries.
 
-A single message is shortend to the size of the watch display (no scrolling).
+A single message is shortend to the size of the watch display (no scrolling on Watchy).
 
 ## Mobile app: ESP-Alerts-for-Android
 
@@ -35,7 +35,7 @@ Configure the behavior of mobile app in the Settings section of the app (optiona
 - Run as a service
 - Start at boot
 - Flip display vertically
-- Remote MAC address: WiFi MAC address of the Watchy to limit the access of the companion app in standard format (xx:xx:xx:xx:xx:xx)
+- Remote MAC address: WiFi MAC address of the Watchy or LilyGo to limit the access of the companion app on mobile for certain watch device in standard format (xx:xx:xx:xx:xx:xx)
 
 ### Setup mobile hotspot
 Use a secure password for tethering.
@@ -68,6 +68,8 @@ Watchy is advertising via BLE to support Extended Unlock.
 In most of the cases this is not sufficient to fulfill the requirements for Extended Unlock (constant connection via BLE, active GATT service).
 Working with WiFi and BLE in parallel and constant way (for BLE) on ESP32 creates several issues with acceptable powermanagement.
 
+Further development of the trusted device feature will be done on LilyGo.
+
 ## Hints
 Location discovery: If mobile device is in roaming zone, IP address is still received from home mobile service provider, which results in home weather report on watch face.
 
@@ -77,5 +79,11 @@ Quiet mode: Exit by pressing the left up button.
 The Smart Watchy firmware is now available on LilyGo.
 It is compatible with the existing companion mobile app for Android.
 The firmware directory contains appropriate directories for Watchy and LilyGo versions.
+
+## Smart Watchy firmware for LilyGo
 Smart Watchy firmware for LilyGo is running on LilyGo T-Watch-S3 and T-Watch-S3 Ultra.
-The firmware is based on LilyGo library 0.1.0 sharing the same features as firmware for Watchy.
+The firmware is based on LilyGo library 0.1.0 sharing the same features as firmware for Watchy but adding:
+- Time-based one-time password (TOTP) compatible with Microsoft Entra.ID and Google
+
+### Build and Deployment
+Change additionally the TOTP secret in settings.h to your own.
