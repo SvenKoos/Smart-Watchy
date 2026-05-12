@@ -17,6 +17,7 @@
 #include "powerData.h"
 #include "timerEvent.h"
 #include "deviceEvent.h"
+#include "lora.h"
 
 extern alertData currentAlerts;
 extern singleAlert allAlerts[ALERT_MAX_NO];
@@ -131,10 +132,12 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
           // prepare the  screen object
           prepareAlertScreen();
 
-          // show the alert
+          // show the newest alert
           int alertIndex = currentAlerts.count - 1;
           showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
         }
+        // process to Lora
+        processNewAlertsToLora(oldMin, oldMax, newMin, newMax);
       }
     }
 

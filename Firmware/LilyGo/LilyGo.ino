@@ -18,6 +18,7 @@
 #include "config.h"
 #include "timerEvent.h"
 #include "TOTP.h"
+#include "lora.h"
 
 RTC_DATA_ATTR bool update_gui_request;
 
@@ -79,6 +80,9 @@ void setup() {
 
   // setup TOTP
   setupTOTP(settings.totpSecret);
+
+  // setup Lora
+  setupLora();
 
   // Set brightness to MAX
   // T-LoRa-Pager brightness level is 0 ~ 16
