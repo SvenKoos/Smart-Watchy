@@ -19,6 +19,7 @@
 #include "alertData.h"
 #include "powerData.h"
 #include "accellData.h"
+#include "lora.h"
 
 extern lilygoSettings settings;
 
@@ -72,6 +73,9 @@ void collectData(void) {
 
   // get power data
   currentPower = getPowerData();
+
+  // handle the Lora queue
+  transmitAlertsToLora();
 }
 
 bool connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {

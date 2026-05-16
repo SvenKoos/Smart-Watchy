@@ -21,13 +21,19 @@
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-void menuHandler();
 static void back_event_handler(lv_event_t *e);
-static void eventFunction1CB(lv_event_t *e);
-static void eventFunction2CB(lv_event_t *e);
-static lv_obj_t *sub1Function(lv_obj_t *menu);
-static lv_obj_t *sub2Function(lv_obj_t *menu);
-bool setupWifi();
+static void eventGestureDefaultCB(lv_event_t *e);
+static void start_wifi_manager_timer_cb(lv_timer_t *t);
+static void eventFunctionWifiCB(lv_event_t *e);
+static void eventFunctionTotpCB(lv_event_t *e);
+static lv_obj_t *subAboutFunction(lv_obj_t *menu);
+static lv_obj_t *subLoRaMsgFunction(lv_obj_t *menu);
+static lv_obj_t *subWifiFunction(lv_obj_t *menu);
+static lv_obj_t *subBatteryFunction(lv_obj_t *menu);
+static void update_totp_status(lv_timer_t *timer);
+static lv_obj_t *subTotpFunction(lv_obj_t *menu);
+void menuHandler();
+static bool setupWifi();
 
 /**********************
  *      MACROS

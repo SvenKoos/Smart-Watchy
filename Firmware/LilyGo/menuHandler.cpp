@@ -22,7 +22,13 @@ static lv_obj_t *labelAbout;
 static lv_obj_t *chartBattery;
 static lv_obj_t *labelTOTP;
 static lv_obj_t *barTOTP;
+static lv_obj_t *tabviewLoRa;
+
 lv_timer_t *timerTOTP = NULL;
+
+const char *msgTypes[] = {
+  "I'll call you later.", "Have a nice day!", "Love you!", "This is a test message."
+};
 
 static void back_event_handler(lv_event_t *e) {
   lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
@@ -31,7 +37,7 @@ static void back_event_handler(lv_event_t *e) {
   Serial.println("Back pressed");
 
   if (lv_menu_back_button_is_root(menu, obj)) {
-    startBrightnessTimer(10);
+    startBrightnessTimer(15);
 
     // draw the watchface screen
     guiState = WATCHFACE_STATE;
@@ -39,18 +45,36 @@ static void back_event_handler(lv_event_t *e) {
   }
 }
 
-// sub CB: Default (About, Battery)
-static void eventFunctionDefaultCB(lv_event_t *e) {
-  lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
-  lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
-
+// sub CB: Default
+static void eventGestureDefaultCB(lv_event_t *e) {
   // 1. Den Event-Code abrufen
   lv_event_code_t code = lv_event_get_code(e);
 
   // 2. Den Code prüfen
-  if (code == LV_EVENT_CLICKED) {
-    startBrightnessTimer(10);
+  if ((code == LV_EVENT_SCROLL_END) || (code == LV_EVENT_GESTURE) || (code == LV_EVENT_CLICKED) || 
+      (code == LV_EVENT_SCROLL) || (code == LV_EVENT_VALUE_CHANGED) || (code == LV_EVENT_STATE_CHANGED)) {
+
+    const char * name = lv_event_code_get_name(code);
+    if (name != NULL)
+    { 
+      Serial.print("Event code / name: "); Serial.print(code, DEC); Serial.print(" / "); Serial.println(name); 
+    }
+    else
+    {
+      Serial.print("Event code: "); Serial.println(code, DEC); 
+    }
+
+    startBrightnessTimer(15);
   }
+}
+
+static void registerDefaultEvents(lv_obj_t *cont) {
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_SCROLL_END, NULL);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_GESTURE, NULL);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_SCROLL, NULL);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_VALUE_CHANGED, NULL);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_STATE_CHANGED, NULL);
 }
 
 static void start_wifi_manager_timer_cb(lv_timer_t *t) {
@@ -60,8 +84,8 @@ static void start_wifi_manager_timer_cb(lv_timer_t *t) {
 
 // sub CB: Wifi
 static void eventFunctionWifiCB(lv_event_t *e) {
-  lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
-  lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
+  // lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
+  // lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
 
   // 1. Den Event-Code abrufen
   lv_event_code_t code = lv_event_get_code(e);
@@ -79,8 +103,8 @@ static void eventFunctionWifiCB(lv_event_t *e) {
 
 // sub CB: TOTP
 static void eventFunctionTotpCB(lv_event_t *e) {
-  lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
-  lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
+  // lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
+  // lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
 
   // 1. Den Event-Code abrufen
   lv_event_code_t code = lv_event_get_code(e);
@@ -95,29 +119,12 @@ static void eventFunctionTotpCB(lv_event_t *e) {
   }
 }
 
-// sub x: Scroll (Menu, About, Battery, Wifi)
-static void eventSubScroll(lv_event_t *e) {
-  lv_obj_t *cont = (lv_obj_t *)lv_event_get_target(e);
-  lv_obj_t *obj = (lv_obj_t *)lv_event_get_user_data(e);
-
-  // 1. Den Event-Code abrufen
-  lv_event_code_t code = lv_event_get_code(e);
-
-  // 2. Den Code prüfen
-  Serial.print("Scroll event code: ");
-  Serial.println(code, DEC);
-
-  if (code == LV_EVENT_SCROLL_END) {
-    startBrightnessTimer(10);
-  }
-}
-
 // sub page: About page
 static lv_obj_t *subAboutFunction(lv_obj_t *menu) {
   Serial.println("About function started");
 
   // spinner
-  lv_timer_handler();
+  lv_refr_now(NULL);
 
   /*Create a sub page*/
   lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
@@ -127,7 +134,7 @@ static lv_obj_t *subAboutFunction(lv_obj_t *menu) {
   lv_obj_set_style_text_font(labelAbout, &lv_font_montserrat_18, LV_PART_MAIN);
   lv_obj_set_width(labelAbout, lv_pct(95));
   lv_label_set_long_mode(labelAbout, LV_LABEL_LONG_WRAP);
-  lv_obj_add_event_cb(labelAbout, eventSubScroll, LV_EVENT_ALL, (void *)labelAbout);
+  registerDefaultEvents(labelAbout);
 
   char aboutText[128] = "";
   String localIP;
@@ -146,7 +153,7 @@ static lv_obj_t *subAboutFunction(lv_obj_t *menu) {
     strcpy(aboutText, "WiFi Not Configured\n");
   }
   // spinner
-  lv_timer_handler();
+  lv_refr_now(NULL);
 
   // disconnect WiFi
   disconnectWifi();
@@ -163,12 +170,54 @@ static lv_obj_t *subAboutFunction(lv_obj_t *menu) {
   return pageSub;
 }
 
+// sub page: LoR messages page
+static lv_obj_t *subLoRaMsgFunction(lv_obj_t *menu) {
+  Serial.println("LoRs Msg. function started");
+
+  // spinner
+  lv_refr_now(NULL);
+
+  /*Create a sub page*/
+  lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
+  lv_obj_t *contSub = lv_menu_cont_create(pageSub);
+  lv_obj_set_size(contSub, lv_pct(100), lv_pct(66)); // width, height
+  lv_obj_set_flex_flow(contSub, LV_FLEX_FLOW_COLUMN);  // Layout-Hilfe
+
+  // Create a tab view with tabs on the bottom (e.g. as dot indicators)
+  tabviewLoRa = lv_tabview_create(contSub);
+  lv_obj_set_size(tabviewLoRa, lv_pct(100), lv_pct(100)); // Füllt den Container
+  lv_tabview_set_tab_bar_position(tabviewLoRa, LV_DIR_BOTTOM);
+  lv_obj_set_style_text_font(tabviewLoRa, &lv_font_montserrat_18, 0);
+  registerDefaultEvents(tabviewLoRa);
+
+  lv_obj_t * tab_btns = lv_tabview_get_tab_btns(tabviewLoRa);
+  lv_obj_set_height(tab_btns, 20); // Sehr schmale Leiste
+  lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_MAIN); // Hintergrund der Leiste unsichtbar
+
+  int msgCount = sizeof(msgTypes) / sizeof(msgTypes[0]);  
+  for (int i = 0; i < msgCount; i++) {
+    // Add your tabs/pages (you can keep the names empty if you just want indicator dots)
+    lv_obj_t *tab = lv_tabview_add_tab(tabviewLoRa, "*");
+
+    lv_obj_t * label = lv_label_create(tab);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_18, 0);
+    lv_obj_set_width(label, lv_pct(100)); // Volle Breite des Tabs
+    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); // Text umbrechen
+    lv_label_set_text(label, msgTypes[i]);
+  }
+
+  // Trigger the carousel to flip to the first tab with an animation
+  lv_tabview_set_active(tabviewLoRa, 0, LV_ANIM_ON);
+
+  return pageSub;
+}
+
 // sub page: Configure WiFi page
 static lv_obj_t *subWifiFunction(lv_obj_t *menu) {
   Serial.println("Wifi function started");
 
   // spinner
-  lv_timer_handler();
+  lv_refr_now(NULL);
 
   /*Create a sub page*/
   lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
@@ -178,7 +227,7 @@ static lv_obj_t *subWifiFunction(lv_obj_t *menu) {
   lv_obj_set_style_text_font(labelWifi, &lv_font_montserrat_18, LV_PART_MAIN);
   lv_obj_set_width(labelWifi, lv_pct(95));
   lv_label_set_long_mode(labelWifi, LV_LABEL_LONG_WRAP);
-  lv_obj_add_event_cb(labelWifi, eventSubScroll, LV_EVENT_ALL, (void *)labelWifi);
+  registerDefaultEvents(labelWifi);
 
   char wifiText[256] = "Configure WiFi:\n - Connect to SSID\n   ";
   strcat(wifiText, WIFI_AP_SSID);
@@ -194,7 +243,7 @@ static lv_obj_t *subBatteryFunction(lv_obj_t *menu) {
   Serial.println("Battery function started");
 
   // spinner
-  lv_timer_handler();
+  lv_refr_now(NULL);
 
   /*Create a sub page*/
   lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
@@ -208,7 +257,7 @@ static lv_obj_t *subBatteryFunction(lv_obj_t *menu) {
 
   chartBattery = lv_chart_create(contSub);
   lv_chart_set_type(chartBattery, LV_CHART_TYPE_LINE);
-  lv_obj_add_event_cb(chartBattery, eventSubScroll, LV_EVENT_ALL, (void *)chartBattery);
+  registerDefaultEvents(chartBattery);
   lv_obj_set_size(chartBattery, chartWidth, 130);          // Etwas kleiner als das Display
   lv_obj_set_pos(chartBattery, chartXStart, chartYStart);  // X=55 lässt genug Platz für die Y-Labels links
   lv_chart_set_axis_range(chartBattery, LV_CHART_AXIS_PRIMARY_Y, 0, 100);
@@ -241,11 +290,15 @@ static lv_obj_t *subBatteryFunction(lv_obj_t *menu) {
   lv_scale_set_text_src(scale_x, x_labels);
 
   // spinner
-  lv_timer_handler();
+  lv_refr_now(NULL);
 
   lv_chart_series_t *ser = lv_chart_add_series(chartBattery, lv_palette_main(LV_PALETTE_RED), LV_CHART_AXIS_PRIMARY_Y);
-  for (int i = 0; i < 1440; i++)
-    lv_chart_set_next_value(chartBattery, ser, batteryHistory[i]);
+  for (int i = 0; i < 1440; i++) {
+    if (batteryHistory[i] > 0)
+      lv_chart_set_next_value(chartBattery, ser, batteryHistory[i]);
+    else
+      lv_chart_set_next_value(chartBattery, ser, LV_CHART_POINT_NONE);
+  }
 
   // 1. Linien-Objekt erstellen
   lv_obj_t *time_line = lv_line_create(contSub);
@@ -277,7 +330,7 @@ static lv_obj_t *subBatteryFunction(lv_obj_t *menu) {
 
 // sub page: TOTP page
 // Diese Funktion wird vom Timer aufgerufen (z.B. jede Sekunde)
-void update_totp_status(lv_timer_t *timer) {
+static void update_totp_status(lv_timer_t *timer) {
   time_t now;
   time(&now);
   struct tm timeinfo;
@@ -298,7 +351,7 @@ static lv_obj_t *subTotpFunction(lv_obj_t *menu) {
   Serial.println("TOTP function started");
 
   // spinner
-  lv_timer_handler();
+  lv_refr_now(NULL);
 
   /*Create a sub page*/
   lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
@@ -341,7 +394,7 @@ void menuHandler() {
   lv_obj_add_event_cb(menu, back_event_handler, LV_EVENT_CLICKED, menu);
   lv_obj_set_size(menu, lv_display_get_horizontal_resolution(NULL) - 10, lv_display_get_vertical_resolution(NULL) - 10);
   lv_obj_center(menu);
-  lv_obj_add_event_cb(menu, eventSubScroll, LV_EVENT_ALL, (void *)menu);
+  lv_obj_add_event_cb(menu, eventGestureDefaultCB, LV_EVENT_SCROLL, NULL);
 
   // style
   lv_obj_set_style_text_font(menu, &lv_font_montserrat_36, LV_PART_MAIN);
@@ -364,24 +417,31 @@ void menuHandler() {
 
   // menu item TOTP
   cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventFunctionTotpCB, LV_EVENT_ALL, menu);
+  lv_obj_add_event_cb(cont, eventFunctionTotpCB, LV_EVENT_CLICKED, menu);
   label = lv_label_create(cont);
   lv_label_set_text(label, "    TOTP");
   lv_menu_set_load_page_event(menu, cont, subTotpFunction(menu));
 
   // menu item About
   cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventFunctionDefaultCB, LV_EVENT_ALL, menu);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
   lv_label_set_text(label, "    About");
   lv_menu_set_load_page_event(menu, cont, subAboutFunction(menu));
 
   // menu item battery history
   cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventFunctionDefaultCB, LV_EVENT_ALL, menu);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
   lv_label_set_text(label, "    Battery");
   lv_menu_set_load_page_event(menu, cont, subBatteryFunction(menu));
+
+  // menu item Lora Messages
+  cont = lv_menu_cont_create(pageMain);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
+  label = lv_label_create(cont);
+  lv_label_set_text(label, "    LoRa Msg");
+  lv_menu_set_load_page_event(menu, cont, subLoRaMsgFunction(menu));
 
   // separator
   cont = lv_menu_cont_create(pageMain);
@@ -390,7 +450,7 @@ void menuHandler() {
 
   // menu item Configure WiFi
   cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventFunctionWifiCB, LV_EVENT_ALL, menu);
+  lv_obj_add_event_cb(cont, eventFunctionWifiCB, LV_EVENT_CLICKED, menu);
   label = lv_label_create(cont);
   lv_label_set_text(label, "    WiFi");
   lv_menu_set_load_page_event(menu, cont, subWifiFunction(menu));
@@ -401,7 +461,7 @@ void menuHandler() {
   lv_menu_set_page(menu, pageMain);
 }
 
-bool setupWifi() {
+static bool setupWifi() {
   Serial.println("Setup WiFi started");
 
   // Hardware-Reset für sauberen AP-Start

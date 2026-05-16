@@ -30,6 +30,7 @@ typedef struct {
  void addAlertToLora(singleAlert alert);
  void processNewAlertsToLora(int oldMinIdx, int newMinIdx, int oldMaxIdx, int newMaxIdx);
  void settingLoRaParams();
+ void transmitAlertsToLora();
 
 /**********************
  *      MACROS

@@ -53,19 +53,18 @@ void transmitAlertsToLora() {
     radio.standby();
     settingLoRaParams();
 
-    for (int i = 0; i < uxMessagesWaiting; i++) {
-      if (xQueueReceive(loraQueue, &loraMsg, 0) == pdPASS) {
+    // send only 1 message per cycle (1 min)
+    if (xQueueReceive(loraQueue, &loraMsg, 0) == pdPASS) {
 
-        // 2. Paket zusammenbauen (z.B. als einfacher String oder Byte-Array)
-        // String payload = String(loraMsg.appName) + ":" + loraMsg.title + ":" + loraMsg.body;
+      // 2. Paket zusammenbauen (z.B. als einfacher String oder Byte-Array)
+      // String payload = String(loraMsg.appName) + ":" + loraMsg.title + ":" + loraMsg.body;
 
-        // 3. Senden (Blockiert kurz während des Funkvorgangs)
-        // int state = radio.transmit(payload);
-        int state = radio.transmit((uint8_t*)&loraMsg, sizeof(loraMsg));
+      // 3. Senden (Blockiert kurz während des Funkvorgangs)
+      // int state = radio.transmit(payload);
+      int state = radio.transmit((uint8_t*)&loraMsg, sizeof(loraMsg));
 
-        Serial.print("transmitAlertsToLora transmit state: ");
-        Serial.println(state, DEC);
-      }
+      Serial.print("transmitAlertsToLora transmit state: ");
+      Serial.println(state, DEC);
     }
 
     // 4. Radio sofort wieder in den Deep Sleep

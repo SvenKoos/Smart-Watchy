@@ -46,15 +46,18 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
     }
 
     String payload = http.getString();
-    if (payload.length() > 8192) {
+    if (payload.length() > 16*1024) {
       currentAlerts.code = CODE_PARSE_ERROR;
       strncpy(currentAlerts.log, "Invalid payload", LOG_LEN - 1);
+      Serial.print("getAlertData Invalid payload: ");
+      Serial.println(payload.length(), DEC);
       return currentAlerts;
     }
 
     alerts = JSON.parse(payload);
     if (!alerts.hasOwnProperty("data") || JSON.typeof(alerts["data"]) != "array") {
       currentAlerts.code = CODE_PARSE_ERROR;
+      Serial.println("getAlertData Parsing error");
       return currentAlerts;
     }
 
