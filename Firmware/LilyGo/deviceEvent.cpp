@@ -58,7 +58,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
 
         // set brightness
         displayWakup();
-        startBrightnessTimer(10);
+        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         handle_button_emergency_reset();
 
@@ -87,7 +87,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
       case PMU_EVENT_USBC_REMOVE:
         // Serial.println("Power adapter removed");
         displayWakup();
-        startBrightnessTimer(10);
+        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         // draw the watchface screen
         guiState = WATCHFACE_STATE;
@@ -98,7 +98,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
       case PMU_EVENT_USBC_INSERT:
         // Serial.println("Power adapter plugged in");
         displayWakup();
-        startBrightnessTimer(10);
+        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         // draw the watchface screen
         guiState = WATCHFACE_STATE;
@@ -141,7 +141,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
 
         // set brightness
         displayWakup();
-        startBrightnessTimer(10);
+        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         if (guiState == WATCHFACE_STATE) {
           Serial.println("DoubleTap event: watchface state");
@@ -185,7 +185,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
 static void alertEventCB(lv_event_t* e) {
   // set brightness
   displayWakup();
-  startBrightnessTimer(10);
+  startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
   if ((guiState == ALERT_STATE) && (lv_event_get_code(e) == LV_EVENT_GESTURE)) {
     // 500ms Sperrzeit nach der letzten erfolgreichen Geste

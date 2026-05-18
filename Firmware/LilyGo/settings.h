@@ -2,7 +2,7 @@
 #define SETTINGS_H
 
 #define CITY_ID "2660253"  //Interlaken
-#define OPENWEATHERMAP_APIKEY "________________________________"
+#define OPENWEATHERMAP_APIKEY "--------------------------------"
 #define OPENWEATHERMAP_URL "http://api.openweathermap.org/data/2.5/weather"  //open weather api
 #define TEMP_UNIT "metric"                                                   //metric = Celsius , imperial = Fahrenheit
 #define TEMP_LANG "en"
@@ -12,9 +12,10 @@
 #define GEOIP_URL "http://ipwho.is"  //  GeoIP (Get IP address location in JSON format)
 #define LOCATION_UPDATE_INTERVAL 15
 #define WIFI_SSID "AndroidAP9339"
-#define WIFI_PWD "Lene7890"
-#define TOTP_ACCOUNT "____________________"
-#define TOTP_SECRET "________________"
+#define WIFI_PWD "--------"
+#define TOTP_ACCOUNT "sven.koos@ch.abb.com"
+#define TOTP_SECRET "----------------"
+#define LORA_MAGIC 0xDEADBEEF
 
 typedef struct lilygoSettings {
   // Weather Settings
@@ -35,6 +36,7 @@ typedef struct lilygoSettings {
   String wifiPwd;
   String totpAccount;
   String totpSecret;
+  uint32_t loraMagic;
 } lilygoSettings;
 
 lilygoSettings setSetting();

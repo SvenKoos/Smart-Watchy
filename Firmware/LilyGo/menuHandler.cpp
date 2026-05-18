@@ -12,17 +12,21 @@
 #include "dataCollection.h"
 #include "menuHandler.h"
 #include "TOTP.h"
+#include "alertData.h"
+#include "lora.h"
 
 extern int guiState;
 extern lilygoSettings settings;
 extern uint8_t batteryHistory[1440];
 
+static lv_obj_t *pageMain;
 static lv_obj_t *labelWifi;
 static lv_obj_t *labelAbout;
 static lv_obj_t *chartBattery;
 static lv_obj_t *labelTOTP;
 static lv_obj_t *barTOTP;
-static lv_obj_t *tabviewLoRa;
+// static lv_obj_t *tabviewLoRa;
+static lv_obj_t * rollerLoRa;
 
 lv_timer_t *timerTOTP = NULL;
 
@@ -37,7 +41,7 @@ static void back_event_handler(lv_event_t *e) {
   Serial.println("Back pressed");
 
   if (lv_menu_back_button_is_root(menu, obj)) {
-    startBrightnessTimer(15);
+    startBrightnessTimer(BRIGHTNESS_TIMEOUT_MENU);
 
     // draw the watchface screen
     guiState = WATCHFACE_STATE;
@@ -51,20 +55,21 @@ static void eventGestureDefaultCB(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
 
   // 2. Den Code prüfen
-  if ((code == LV_EVENT_SCROLL_END) || (code == LV_EVENT_GESTURE) || (code == LV_EVENT_CLICKED) || 
-      (code == LV_EVENT_SCROLL) || (code == LV_EVENT_VALUE_CHANGED) || (code == LV_EVENT_STATE_CHANGED)) {
+  if ((code == LV_EVENT_SCROLL_END) || (code == LV_EVENT_GESTURE) || (code == LV_EVENT_CLICKED) || (code == LV_EVENT_SCROLL) || 
+      (code == LV_EVENT_VALUE_CHANGED) || (code == LV_EVENT_STATE_CHANGED)) {
 
-    const char * name = lv_event_code_get_name(code);
-    if (name != NULL)
-    { 
-      Serial.print("Event code / name: "); Serial.print(code, DEC); Serial.print(" / "); Serial.println(name); 
-    }
-    else
-    {
-      Serial.print("Event code: "); Serial.println(code, DEC); 
+    const char *name = lv_event_code_get_name(code);
+    if (name != NULL) {
+      Serial.print("Event code / name: ");
+      Serial.print(code, DEC);
+      Serial.print(" / ");
+      Serial.println(name);
+    } else {
+      Serial.print("Event code: ");
+      Serial.println(code, DEC);
     }
 
-    startBrightnessTimer(15);
+    startBrightnessTimer(BRIGHTNESS_TIMEOUT_MENU);
   }
 }
 
@@ -170,6 +175,32 @@ static lv_obj_t *subAboutFunction(lv_obj_t *menu) {
   return pageSub;
 }
 
+static void eventRollerLoRaCB(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t * roller = (lv_obj_t *)lv_event_get_target(e);
+  lv_obj_t * menu = (lv_obj_t *)lv_event_get_user_data(e);
+
+  // Wenn der Benutzer den Roller dreht und stoppt (Auswahl ändert sich)
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    uint16_t sel_idx = lv_roller_get_selected(roller);
+    char buf[32];
+    lv_roller_get_selected_str(roller, buf, sizeof(buf));
+    Serial.printf("Roller gedreht. Index: %d, Text: %s\n", sel_idx, buf);
+    
+    startBrightnessTimer(BRIGHTNESS_TIMEOUT_MENU);
+  }
+
+  // Wenn der Benutzer fest auf die aktuell ausgewählte Nachricht TIPPTE (Senden)
+  if (code == LV_EVENT_CLICKED) {
+    uint16_t sel_idx = lv_roller_get_selected(roller);
+    Serial.printf("Nachricht ausgewählt zum Senden! Index: %d (Text: %s)\n", sel_idx, msgTypes[sel_idx]);
+    
+    addMsgToLora(msgTypes[sel_idx]);
+
+    lv_obj_send_event(lv_menu_get_main_header_back_button(menu), LV_EVENT_CLICKED, NULL);
+  }
+}
+
 // sub page: LoR messages page
 static lv_obj_t *subLoRaMsgFunction(lv_obj_t *menu) {
   Serial.println("LoRs Msg. function started");
@@ -180,34 +211,41 @@ static lv_obj_t *subLoRaMsgFunction(lv_obj_t *menu) {
   /*Create a sub page*/
   lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
   lv_obj_t *contSub = lv_menu_cont_create(pageSub);
-  lv_obj_set_size(contSub, lv_pct(100), lv_pct(66)); // width, height
-  lv_obj_set_flex_flow(contSub, LV_FLEX_FLOW_COLUMN);  // Layout-Hilfe
+  lv_obj_set_size(contSub, lv_pct(100), lv_pct(100));   // width, height
+  lv_obj_set_layout(contSub, LV_LAYOUT_NONE);
 
-  // Create a tab view with tabs on the bottom (e.g. as dot indicators)
-  tabviewLoRa = lv_tabview_create(contSub);
-  lv_obj_set_size(tabviewLoRa, lv_pct(100), lv_pct(100)); // Füllt den Container
-  lv_tabview_set_tab_bar_position(tabviewLoRa, LV_DIR_BOTTOM);
-  lv_obj_set_style_text_font(tabviewLoRa, &lv_font_montserrat_18, 0);
-  registerDefaultEvents(tabviewLoRa);
+  /* 2. Den Roller (die Text-Walze) erstellen */
+  rollerLoRa = lv_roller_create(contSub);
+  lv_obj_set_size(rollerLoRa, lv_pct(100), lv_pct(75));  // Füllt den Container
+  // Optionen setzen (Modus: INFINITE erlaubt endloses Durchscrollen im Kreis, normal wäre NORMAL)
+  lv_obj_set_style_text_font(rollerLoRa, &lv_font_montserrat_18, LV_PART_MAIN);
+  lv_obj_set_style_text_font(rollerLoRa, &lv_font_montserrat_18, LV_PART_SELECTED); // Ausgewählter Text
+  // Sichtbare Zeilenanzahl automatisch an die Höhe anpassen (z.B. 3 Zeilen sichtbar)
+  lv_roller_set_visible_row_count(rollerLoRa, 3);
+  // Mittig im oberen/mittleren Bereich platzieren
+  lv_obj_align(rollerLoRa, LV_ALIGN_TOP_MID, 0, 0);
+  // WICHTIG: Den Start-Index unmissverständlich auf 0 (erste Nachricht) zwingen
+  lv_roller_set_selected(rollerLoRa, 0, LV_ANIM_OFF);
+  // Unseren neuen, schlanken Roller-Callback zuweisen
+  lv_obj_add_event_cb(rollerLoRa, eventRollerLoRaCB, LV_EVENT_ALL, menu);
 
-  lv_obj_t * tab_btns = lv_tabview_get_tab_btns(tabviewLoRa);
-  lv_obj_set_height(tab_btns, 20); // Sehr schmale Leiste
-  lv_obj_set_style_bg_opa(tab_btns, LV_OPA_TRANSP, LV_PART_MAIN); // Hintergrund der Leiste unsichtbar
-
-  int msgCount = sizeof(msgTypes) / sizeof(msgTypes[0]);  
+  int msgCount = sizeof(msgTypes) / sizeof(msgTypes[0]);
+  // Alle Nachrichten aus deinem msgTypes-Array für den Roller zu einem String verbinden
+  // Die Optionen müssen in LVGL durch ein '\n' (New Line) getrennt sein
+  String rollerOptions = "";
   for (int i = 0; i < msgCount; i++) {
-    // Add your tabs/pages (you can keep the names empty if you just want indicator dots)
-    lv_obj_t *tab = lv_tabview_add_tab(tabviewLoRa, "*");
-
-    lv_obj_t * label = lv_label_create(tab);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_18, 0);
-    lv_obj_set_width(label, lv_pct(100)); // Volle Breite des Tabs
-    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP); // Text umbrechen
-    lv_label_set_text(label, msgTypes[i]);
+    rollerOptions += msgTypes[i];
+    if (i < msgCount - 1) rollerOptions += "\n";
   }
+  lv_roller_set_options(rollerLoRa, rollerOptions.c_str(), LV_ROLLER_MODE_INFINITE);
 
-  // Trigger the carousel to flip to the first tab with an animation
-  lv_tabview_set_active(tabviewLoRa, 0, LV_ANIM_ON);
+  lv_obj_t *labelHint = lv_label_create(contSub);
+  lv_obj_set_style_text_font(labelHint, &lv_font_montserrat_18, 0);
+  lv_obj_set_style_text_align(labelHint, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_set_width(labelHint, lv_pct(95));               // Volle Breite des Tabs
+  lv_label_set_long_mode(labelHint, LV_LABEL_LONG_WRAP);  // Text umbrechen
+  lv_label_set_text(labelHint, "Tap on selected message to send.");
+  lv_obj_align(labelHint, LV_ALIGN_BOTTOM_MID, 0, -5);
 
   return pageSub;
 }
@@ -397,7 +435,7 @@ void menuHandler() {
   lv_obj_add_event_cb(menu, eventGestureDefaultCB, LV_EVENT_SCROLL, NULL);
 
   // style
-  lv_obj_set_style_text_font(menu, &lv_font_montserrat_36, LV_PART_MAIN);
+  lv_obj_set_style_text_font(menu, &lv_font_montserrat_34, LV_PART_MAIN);
 
   // spinner
   lv_obj_t *spinner = lv_spinner_create(lv_screen_active());
@@ -408,12 +446,13 @@ void menuHandler() {
   lv_obj_t *back_btn = lv_menu_get_main_header_back_button(menu);
   lv_obj_t *back_button_label = lv_label_create(back_btn);
   lv_label_set_text(back_button_label, " Back");
+  lv_obj_set_style_text_font(back_button_label, &lv_font_montserrat_36, LV_PART_MAIN);
 
   lv_obj_t *cont;
   lv_obj_t *label;
 
   //Create a main page
-  lv_obj_t *pageMain = lv_menu_page_create(menu, NULL);
+  pageMain = lv_menu_page_create(menu, NULL);
 
   // menu item TOTP
   cont = lv_menu_cont_create(pageMain);

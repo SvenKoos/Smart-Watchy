@@ -18,6 +18,7 @@
  *      TYPEDEFS
  **********************/
 typedef struct {
+  uint32_t magic;
   char appName[NAME_LEN];
   char title[TITLE_LEN];
   char body[BODY_LEN];
@@ -27,6 +28,7 @@ typedef struct {
  * GLOBAL PROTOTYPES
  **********************/
  void setupLora();
+ void addMsgToLora(const char* msg);
  void addAlertToLora(singleAlert alert);
  void processNewAlertsToLora(int oldMinIdx, int newMinIdx, int oldMaxIdx, int newMaxIdx);
  void settingLoRaParams();

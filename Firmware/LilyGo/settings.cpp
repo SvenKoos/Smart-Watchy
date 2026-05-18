@@ -21,6 +21,7 @@ lilygoSettings setSetting() {
   settings.wifiPwd = WIFI_PWD;
   settings.totpAccount = TOTP_ACCOUNT;
   settings.totpSecret = TOTP_SECRET;
+  settings.loraMagic = LORA_MAGIC;
 
   return settings;
 }

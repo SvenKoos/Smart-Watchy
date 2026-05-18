@@ -6,10 +6,12 @@
 
 #include "dataCollection.h"
 #include "alertData.h"
+#include "settings.h"
 #include "lora.h"
 
 extern alertData currentAlerts;
 extern singleAlert allAlerts[ALERT_MAX_NO];
+extern lilygoSettings settings;
 
 QueueHandle_t loraQueue;
 
@@ -17,11 +19,25 @@ void setupLora() {
   loraQueue = xQueueCreate(ALERT_MAX_NO, sizeof(LoraNotification));
 }
 
+void addMsgToLora(const char *msg) {
+  LoraNotification loraMsg;
+  strncpy(loraMsg.appName, "LilyGo", NAME_LEN);
+  strncpy(loraMsg.title, "Messenger", TITLE_LEN);
+  strncpy(loraMsg.body, msg, BODY_LEN);
+  loraMsg.magic = settings.loraMagic;
+
+  xQueueSend(loraQueue, &loraMsg, 0);  // Schiebt es in die Queue und läuft sofort weiter
+
+  Serial.print("addMsgToLora Msg: ");
+  Serial.println(msg);
+}
+
 void addAlertToLora(singleAlert alert) {
   LoraNotification loraMsg;
   strncpy(loraMsg.appName, alert.appName, NAME_LEN);
   strncpy(loraMsg.title, alert.title, TITLE_LEN);
   strncpy(loraMsg.body, alert.body, BODY_LEN);
+  loraMsg.magic = settings.loraMagic;
 
   xQueueSend(loraQueue, &loraMsg, 0);  // Schiebt es in die Queue und läuft sofort weiter
 
