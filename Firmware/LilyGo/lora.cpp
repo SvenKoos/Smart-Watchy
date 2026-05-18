@@ -3,11 +3,16 @@
 #include <Arduino.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include <Crypto.h>
+#include <AES.h>
+#include <CTR.h>
+#include <time.h>
 
 #include "dataCollection.h"
 #include "alertData.h"
 #include "settings.h"
 #include "lora.h"
+#include "config.h"
 
 extern alertData currentAlerts;
 extern singleAlert allAlerts[ALERT_MAX_NO];
@@ -15,16 +20,25 @@ extern lilygoSettings settings;
 
 QueueHandle_t loraQueue;
 
+CTR<AES128> ctraes;
+
+uint32_t getEpochTime() {
+    time_t now;
+    time(&now); // Füllt 'now' mit den aktuellen Sekunden seit 1970
+    return (uint32_t)now;
+}
+
 void setupLora() {
   loraQueue = xQueueCreate(ALERT_MAX_NO, sizeof(LoraNotification));
 }
 
 void addMsgToLora(const char *msg) {
   LoraNotification loraMsg;
-  strncpy(loraMsg.appName, "LilyGo", NAME_LEN);
-  strncpy(loraMsg.title, "Messenger", TITLE_LEN);
-  strncpy(loraMsg.body, msg, BODY_LEN);
-  loraMsg.magic = settings.loraMagic;
+  strncpy(loraMsg.data.appName, "LilyGo", NAME_LEN);
+  strncpy(loraMsg.data.title, "Messenger", TITLE_LEN);
+  strncpy(loraMsg.data.body, msg, BODY_LEN);
+  loraMsg.data.magic = settings.loraMagic;
+  loraMsg.packetCounter = getEpochTime();
 
   xQueueSend(loraQueue, &loraMsg, 0);  // Schiebt es in die Queue und läuft sofort weiter
 
@@ -34,10 +48,11 @@ void addMsgToLora(const char *msg) {
 
 void addAlertToLora(singleAlert alert) {
   LoraNotification loraMsg;
-  strncpy(loraMsg.appName, alert.appName, NAME_LEN);
-  strncpy(loraMsg.title, alert.title, TITLE_LEN);
-  strncpy(loraMsg.body, alert.body, BODY_LEN);
-  loraMsg.magic = settings.loraMagic;
+  strncpy(loraMsg.data.appName, alert.appName, NAME_LEN);
+  strncpy(loraMsg.data.title, alert.title, TITLE_LEN);
+  strncpy(loraMsg.data.body, alert.body, BODY_LEN);
+  loraMsg.data.magic = settings.loraMagic;
+  loraMsg.packetCounter = getEpochTime();
 
   xQueueSend(loraQueue, &loraMsg, 0);  // Schiebt es in die Queue und läuft sofort weiter
 
@@ -71,13 +86,24 @@ void transmitAlertsToLora() {
 
     // send only 1 message per cycle (1 min)
     if (xQueueReceive(loraQueue, &loraMsg, 0) == pdPASS) {
+      // encryption
+      // 1. IV vorbereiten (Die ersten 4 Bytes sind der Counter, der Rest bleibt Null)
+      byte iv[16] = { 0 };
+      memcpy(iv, &(loraMsg.packetCounter), sizeof(loraMsg.packetCounter));
 
-      // 2. Paket zusammenbauen (z.B. als einfacher String oder Byte-Array)
-      // String payload = String(loraMsg.appName) + ":" + loraMsg.title + ":" + loraMsg.body;
+      // 2. Krypto-Engine initialisieren
+      ctraes.setKey(key, sizeof(key));
+      ctraes.setIV(iv, sizeof(iv));
 
-      // 3. Senden (Blockiert kurz während des Funkvorgangs)
+      // 3. Nur den inneren Teil (data) "In-Place" verschlüsseln
+      // Wir überschreiben die Klartext-Daten direkt mit dem Chiffre
+      ctraes.encrypt((byte *)&(loraMsg.data), (byte *)&(loraMsg.data), sizeof(EncryptedPayload));
+
+      //  Senden (Blockiert kurz während des Funkvorgangs)
       // int state = radio.transmit(payload);
-      int state = radio.transmit((uint8_t*)&loraMsg, sizeof(loraMsg));
+      // int state = radio.transmit((uint8_t*)&loraMsg, sizeof(loraMsg));
+      // non-blocking
+      int state = radio.startTransmit((uint8_t *)&loraMsg, sizeof(LoraNotification));
 
       Serial.print("transmitAlertsToLora transmit state: ");
       Serial.println(state, DEC);
@@ -86,6 +112,37 @@ void transmitAlertsToLora() {
     // 4. Radio sofort wieder in den Deep Sleep
     radio.sleep();
     instance.pmu.disableALDO4();  // Radio
+  }
+}
+
+// not used here, only blueprint for LoRa receiver
+void processReceivedPacket() {
+  LoraNotification receivedMsg;
+
+  // 1. Daten von RadioLib direkt in das Struct einlesen
+  int state = radio.readData((uint8_t *)&receivedMsg, sizeof(LoraNotification));
+
+  if (state == RADIOLIB_ERR_NONE) {
+    // 2. IV aus dem empfangenen Counter rekonstruieren
+    // UNix epoche time is in packetCounter
+    byte iv[16] = { 0 };
+    memcpy(iv, &(receivedMsg.packetCounter), sizeof(receivedMsg.packetCounter));
+
+    // 3. Krypto-Engine initialisieren
+    ctraes.setKey(key, sizeof(key));
+    ctraes.setIV(iv, sizeof(iv));
+
+    // 4. Den inneren Teil "In-Place" wieder entschlüsseln
+    ctraes.decrypt((byte *)&(receivedMsg.data), (byte *)&(receivedMsg.data), sizeof(EncryptedPayload));
+
+    // 5. Sicherheits-Check: Passt das Magic Word?
+    if (receivedMsg.data.magic == settings.loraMagic) {
+      // Erfolg! Nachricht ist echt und entschlüsselt.
+      // displayOnEPaper(receivedMsg.data.appName, receivedMsg.data.title, receivedMsg.data.body);
+    } else {
+      // Fehler: Falscher Schlüssel, manipuliert oder unverschlüsselter Müll
+      Serial.println("Krypto-Fehler: Magic Word falsch! Paket verworfen.");
+    }
   }
 }
 

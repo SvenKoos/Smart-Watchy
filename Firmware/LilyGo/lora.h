@@ -22,6 +22,11 @@ typedef struct {
   char appName[NAME_LEN];
   char title[TITLE_LEN];
   char body[BODY_LEN];
+} EncryptedPayload;
+
+typedef struct {
+    uint32_t packetCounter; // Bleibt unverschlüsselt (wird für den IV benötigt)
+    EncryptedPayload data;  // Wird verschlüsselt
 } LoraNotification;
 
 /**********************

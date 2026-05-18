@@ -21,5 +21,11 @@
 // UI timeouts
 #define BRIGHTNESS_TIMEOUT_MENU 15
 #define BRIGHTNESS_TIMEOUT_DEFAULT 10
+#define BRIGHTNESS_TIMEOUT_ALERT 5
+
+// encryption
+// 16-Byte Schlüssel (128-Bit), den T-Watch und T-Echo teilen
+const byte key[16] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
+                       0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 
 #endif

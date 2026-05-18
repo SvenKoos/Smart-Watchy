@@ -127,7 +127,7 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
         if (guiState == DARK_STATE) {
           // set brightness
           displayWakup();
-          startBrightnessTimer(5);
+          startBrightnessTimer(BRIGHTNESS_TIMEOUT_ALERT);
 
           // GUI state
           guiState = ALERT_STATE;
