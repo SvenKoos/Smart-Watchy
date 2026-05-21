@@ -82,8 +82,12 @@ The firmware directory contains appropriate directories for Watchy and LilyGo ve
 
 ## Smart Watchy firmware for LilyGo
 Smart Watchy firmware for LilyGo is running on LilyGo T-Watch-S3 and T-Watch-S3 Ultra.
+- The UI is changed from button-based usage to gesture-based handling.
+- The menu is still provided using the one and only LilyGo button.
 The firmware is based on LilyGo library 0.1.0 sharing the same features as firmware for Watchy but adding:
-- Time-based one-time password (TOTP) compatible with Microsoft Entra.ID and Google
+- time-based one-time password (TOTP) compatible with Microsoft Entra.ID and Google
+- remaining battery capacity daily chart in the menü
+- step counter daily chart in the menü
 
 ### Build and Deployment
 Change additionally the TOTP secret in settings.h to your own.

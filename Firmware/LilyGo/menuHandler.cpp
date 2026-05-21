@@ -18,6 +18,7 @@
 extern int guiState;
 extern lilygoSettings settings;
 extern uint8_t batteryHistory[1440];
+extern uint16_t stepCounterHistory[1440];
 
 static lv_obj_t *pageMain;
 static lv_obj_t *labelWifi;
@@ -25,8 +26,8 @@ static lv_obj_t *labelAbout;
 static lv_obj_t *chartBattery;
 static lv_obj_t *labelTOTP;
 static lv_obj_t *barTOTP;
-// static lv_obj_t *tabviewLoRa;
 static lv_obj_t * rollerLoRa;
+static lv_obj_t *chartStepCounter;
 
 lv_timer_t *timerTOTP = NULL;
 
@@ -333,34 +334,78 @@ static lv_obj_t *subBatteryFunction(lv_obj_t *menu) {
   lv_chart_series_t *ser = lv_chart_add_series(chartBattery, lv_palette_main(LV_PALETTE_RED), LV_CHART_AXIS_PRIMARY_Y);
   for (int i = 0; i < 1440; i++) {
     if (batteryHistory[i] > 0)
-      lv_chart_set_next_value(chartBattery, ser, batteryHistory[i]);
+      // lv_chart_set_next_value(chartBattery, ser, batteryHistory[i]);
+      lv_chart_set_value_by_id(chartBattery, ser, i, batteryHistory[i]);
     else
-      lv_chart_set_next_value(chartBattery, ser, LV_CHART_POINT_NONE);
+      // lv_chart_set_next_value(chartBattery, ser, LV_CHART_POINT_NONE);
+      lv_chart_set_value_by_id(chartBattery, ser, i, LV_CHART_POINT_NONE);
   }
 
-  // 1. Linien-Objekt erstellen
-  lv_obj_t *time_line = lv_line_create(contSub);
-  // 2. Punkte für die vertikale Linie definieren (Start oben, Ende unten)
-  // Wir nutzen statische Punkte, die wir später per Code verschieben
-  static lv_point_precise_t line_points[] = { { 0, 0 }, { 0, 130 } };  // 130 ist die Höhe deines Charts
-  lv_line_set_points(time_line, line_points, 2);
-  // 3. Styling des Strichs
-  lv_obj_set_style_line_width(time_line, 2, 0);
-  lv_obj_set_style_line_color(time_line, lv_palette_main(LV_PALETTE_BLUE), 0);  // Blau für Zeit
-  lv_obj_set_style_line_opa(time_line, 180, 0);                                 // Leicht transparent
-  lv_obj_set_style_line_dash_width(time_line, 4, 0);                            // Optional: Gestrichelt
-  lv_obj_set_style_line_dash_gap(time_line, 2, 0);
-  // 4. Zeit abrufen
-  struct tm timeinfo;
-  if (getLocalTime(&timeinfo)) {
-    int totalMinutes = timeinfo.tm_hour * 60 + timeinfo.tm_min;
+  return pageSub;
+}
 
-    // Berechne die X-Position relativ zum Chart
-    int xPos = chartXStart + (totalMinutes * chartWidth / 1440);
+// sub page: step counter history page
+static lv_obj_t *subStepCounterFunction(lv_obj_t *menu) {
+  Serial.println("Step counter function started");
 
-    // Position des Strichs setzen (Y ist 20, wie dein Chart)
-    lv_obj_set_pos(time_line, xPos, chartYStart);
-    lv_obj_move_foreground(time_line);
+  // spinner
+  lv_refr_now(NULL);
+
+  /*Create a sub page*/
+  lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
+  lv_obj_t *contSub = lv_menu_cont_create(pageSub);
+  // Deaktiviert das Flex-Layout, damit align_to funktioniert
+  lv_obj_set_layout(contSub, LV_LAYOUT_NONE);
+
+  int chartWidth = 160;
+  int chartXStart = 40;
+  int chartYStart = 5;
+
+  chartStepCounter = lv_chart_create(contSub);
+  lv_chart_set_type(chartStepCounter, LV_CHART_TYPE_LINE);
+  registerDefaultEvents(chartStepCounter);
+  lv_obj_set_size(chartStepCounter, chartWidth, 130);          // Etwas kleiner als das Display
+  lv_obj_set_pos(chartStepCounter, chartXStart, chartYStart);  // X=55 lässt genug Platz für die Y-Labels links
+  lv_chart_set_axis_range(chartStepCounter, LV_CHART_AXIS_PRIMARY_Y, 0, 20000);
+  lv_chart_set_range(chartStepCounter, LV_CHART_AXIS_PRIMARY_Y, 0, 20000);
+  lv_chart_set_point_count(chartStepCounter, 1440);
+
+  // Skala für die Y-Achse erstellen
+  lv_obj_t *scale_y = lv_scale_create(contSub);
+  lv_obj_set_size(scale_y, 45, 130);  // Gleiche Höhe wie der Chart
+  lv_obj_align_to(scale_y, chartStepCounter, LV_ALIGN_OUT_LEFT_MID, -5, 0);
+  // Skala konfigurieren
+  lv_scale_set_mode(scale_y, LV_SCALE_MODE_VERTICAL_LEFT);
+  lv_scale_set_range(scale_y, 0, 20000);
+  lv_scale_set_total_tick_count(scale_y, 3);  // 0, 10k, 20k
+  lv_scale_set_major_tick_every(scale_y, 1);  // Jeder Tick bekommt ein Label
+  lv_obj_set_style_text_font(scale_y, &lv_font_montserrat_18, LV_PART_MAIN);
+  // Labels setzen
+  static const char *y_labels[] = { "0", "10k", "20k", NULL };
+  lv_scale_set_text_src(scale_y, y_labels);
+
+  // Skala für die X-Achse erstellen
+  lv_obj_t *scale_x = lv_scale_create(contSub);
+  lv_obj_set_size(scale_x, 160, 40);  // Gleiche Breite wie der Chart
+  lv_obj_align_to(scale_x, chartStepCounter, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
+  lv_scale_set_mode(scale_x, LV_SCALE_MODE_HORIZONTAL_BOTTOM);
+  lv_scale_set_range(scale_x, 0, 24);
+  lv_scale_set_total_tick_count(scale_x, 3);  // 0, 12, 24
+  lv_scale_set_major_tick_every(scale_x, 1);
+  lv_obj_set_style_text_font(scale_x, &lv_font_montserrat_18, LV_PART_MAIN);
+  static const char *x_labels[] = { "0", "12", "24", NULL };
+  lv_scale_set_text_src(scale_x, x_labels);
+
+  // spinner
+  lv_refr_now(NULL);
+
+  lv_chart_series_t *ser = lv_chart_add_series(chartStepCounter, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
+  for (int i = 0; i < 1440; i++) {
+    if (stepCounterHistory[i] > 0)
+      // lv_chart_set_next_value(chartStepCounter, ser, stepCounterHistory[i]);
+      lv_chart_set_value_by_id(chartStepCounter, ser, i, stepCounterHistory[i]);
+    else
+      lv_chart_set_value_by_id(chartStepCounter, ser, i, LV_CHART_POINT_NONE);
   }
 
   return pageSub;
@@ -474,6 +519,13 @@ void menuHandler() {
   label = lv_label_create(cont);
   lv_label_set_text(label, "    Battery");
   lv_menu_set_load_page_event(menu, cont, subBatteryFunction(menu));
+
+  // menu item step counterhistory
+  cont = lv_menu_cont_create(pageMain);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
+  label = lv_label_create(cont);
+  lv_label_set_text(label, "    Steps");
+  lv_menu_set_load_page_event(menu, cont, subStepCounterFunction(menu));
 
   // menu item Lora Messages
   cont = lv_menu_cont_create(pageMain);

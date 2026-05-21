@@ -101,15 +101,19 @@ void transmitAlertsToLora() {
 
       //  Senden (Blockiert kurz während des Funkvorgangs)
       // int state = radio.transmit(payload);
-      // int state = radio.transmit((uint8_t*)&loraMsg, sizeof(loraMsg));
+      int state = radio.transmit((uint8_t*)&loraMsg, sizeof(LoraNotification));
       // non-blocking
-      int state = radio.startTransmit((uint8_t *)&loraMsg, sizeof(LoraNotification));
+      // int state = radio.startTransmit((uint8_t *)&loraMsg, sizeof(LoraNotification));
 
       Serial.print("transmitAlertsToLora transmit state: ");
       Serial.println(state, DEC);
     }
+    else {
+      Serial.print("transmitAlertsToLora No msg. in the queue");
+    }
 
     // 4. Radio sofort wieder in den Deep Sleep
+    // can be done only in blocking mode
     radio.sleep();
     instance.pmu.disableALDO4();  // Radio
   }
@@ -148,7 +152,7 @@ void processReceivedPacket() {
 
 void settingLoRaParams() {
   // set carrier frequency
-  if (radio.setFrequency(868.0) == RADIOLIB_ERR_INVALID_FREQUENCY) {
+  if (radio.setFrequency(868.1) == RADIOLIB_ERR_INVALID_FREQUENCY) {
     Serial.println(F("Selected frequency is invalid for this module!"));
   }
 

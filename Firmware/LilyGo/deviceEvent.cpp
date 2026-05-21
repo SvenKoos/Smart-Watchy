@@ -86,24 +86,26 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
         break;
       case PMU_EVENT_USBC_REMOVE:
         // Serial.println("Power adapter removed");
-        displayWakup();
-        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         // draw the watchface screen
         guiState = WATCHFACE_STATE;
         currentAccelleration.isMoved = true;
         drawWatchFace();
+
+        displayWakup();
+        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         break;
       case PMU_EVENT_USBC_INSERT:
         // Serial.println("Power adapter plugged in");
-        displayWakup();
-        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         // draw the watchface screen
         guiState = WATCHFACE_STATE;
         currentAccelleration.isMoved = true;
         drawWatchFace();
+
+        displayWakup();
+        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         break;
       case PMU_EVENT_BATTERY_OVER_VOLTAGE:
@@ -139,10 +141,6 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
       case SENSOR_DOUBLE_TAP_DETECTED:
         Serial.println("DoubleTap event");
 
-        // set brightness
-        displayWakup();
-        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
-
         if (guiState == WATCHFACE_STATE) {
           Serial.println("DoubleTap event: watchface state");
 
@@ -172,6 +170,11 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
           currentAccelleration.isMoved = true;
           drawWatchFace();
         }
+
+        // set brightness
+        displayWakup();
+        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
+
         break;
       case SENSOR_ANY_MOTION_DETECTED:
         // Serial.println("Any motion / no motion event");
@@ -184,7 +187,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
 
 static void alertEventCB(lv_event_t* e) {
   // set brightness
-  displayWakup();
+  // displayWakup();
   startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
   if ((guiState == ALERT_STATE) && (lv_event_get_code(e) == LV_EVENT_GESTURE)) {

@@ -70,11 +70,19 @@ powerData getPowerData() {
   Serial.println(currentPower.batteryPercent, DEC);
 
   struct tm timeinfo;
-  int currentMinuteIndex = 0;
   if (getLocalTime(&timeinfo)) {
+    // reset battery history at midnight
+    if (timeinfo.tm_hour == 0 && timeinfo.tm_min == 0) {
+      for (int i = 0; i < 1440; i++) {
+        batteryHistory[i] = 0;
+      }
+    }
+
+    // store current battery capacity value
+    int currentMinuteIndex = 0;
     currentMinuteIndex = timeinfo.tm_hour * 60 + timeinfo.tm_min;
+    batteryHistory[currentMinuteIndex] = currentPower.batteryPercent;
   }
-  batteryHistory[currentMinuteIndex] = currentPower.batteryPercent;
 
   return currentPower;
 }

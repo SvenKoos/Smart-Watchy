@@ -125,10 +125,6 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
           vibMotor();
         }
         if (guiState == DARK_STATE) {
-          // set brightness
-          displayWakup();
-          startBrightnessTimer(BRIGHTNESS_TIMEOUT_ALERT);
-
           // GUI state
           guiState = ALERT_STATE;
 
@@ -138,6 +134,10 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
           // show the newest alert
           int alertIndex = currentAlerts.count - 1;
           showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
+
+          // set brightness
+          displayWakup();
+          startBrightnessTimer(BRIGHTNESS_TIMEOUT_ALERT);
         }
         // process to Lora
         processNewAlertsToLora(oldMin, oldMax, newMin, newMax);
