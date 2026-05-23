@@ -24,6 +24,12 @@ accellData getAccellData() {
   struct tm timeinfo;
   instance.rtc.getDateTime(&timeinfo);
   if (timeinfo.tm_hour == 0 && timeinfo.tm_min == 0) {
+    // step counter history
+    for (int i = 0; i < 1440; i++) {
+      stepCounterHistory[i] = 0;
+    }
+
+    // reset step counter
     resetAccellData();
   }
 
@@ -34,9 +40,7 @@ accellData getAccellData() {
   instance.sensor.getAccelerometer(currentAccelleration.xAccell, currentAccelleration.yAccell, currentAccelleration.zAccell);
   currentAccelleration.stepCounter = instance.sensor.getPedometerCounter();
 
-  currentAccelleration.isMoved = ((abs(oldAccelX - currentAccelleration.xAccell) > MAX_ACCEL_QUIET) || 
-                                  (abs(oldAccelY - currentAccelleration.yAccell) > MAX_ACCEL_QUIET) || 
-                                  (abs(oldAccelZ - currentAccelleration.zAccell) > MAX_ACCEL_QUIET));
+  currentAccelleration.isMoved = ((abs(oldAccelX - currentAccelleration.xAccell) > MAX_ACCEL_QUIET) || (abs(oldAccelY - currentAccelleration.yAccell) > MAX_ACCEL_QUIET) || (abs(oldAccelZ - currentAccelleration.zAccell) > MAX_ACCEL_QUIET));
 
   currentAccelleration.code = CODE_NO_ERROR;
 
