@@ -298,6 +298,28 @@ void GFX_Print_SX1262_Init_Failed_Refresh_Info(void) {
   display.printf("Status: Init failed");
 }
 
+// Funktion zur Konvertierung von Unix-Time in hh:mm (Lokale Zeit)
+String getFormattedTime(uint32_t unixTime) {
+  // 1. Zeitzone anpassen (z.B. Hamburg / Mitteleuropäische Zeit)
+  // MEZ = UTC + 1 Stunde (3600 Sek) | MESZ (Sommerzeit) = UTC + 2 Stunden (7200 Sek)
+  // Da wir aktuell Mai 2026 haben, befinden wir uns in der Sommerzeit (MESZ):
+  // ist bereits angepasst
+  uint32_t localTime = unixTime;
+
+  // 2. Sekunden des aktuellen Tages isolieren
+  uint32_t secondsInDay = localTime % 86400;  // 86400 Sekunden hat ein Tag
+
+  // 3. Stunden und Minuten berechnen
+  uint8_t hours = secondsInDay / 3600;
+  uint8_t minutes = (secondsInDay % 3600) / 60;
+
+  // 4. Als sauber formatierten String zurückgeben (mit führenden Nullen)
+  char timeBuffer[6];  // Platz für "hh:mm\0"
+  sprintf(timeBuffer, "%02d:%02d", hours, minutes);
+
+  return String(timeBuffer);
+}
+
 void GFX_Print_SX1262_Info_Loop(void) {
   if (SX1262_OP.initialization_flag == true) {
     if (Display_Refresh_OP.sx1262_test.transmission_fast_refresh_flag == true) {
@@ -366,12 +388,24 @@ void GFX_Print_SX1262_Info_Loop(void) {
           display.print("Titel: ");
           display.println(receivedMsg.data.title);
 
-          display.setCursor(5, 60);
+          if (strlen(receivedMsg.data.title) < 15) 
+            display.setCursor(5, 60);
+          else
+            display.setCursor(5, 80);
           display.println(receivedMsg.data.body);
 
           // Signalstärke unten klein einblenden
+          display.setFont(&FreeMonoBold9pt7b);
           display.setCursor(5, 170);
-          display.printf("RSSI: %.0f dBm", SX1262_OP.receive_rssi);
+          display.printf("RSSI:%.0fdBm", SX1262_OP.receive_rssi);
+
+          // Zeitstempel umwandeln
+          String timeString = getFormattedTime(receivedMsg.packetCounter);
+          // Test-Ausgabe im Seriellen Monitor
+          Serial.print("Nachricht empfangen um: ");
+          Serial.println(timeString);
+          display.setCursor(130, 170);
+          display.print(timeString);;
 
           // Display-Refresh im nächsten Loop-Durchlauf triggern
           Display_Refresh_OP.sx1262_test.transmission_fast_refresh_flag = true;
@@ -452,7 +486,7 @@ void setup(void) {
   display.setRotation(1);
   display.setTextColor(EPD_BLACK);
 
-  GFX_Print_TEST("SX1262 callback distance test");
+  GFX_Print_TEST("Callback distance test");
 
   GFX_Print_SX1262_Info();
   if (SX1262_Initialization() == true) {
