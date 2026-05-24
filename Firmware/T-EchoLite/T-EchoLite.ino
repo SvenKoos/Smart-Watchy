@@ -381,6 +381,8 @@ void GFX_Print_SX1262_Info_Loop(void) {
           // Wir nutzen hier einfache Standard-Schrift-Koordinaten
           display.setFont(&FreeSans9pt7b);
           display.setCursor(5, 20);
+
+/*          
           display.print("App: ");
           display.println(receivedMsg.data.appName);
 
@@ -393,6 +395,8 @@ void GFX_Print_SX1262_Info_Loop(void) {
           else
             display.setCursor(5, 80);
           display.println(receivedMsg.data.body);
+*/
+          display.printf("%s\n %s\n %s", receivedMsg.data.appName, receivedMsg.data.title, receivedMsg.data.body);
 
           // Signalstärke unten klein einblenden
           display.setFont(&FreeMonoBold9pt7b);

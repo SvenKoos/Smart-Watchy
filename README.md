@@ -89,11 +89,11 @@ The firmware is based on LilyGo library 0.1.0 sharing the same features as firmw
 - remaining battery capacity daily chart in the menü
 - step counter daily chart in the menü
 
+### Build and Deployment
+Change additionally the TOTP secret in settings.h to your own.
+
 # Smart Watchy goes LoRa WAN
 Smart Watchy on LiLygo is using LoRa WAN to
 - forward messages from mobile message center on Android received with Smart Watchy on LilyGo T-Watch to T-Echo Lite,
 - send messages from LoRa Messenger menu item of Smart Watchy on LilyGo to T-Echo Lite.
 LoRa transmitting is encrypted and uses a sender identifier (LoRa magic) to ensure information security.
-
-### Build and Deployment
-Change additionally the TOTP secret in settings.h to your own.
