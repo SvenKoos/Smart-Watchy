@@ -77,31 +77,15 @@ void stopBrightnessTimer() {
 }
 
 void displayWakup() {
-  // 1. Hardware-Befehl: Sleep Out
-  // your_send_cmd(0x11);
-
-  // 2. WICHTIG: Wartezeit für die Ladungspumpen des Displays
-  // Laut MIPI-Spezifikation sind 120ms sicher, oft reichen 5-20ms.
-  // delay(120);
-/*
-  // 3. LVGL Re-Aktivieren
-  lv_display_t *disp = lv_display_get_default();
-  if (disp) {
-    lv_display_remove_flag(disp, LV_DISPLAY_FLAG_READ_ONLY);
-
-    // In v9.5 setzt dies den Inaktivitäts-Timer zurück
-    lv_display_trigger_activity(disp);
-  }
-*/
-  instance.pmu.enableALDO2();  // Erst Strom an...
-  delay(5);                    // Ganz kurzes Warten für stabile Spannung
+  // instance.pmu.enableALDO2();  // Erst Strom an...
+  // delay(50);                    // Ganz kurzes Warten für stabile Spannung
 
   // 4. Licht wieder an
   uint brightness = DEVICE_MAX_BRIGHTNESS_LEVEL;
   if (currentWeather.weatherIcon[2] == 'd')
-    brightness = 150;
+    brightness = BRIGHTNESS_DAY;
   else if (currentWeather.weatherIcon[2] == 'n')
-    brightness = 100;
+    brightness = BRIGHTNESS_NIGHT;
   // instance.incrementalBrightness(brightness);
   instance.setBrightness(brightness);
 }
@@ -109,17 +93,8 @@ void displayWakup() {
 void displayGoToSleep() {
   // 1. Licht aus (Soforteffekt)
   // instance.setBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
-  instance.decrementBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
-
-  instance.pmu.disableALDO2();  // Schaltet die Stromversorgung der LEDs physisch ab
-/*
-  // 2. LVGL-Rendering für dieses Display stoppen
-  lv_display_t *disp = lv_display_get_default();
-  if (disp) {
-    lv_display_add_flag(disp, LV_DISPLAY_FLAG_READ_ONLY);
-  }
-*/
-  // 3. Hardware-Befehl an den Controller senden (Sleep In)
-  // Ersetze 'your_send_cmd' durch deine SPI-Schreibfunktion
-  // your_send_cmd(0x10);
+  // instance.decrementBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
+  instance.decrementBrightness(0);
+  delay(10); // Kurz warten, bis das PWM-Signal der LEDs komplett abgeflacht ist
+  // instance.pmu.disableALDO2();  // Schaltet die Stromversorgung der LEDs physisch ab
 }

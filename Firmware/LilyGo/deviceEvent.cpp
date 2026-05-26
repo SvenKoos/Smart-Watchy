@@ -28,9 +28,9 @@ lv_obj_t* labelTitleBody;
 
 uint32_t last_gesture_time = 0;
 
-void setupDeviceEvent() {
-  instance.onEvent(device_event_cb);
-}
+  void setupDeviceEvent() {
+    instance.onEvent(device_event_cb);
+  }
 
 static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
   if (event == POWER_EVENT) {
@@ -56,6 +56,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
       case PMU_EVENT_KEY_CLICKED:
         Serial.println("Power button is clicked");
 
+        // s. loop()
         // set brightness
         displayWakup();
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
