@@ -42,37 +42,9 @@ void setupTOTP(String base32Secret) {
       bitsLeft -= 8;
     }
   }
-  /*
-  // Im NVS speichern
-  prefs.begin("totp", false);
-  prefs.putBytes("key", binKey, keyLen);
-  prefs.putInt("len", keyLen);
-  prefs.end();
-
-  Serial.printf("setupTOTP %d Bytes store in NVS\n", keyLen);
-*/
 }
 
 String calculateTotpCode() {
-  // Code: 120589807
-  // URL https://mobileappcommunicator.auth.microsoft.com/activatev2/572624020/SASPUBWEULR1AZ2FD002
-  // Account: ABB:sven.koos@ch.abb.com
-  // Secret: vm2qr7v2rzgrn2lh
-  /*
-  // 1. Secret aus NVS laden (wie gehabt)
-  prefs.begin("totp", true);
-  int keyLen = prefs.getInt("len", 0);
-  if (keyLen == 0) {
-    prefs.end();
-    Serial.println("calculateTotpCode No secret");
-
-    return "";
-  }
-  uint8_t binKey[32];
-  prefs.getBytes("key", binKey, keyLen);
-  prefs.end();
-*/
-  //
   if (keyLen == 0) {
     Serial.println("calculateTotpCode No key");
     return "";
@@ -83,11 +55,6 @@ String calculateTotpCode() {
   time(&now);
   now -= currentWeather.offset;  // Zeitzone + Sommerzeit
   Serial.println(now);
-
-  // example:
-    // timestamp 1778338810
-    // Code: 378331
-    // Secret: vm2qr7v2rzgrn2lh
 
   uint64_t timesteps = now / 30;
 

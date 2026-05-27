@@ -100,7 +100,6 @@ void transmitAlertsToLora() {
       ctraes.encrypt((byte *)&(loraMsg.data), (byte *)&(loraMsg.data), sizeof(EncryptedPayload));
 
       //  Senden (Blockiert kurz während des Funkvorgangs)
-      // int state = radio.transmit(payload);
       int state = radio.transmit((uint8_t*)&loraMsg, sizeof(LoraNotification));
       // non-blocking
       // int state = radio.startTransmit((uint8_t *)&loraMsg, sizeof(LoraNotification));

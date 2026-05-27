@@ -187,7 +187,6 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
 
 static void alertEventCB(lv_event_t* e) {
   // set brightness
-  // displayWakup();
   startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
   if ((guiState == ALERT_STATE) && (lv_event_get_code(e) == LV_EVENT_GESTURE)) {

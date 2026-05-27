@@ -1,3 +1,7 @@
+#ifndef ARDUINO_T_WATCH_S3
+#error "HALT! Bitte im Menü das Board auf 'LilyGo T-Watch-S3' umstellen!"
+#endif
+
 #include <LilyGoLib.h>
 #include <LV_Helper.h>
 #include <WiFi.h>

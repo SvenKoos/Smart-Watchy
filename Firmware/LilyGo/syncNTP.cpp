@@ -42,9 +42,6 @@ void syncNTP(long gmt, const char *ntpServer) {
       tv.tv_sec = epochTime;
       tv.tv_usec = 0;
       settimeofday(&tv, NULL);
-
-      // OPTIONAL: Falls du eine externe Hardware-RTC nutzt (wie den BM8563 auf der Watch)
-      // instance.rtc.setDateTime(timeClient.getFormattedTime());
     }
     timeClient.end();
   }

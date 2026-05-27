@@ -63,7 +63,7 @@ void startBrightnessTimer(uint seconds) {
     esp_timer_stop(brightness_timer);
   }
 
-  esp_timer_start_once(brightness_timer, seconds * 1000000);  // 15 sec
+  esp_timer_start_once(brightness_timer, seconds * 1000 * 1000);  
 
   Serial.println("startBrightnessTimer Start");
 }
@@ -77,24 +77,8 @@ void stopBrightnessTimer() {
 }
 
 void displayWakup() {
-  // 1. Hardware-Befehl: Sleep Out
-  // your_send_cmd(0x11);
-
-  // 2. WICHTIG: Wartezeit für die Ladungspumpen des Displays
-  // Laut MIPI-Spezifikation sind 120ms sicher, oft reichen 5-20ms.
-  // delay(120);
-/*
-  // 3. LVGL Re-Aktivieren
-  lv_display_t *disp = lv_display_get_default();
-  if (disp) {
-    lv_display_remove_flag(disp, LV_DISPLAY_FLAG_READ_ONLY);
-
-    // In v9.5 setzt dies den Inaktivitäts-Timer zurück
-    lv_display_trigger_activity(disp);
-  }
-*/
-  instance.pmu.enableALDO2();  // Erst Strom an...
-  delay(5);                    // Ganz kurzes Warten für stabile Spannung
+  instance.powerControl(POWER_DISPLAY_BACKLIGHT, true);  // Erst Strom an...
+  delay(5);                                             // Ganz kurzes Warten für stabile Spannung
 
   // 4. Licht wieder an
   uint brightness = DEVICE_MAX_BRIGHTNESS_LEVEL;
@@ -111,15 +95,5 @@ void displayGoToSleep() {
   // instance.setBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
   instance.decrementBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
 
-  instance.pmu.disableALDO2();  // Schaltet die Stromversorgung der LEDs physisch ab
-/*
-  // 2. LVGL-Rendering für dieses Display stoppen
-  lv_display_t *disp = lv_display_get_default();
-  if (disp) {
-    lv_display_add_flag(disp, LV_DISPLAY_FLAG_READ_ONLY);
-  }
-*/
-  // 3. Hardware-Befehl an den Controller senden (Sleep In)
-  // Ersetze 'your_send_cmd' durch deine SPI-Schreibfunktion
-  // your_send_cmd(0x10);
+  instance.powerControl(POWER_DISPLAY_BACKLIGHT, false);  // Schaltet die Stromversorgung der LEDs physisch ab
 }

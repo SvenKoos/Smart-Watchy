@@ -96,5 +96,6 @@ Change additionally the TOTP secret in settings.h to your own.
 Smart Watchy on LiLygo is using LoRa WAN to
 - forward messages from mobile message center on Android received with Smart Watchy on LilyGo T-Watch to T-Echo Lite,
 - send messages from LoRa Messenger menu item of Smart Watchy on LilyGo to T-Echo Lite.
+
 LoRa transmitting is encrypted and uses a sender identifier (LoRa magic) to ensure information security.
-Firmware for T-Echi Lite is added to the repository.
+Firmware for T-Echo Lite is added to the repository.
