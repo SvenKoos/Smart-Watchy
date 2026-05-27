@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// wifi AP
+// wifi
 #define WIFI_AP_TIMEOUT 60
 #define WIFI_AP_SSID    "LilyGo"
 
@@ -22,10 +22,6 @@
 #define BRIGHTNESS_TIMEOUT_MENU 15
 #define BRIGHTNESS_TIMEOUT_DEFAULT 10
 #define BRIGHTNESS_TIMEOUT_ALERT 5
-
-// brightness
-#define BRIGHTNESS_DAY 150
-#define BRIGHTNESS_NIGHT 100
 
 // encryption
 // 16-Byte Schlüssel (128-Bit), den T-Watch und T-Echo teilen
