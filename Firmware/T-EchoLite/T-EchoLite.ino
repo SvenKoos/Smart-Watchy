@@ -5,6 +5,7 @@
  * @LastEditTime: 2025-06-05 14:55:44
  * @License: GPL 3.0
  */
+
 #include <Arduino.h>
 #include "Adafruit_EPD.h"
 #include "RadioLib.h"
@@ -43,8 +44,6 @@ static const uint32_t Local_MAC[2] = {
   NRF_FICR->DEVICEID[1],
 };
 
-static size_t CycleTime = 0;
-
 struct Display_Refresh_Operator {
   struct
   {
@@ -53,12 +52,6 @@ struct Display_Refresh_Operator {
 };
 
 struct SX1262_Operator {
-  using state = enum {
-    UNCONNECTED,  // not connected
-    CONNECTED,    // connected already
-    CONNECTING,   // connecting
-  };
-
   using mode = enum {
     LORA,  // lora mode
     FSK,   // fsk mode
@@ -117,34 +110,10 @@ struct SX1262_Operator {
     bool change_flag = false;
   } crc;
 
-  struct
-  {
-    struct
-    {
-      bool send_flag = false;
-      bool receive_flag = false;
-    } led;
-
-    uint32_t mac[2] = { 0 };
-    uint32_t send_data = 0;
-    uint32_t receive_data = 0;
-    uint8_t connection_flag = state::UNCONNECTED;
-    bool send_flag = false;
-    uint8_t error_count = 11;
-  } device_1;
-
   uint8_t current_mode = mode::LORA;
 
   volatile bool operation_flag = false;
   bool initialization_flag = false;
-  bool mode_change_flag = false;
-
-  uint8_t send_package[16] = { 'M', 'A', 'C', ':',
-                               (uint8_t)(Local_MAC[1] >> 24), (uint8_t)(Local_MAC[1] >> 16),
-                               (uint8_t)(Local_MAC[1] >> 8), (uint8_t)(Local_MAC[1]),
-                               (uint8_t)(Local_MAC[0] >> 24), (uint8_t)(Local_MAC[0] >> 16),
-                               (uint8_t)(Local_MAC[0] >> 8), (uint8_t)Local_MAC[0],
-                               0, 0, 0, 0 };
 
   float receive_rssi = 0;
   float receive_snr = 0;
@@ -235,33 +204,29 @@ void GFX_Print_TEST(String s) {
   display.setCursor(SCREEN_WIDTH / 2 - 5, SCREEN_HEIGHT / 2 + 40);
   display.setTextSize(4);
   display.printf("3");
-  // display.display(display.Update_Mode::FULL_REFRESH, true);
   display.display();
-  // delay(200);
+  delay(200);
+
   display.fillRect(SCREEN_WIDTH / 2 - 5, SCREEN_HEIGHT / 2 + 20, 30, 40, EPD_WHITE);
   display.setCursor(SCREEN_WIDTH / 2 - 5, SCREEN_HEIGHT / 2 + 40);
   display.printf("2");
-  // display.display(display.Update_Mode::PARTIAL_REFRESH, true);
-  // display.display(display.Update_Mode::PARTIAL_REFRESH, true);
   display.display();
-  // delay(200);
+  delay(200);
+
   display.fillRect(SCREEN_WIDTH / 2 - 5, SCREEN_HEIGHT / 2 + 20, 30, 30, EPD_WHITE);
   display.setCursor(SCREEN_WIDTH / 2 + 3, SCREEN_HEIGHT / 2 + 40);
   display.printf("1");
-  // display.display(display.Update_Mode::PARTIAL_REFRESH, true);
-  // display.display(display.Update_Mode::PARTIAL_REFRESH, true);
   display.display();
-  // delay(200);
+  delay(200);
 }
 
 void GFX_Print_SX1262_Info(void) {
   display.fillScreen(EPD_WHITE);
   display.setFont(&FreeSans9pt7b);
   display.setTextSize(1);
+
   display.setCursor(5, 20);
   display.printf("SX1262 Info");
-
-  // display.setFont(&Org_01);
   display.setCursor(5, 40);
   display.printf("MAC 0: %u", Local_MAC[0]);
   display.setCursor(5, 60);
@@ -269,7 +234,6 @@ void GFX_Print_SX1262_Info(void) {
 }
 
 void GFX_Print_SX1262_Init_Successful_Refresh_Info(void) {
-  // display.fillRect(0, 28 - 5, SCREEN_WIDTH, 40, EPD_WHITE);
   display.setTextSize(1);
   display.setCursor(5, 80);
   display.printf("Status: Init successful");
@@ -292,7 +256,6 @@ void GFX_Print_SX1262_Init_Successful_Refresh_Info(void) {
 }
 
 void GFX_Print_SX1262_Init_Failed_Refresh_Info(void) {
-  // display.fillRect(0, 28 - 5, SCREEN_WIDTH, 40, EPD_WHITE);
   display.setTextSize(1);
   display.setCursor(5, 80);
   display.printf("Status: Init failed");
@@ -303,7 +266,7 @@ String getFormattedTime(uint32_t unixTime) {
   // 1. Zeitzone anpassen (z.B. Hamburg / Mitteleuropäische Zeit)
   // MEZ = UTC + 1 Stunde (3600 Sek) | MESZ (Sommerzeit) = UTC + 2 Stunden (7200 Sek)
   // Da wir aktuell Mai 2026 haben, befinden wir uns in der Sommerzeit (MESZ):
-  // ist bereits angepasst
+  // ist bereits angepasst bei Sender
   uint32_t localTime = unixTime;
 
   // 2. Sekunden des aktuellen Tages isolieren
@@ -326,13 +289,6 @@ void GFX_Print_SX1262_Info_Loop(void) {
       Display_Refresh_OP.sx1262_test.transmission_fast_refresh_flag = false;
       // display.display(display.Update_Mode::FAST_REFRESH, true);
       display.display();
-    }
-
-    if (SX1262_OP.device_1.led.receive_flag == true) {
-      if (millis() > CycleTime) {
-        SX1262_OP.device_1.led.receive_flag = false;
-        digitalWrite(LED_2, HIGH);
-      }
     }
 
     if (SX1262_OP.operation_flag == true) {
@@ -370,10 +326,8 @@ void GFX_Print_SX1262_Info_Loop(void) {
           SX1262_OP.receive_snr = radio.getSNR();
           Serial.printf("[LoRa] RSSI: %.1f dBm | SNR: %.1f dB\n", SX1262_OP.receive_rssi, SX1262_OP.receive_snr);
 
-          // 5. LED_2 kurz einschalten als Empfangsbestätigung
+          // 5. LED_2 einschalten als Empfangsbestätigung
           digitalWrite(LED_2, LOW);
-          SX1262_OP.device_1.led.receive_flag = true;
-          CycleTime = millis() + 50;
 
           // 6. E-Paper-Display beschreiben
           display.clearBuffer();
@@ -382,26 +336,12 @@ void GFX_Print_SX1262_Info_Loop(void) {
           display.setFont(&FreeSans9pt7b);
           display.setCursor(5, 20);
 
-/*          
-          display.print("App: ");
-          display.println(receivedMsg.data.appName);
-
-          display.setCursor(5, 40);
-          display.print("Titel: ");
-          display.println(receivedMsg.data.title);
-
-          if (strlen(receivedMsg.data.title) < 15) 
-            display.setCursor(5, 60);
-          else
-            display.setCursor(5, 80);
-          display.println(receivedMsg.data.body);
-*/
           display.printf("%s\n %s\n %s", receivedMsg.data.appName, receivedMsg.data.title, receivedMsg.data.body);
 
           // Signalstärke unten klein einblenden
           display.setFont(&FreeMonoBold9pt7b);
           display.setCursor(5, 170);
-          display.printf("RSSI:%.0fdBm", SX1262_OP.receive_rssi);
+          display.printf("RSSI %.0fdBm", SX1262_OP.receive_rssi);
 
           // Zeitstempel umwandeln
           String timeString = getFormattedTime(receivedMsg.packetCounter);
@@ -409,7 +349,8 @@ void GFX_Print_SX1262_Info_Loop(void) {
           Serial.print("Nachricht empfangen um: ");
           Serial.println(timeString);
           display.setCursor(130, 170);
-          display.print(timeString);;
+          display.print(timeString);
+          ;
 
           // Display-Refresh im nächsten Loop-Durchlauf triggern
           Display_Refresh_OP.sx1262_test.transmission_fast_refresh_flag = true;
@@ -461,11 +402,6 @@ bool SX1262_Initialization(void) {
 
 void setup(void) {
   Serial.begin(115200);
-  // while (!Serial)
-  // {
-  //     delay(100);
-  // }
-  Serial.println("Ciallo");
 
   // 3.3V Power ON
   pinMode(RT9080_EN, OUTPUT);
@@ -476,6 +412,8 @@ void setup(void) {
 
   pinMode(SX1262_RF_VC1, OUTPUT);
   pinMode(SX1262_RF_VC2, OUTPUT);
+
+  // receive
   Set_SX1262_RF_Transmitter_Switch(false);
 
   pinMode(nRF52840_BOOT, INPUT_PULLUP);
@@ -500,13 +438,15 @@ void setup(void) {
     GFX_Print_SX1262_Init_Failed_Refresh_Info();
     SX1262_OP.initialization_flag = false;
   }
-  // display.display(display.Update_Mode::FULL_REFRESH, true);
   display.display();
-  // display.setFont(&Org_01);
 
   Display_Refresh_OP.sx1262_test.transmission_fast_refresh_flag = true;
 }
 
 void loop() {
+  if (digitalRead(nRF52840_BOOT) == LOW) {
+    digitalWrite(LED_2, HIGH);
+  }
+
   GFX_Print_SX1262_Info_Loop();
 }
