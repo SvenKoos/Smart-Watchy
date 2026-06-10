@@ -96,6 +96,9 @@ bool connectWiFi(String &hostIP, String &gatewayIP, String &macAdress) {
 
     Serial.print("Wifi failed: ");
     Serial.println(WiFi.status(), DEC);
+
+    // turn off radios
+    disconnectWifi();
   } else {
     if (WL_CONNECTED == WiFi.waitForConnectResult()) {  // attempt to connect for 10s
       WIFI_CONFIGURED = true;
