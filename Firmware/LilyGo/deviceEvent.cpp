@@ -17,6 +17,9 @@ extern singleAlert allAlerts[ALERT_MAX_NO];
 extern int guiState;
 extern accellData currentAccelleration;
 
+extern lv_color_t color_bg;
+extern lv_color_t color_text;
+
 int alertIndex = -1;
 
 lv_style_t styleAlerts;
@@ -232,6 +235,9 @@ lv_obj_t* prepareAlertScreen() {
   // clean the screen
   lv_obj_clean(alert_scr);
 
+  // set screen background
+  lv_obj_set_style_bg_color(alert_scr, color_bg, 0);
+
   // 2. Scroll-Verhalten aktivieren
   // Wir erlauben vertikales Scrollen, schalten aber horizontales aus
   lv_obj_add_flag(alert_scr, LV_OBJ_FLAG_SCROLLABLE);
@@ -252,17 +258,20 @@ lv_obj_t* prepareAlertScreen() {
   labelTimestamp = lv_label_create(alert_scr);
   lv_obj_add_style(labelTimestamp, &styleAlerts, LV_PART_MAIN);
   lv_obj_align(labelTimestamp, LV_ALIGN_TOP_LEFT, 5, 5);
+  lv_obj_set_style_text_color(labelTimestamp, color_text, 0);
 
   // Index
   labelIndex = lv_label_create(alert_scr);
   lv_obj_add_style(labelIndex, &styleAlerts, LV_PART_MAIN);
   lv_obj_set_style_text_align(labelIndex, LV_TEXT_ALIGN_RIGHT, 0);
   lv_obj_align(labelIndex, LV_ALIGN_TOP_RIGHT, -10, 5);
+  lv_obj_set_style_text_color(labelIndex, color_text, 0);
 
   // app
   labelApp = lv_label_create(alert_scr);
   lv_obj_add_style(labelApp, &styleAlerts, LV_PART_MAIN);
   lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 5, 30);
+  lv_obj_set_style_text_color(labelApp, color_text, 0);
 
   // title + body
   labelTitleBody = lv_label_create(alert_scr);
@@ -272,6 +281,7 @@ lv_obj_t* prepareAlertScreen() {
   lv_label_set_long_mode(labelTitleBody, LV_LABEL_LONG_WRAP);
   lv_obj_set_width(labelTitleBody, lv_pct(95));  // 90% der Screenbreite nutzen
   lv_obj_align(labelTitleBody, LV_ALIGN_TOP_LEFT, 5, 55);
+  lv_obj_set_style_text_color(labelTitleBody, color_text, 0);
 
   last_gesture_time = 0;
 

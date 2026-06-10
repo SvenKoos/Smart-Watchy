@@ -20,6 +20,9 @@ extern lilygoSettings settings;
 extern uint8_t batteryHistory[1440];
 extern uint16_t stepCounterHistory[1440];
 
+extern lv_color_t color_bg;
+extern lv_color_t color_text;
+
 static lv_obj_t *pageMain;
 static lv_obj_t *labelWifi;
 static lv_obj_t *labelAbout;
@@ -481,6 +484,8 @@ void menuHandler() {
 
   // style
   lv_obj_set_style_text_font(menu, &lv_font_montserrat_34, LV_PART_MAIN);
+  lv_obj_set_style_bg_color(menu, color_bg, 0);
+  lv_obj_set_style_text_color(menu, color_text, 0);
 
   // spinner
   lv_obj_t *spinner = lv_spinner_create(lv_screen_active());
@@ -489,9 +494,13 @@ void menuHandler() {
 
   /*Modify the header*/
   lv_obj_t *back_btn = lv_menu_get_main_header_back_button(menu);
+  lv_obj_set_style_bg_color(back_btn, color_bg, LV_PART_MAIN);
+  lv_obj_set_style_text_color(back_btn, color_text, LV_PART_MAIN);
   lv_obj_t *back_button_label = lv_label_create(back_btn);
-  lv_label_set_text(back_button_label, " Back");
   lv_obj_set_style_text_font(back_button_label, &lv_font_montserrat_36, LV_PART_MAIN);
+  lv_obj_set_style_bg_color(back_button_label, color_bg, LV_PART_MAIN);
+  lv_obj_set_style_text_color(back_button_label, color_text, LV_PART_MAIN);
+  lv_label_set_text(back_button_label, " Back");
 
   lv_obj_t *cont;
   lv_obj_t *label;

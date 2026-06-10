@@ -81,7 +81,7 @@ It is compatible with the existing companion mobile app for Android.
 The firmware directory contains appropriate directories for Watchy and LilyGo versions.
 
 ## Smart Watchy firmware for LilyGo
-Smart Watchy firmware for LilyGo is running on LilyGo T-Watch-S3 and T-Watch-S3 Ultra.
+Smart Watchy firmware for LilyGo is running on LilyGo T-Watch-S3 and T-Watch-S3 Plus.
 - The UI is changed from button-based usage to gesture-based handling.
 - The menu is still provided using the one and only LilyGo button.
 The firmware is based on LilyGo library 0.1.0 sharing the same features as firmware for Watchy but adding:

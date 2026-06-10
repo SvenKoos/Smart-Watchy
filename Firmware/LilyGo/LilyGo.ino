@@ -55,6 +55,9 @@ uint8_t batteryHistory[1440];
 
 uint16_t stepCounterHistory[1440];
 
+lv_color_t color_bg;
+lv_color_t color_text;
+
 void setup() {
   Serial.begin(115200);
 

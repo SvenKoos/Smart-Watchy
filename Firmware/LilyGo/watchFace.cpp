@@ -11,6 +11,7 @@
 #include "locationData.h"
 #include "weatherData.h"
 #include "config.h"
+#include "settings.h"
 
 extern accellData currentAccelleration;
 extern alertData currentAlerts;
@@ -20,6 +21,11 @@ extern weatherData currentWeather;
 
 extern bool WIFI_CONFIGURED;
 extern bool WIFI_CONNECTED;
+
+extern lilygoSettings settings;
+
+extern lv_color_t color_bg;
+extern lv_color_t color_text;
 
 static lv_display_t *display;
 static lv_obj_t *screen;
@@ -76,7 +82,7 @@ void drawWatchFace() {
   // Remove borders
   lv_obj_set_style_border_width(screen, 0, LV_PART_MAIN);
   // Den aktuell aktiven Bildschirm weiß färben
-  lv_obj_set_style_bg_color(screen, lv_color_white(), 0);
+  lv_obj_set_style_bg_color(screen, color_bg, 0);
   // Sicherstellen, dass die Deckkraft auf 100% steht
   lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
   // Scrollbars abschalten
@@ -105,10 +111,19 @@ void drawWatchFace() {
 }
 
 void drawTime() {
-  // 1. Create a label on the active screen
+  // Create a label on the active screen
   lv_obj_t *label = lv_label_create(screen);
 
-  // 2. Set the label text
+  // Assign the style to the label
+  lv_obj_add_style(label, &styleLarge, LV_PART_MAIN);
+
+  // position the label
+  lv_obj_align(label, LV_ALIGN_TOP_LEFT, 5, 5);
+
+  // set text color according to schema
+  lv_obj_set_style_text_color(label, color_text, 0);
+
+  // Set the label text
   struct tm timeinfo;
   if (getLocalTime(&timeinfo)) {
     char buf[6];
@@ -117,12 +132,6 @@ void drawTime() {
     lv_label_set_text(label, buf);
   } else
     lv_label_set_text(label, "Error");
-
-  // 4. Assign the style to the label
-  lv_obj_add_style(label, &styleLarge, LV_PART_MAIN);
-
-  // 5. Optional: position the label
-  lv_obj_align(label, LV_ALIGN_TOP_LEFT, 5, 5);
 }
 
 void drawDate() {
@@ -144,6 +153,10 @@ void drawDate() {
   lv_obj_add_style(labelDay, &styleMedium, LV_PART_MAIN);
   lv_obj_add_style(labelMonth, &styleSmall, LV_PART_MAIN);
   lv_obj_add_style(labelDayWeek, &styleSmall, LV_PART_MAIN);
+
+  lv_obj_set_style_text_color(labelDay, color_text, 0);
+  lv_obj_set_style_text_color(labelMonth, color_text, 0);
+  lv_obj_set_style_text_color(labelDayWeek, color_text, 0);
 
   struct tm timeinfo;
   if (getLocalTime(&timeinfo)) {
@@ -167,10 +180,13 @@ void drawDate() {
 void drawSteps() {
   lv_obj_t *img = lv_image_create(screen);
   lv_image_set_src(img, &iconSteps);
+  updateIconTheme(img, settings.displayBGrndBlack);
   lv_obj_align(img, LV_ALIGN_TOP_LEFT, 5, 197);
 
   lv_obj_t *labelSteps = lv_label_create(screen);
   lv_obj_add_style(labelSteps, &styleMedium, LV_PART_MAIN);
+  lv_obj_set_style_text_color(labelSteps, color_text, 0);
+
   char buf[7];
   snprintf(buf, sizeof(buf), "%d", currentAccelleration.stepCounter);
   lv_label_set_text(labelSteps, buf);
@@ -181,12 +197,14 @@ void drawIcons(bool isConnected) {
   if (currentAlerts.count > 0) {
     lv_obj_t *imgAlerts = lv_image_create(screen);
     lv_image_set_src(imgAlerts, &iconNotify);
+    updateIconTheme(imgAlerts, settings.displayBGrndBlack);
     lv_obj_align(imgAlerts, LV_ALIGN_TOP_LEFT, 165, 80);
   }
 
   if (isConnected) {
     lv_obj_t *imgWifi = lv_image_create(screen);
     lv_image_set_src(imgWifi, &iconWifi);
+    updateIconTheme(imgWifi, settings.displayBGrndBlack);
     lv_obj_align(imgWifi, LV_ALIGN_TOP_LEFT, 195, 80);
   }
 
@@ -198,11 +216,14 @@ void drawIcons(bool isConnected) {
   } else {
     lv_image_set_src(imgBattery, &iconBatteryEmpty);
   }
+  updateIconTheme(imgBattery, settings.displayBGrndBlack);
   lv_obj_align(imgBattery, LV_ALIGN_TOP_LEFT, 200, 10);
 
   lv_obj_t *labelBatteryPercentage = lv_label_create(screen);
   lv_obj_add_style(labelBatteryPercentage, &styleSmall, LV_PART_MAIN);
   lv_obj_set_style_text_align(labelBatteryPercentage, LV_TEXT_ALIGN_RIGHT, 0);
+  lv_obj_set_style_text_color(labelBatteryPercentage, color_text, 0);
+
   char buf[4];
   snprintf(buf, sizeof(buf), "%d", currentPower.batteryPercent);
   lv_label_set_text(labelBatteryPercentage, buf);
@@ -213,47 +234,89 @@ void drawWeather() {
   // location
   lv_obj_t *labelLocation = lv_label_create(screen);
   lv_obj_add_style(labelLocation, &styleSmall, LV_PART_MAIN);
-  lv_label_set_text(labelLocation, currentLocation.cityShort);
   lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 5, 150);
+  lv_obj_set_style_text_color(labelLocation, color_text, 0);
+  lv_label_set_text(labelLocation, currentLocation.cityShort);
 
   if (currentWeather.code == CODE_NO_ERROR) {
     lv_obj_t *imgWeather = lv_image_create(screen);
-    if (strcmp(currentWeather.weatherIcon, "01d") == 0)
-      lv_image_set_src(imgWeather, &map01d);
-    else if (strcmp(currentWeather.weatherIcon, "01n") == 0)
-      lv_image_set_src(imgWeather, &map01n);
-    else if (strcmp(currentWeather.weatherIcon, "02d") == 0)
-      lv_image_set_src(imgWeather, &map02d);
-    else if (strcmp(currentWeather.weatherIcon, "02n") == 0)
-      lv_image_set_src(imgWeather, &map02n);
-    else if (strcmp(currentWeather.weatherIcon, "03d") == 0)
-      lv_image_set_src(imgWeather, &map03d);
-    else if (strcmp(currentWeather.weatherIcon, "03n") == 0)
-      lv_image_set_src(imgWeather, &map03n);
-    else if (strcmp(currentWeather.weatherIcon, "04d") == 0)
-      lv_image_set_src(imgWeather, &map04d);
-    else if (strcmp(currentWeather.weatherIcon, "04n") == 0)
-      lv_image_set_src(imgWeather, &map04n);
-    else if (strcmp(currentWeather.weatherIcon, "09d") == 0)
-      lv_image_set_src(imgWeather, &map09d);
-    else if (strcmp(currentWeather.weatherIcon, "09n") == 0)
-      lv_image_set_src(imgWeather, &map09n);
-    else if (strcmp(currentWeather.weatherIcon, "10d") == 0)
-      lv_image_set_src(imgWeather, &map10d);
-    else if (strcmp(currentWeather.weatherIcon, "10n") == 0)
-      lv_image_set_src(imgWeather, &map10n);
-    else if (strcmp(currentWeather.weatherIcon, "11d") == 0)
-      lv_image_set_src(imgWeather, &map11d);
-    else if (strcmp(currentWeather.weatherIcon, "11n") == 0)
-      lv_image_set_src(imgWeather, &map11n);
-    else if (strcmp(currentWeather.weatherIcon, "13d") == 0)
-      lv_image_set_src(imgWeather, &map13d);
-    else if (strcmp(currentWeather.weatherIcon, "13n") == 0)
-      lv_image_set_src(imgWeather, &map13n);
-    else if (strcmp(currentWeather.weatherIcon, "50d") == 0)
-      lv_image_set_src(imgWeather, &map50d);
-    else if (strcmp(currentWeather.weatherIcon, "50n") == 0)
-      lv_image_set_src(imgWeather, &map50n);
+
+    if (!settings.displayBGrndBlack) {
+      if (strcmp(currentWeather.weatherIcon, "01d") == 0)
+        lv_image_set_src(imgWeather, &map01d_white);
+      else if (strcmp(currentWeather.weatherIcon, "01n") == 0)
+        lv_image_set_src(imgWeather, &map01n_white);
+      else if (strcmp(currentWeather.weatherIcon, "02d") == 0)
+        lv_image_set_src(imgWeather, &map02d_white);
+      else if (strcmp(currentWeather.weatherIcon, "02n") == 0)
+        lv_image_set_src(imgWeather, &map02n_white);
+      else if (strcmp(currentWeather.weatherIcon, "03d") == 0)
+        lv_image_set_src(imgWeather, &map03d_white);
+      else if (strcmp(currentWeather.weatherIcon, "03n") == 0)
+        lv_image_set_src(imgWeather, &map03n_white);
+      else if (strcmp(currentWeather.weatherIcon, "04d") == 0)
+        lv_image_set_src(imgWeather, &map04d_white);
+      else if (strcmp(currentWeather.weatherIcon, "04n") == 0)
+        lv_image_set_src(imgWeather, &map04n_white);
+      else if (strcmp(currentWeather.weatherIcon, "09d") == 0)
+        lv_image_set_src(imgWeather, &map09d_white);
+      else if (strcmp(currentWeather.weatherIcon, "09n") == 0)
+        lv_image_set_src(imgWeather, &map09n_white);
+      else if (strcmp(currentWeather.weatherIcon, "10d") == 0)
+        lv_image_set_src(imgWeather, &map10d_white);
+      else if (strcmp(currentWeather.weatherIcon, "10n") == 0)
+        lv_image_set_src(imgWeather, &map10n_white);
+      else if (strcmp(currentWeather.weatherIcon, "11d") == 0)
+        lv_image_set_src(imgWeather, &map11d_white);
+      else if (strcmp(currentWeather.weatherIcon, "11n") == 0)
+        lv_image_set_src(imgWeather, &map11n_white);
+      else if (strcmp(currentWeather.weatherIcon, "13d") == 0)
+        lv_image_set_src(imgWeather, &map13d_white);
+      else if (strcmp(currentWeather.weatherIcon, "13n") == 0)
+        lv_image_set_src(imgWeather, &map13n_white);
+      else if (strcmp(currentWeather.weatherIcon, "50d") == 0)
+        lv_image_set_src(imgWeather, &map50d_white);
+      else if (strcmp(currentWeather.weatherIcon, "50n") == 0)
+        lv_image_set_src(imgWeather, &map50n_white);
+    } else
+    {
+      if (strcmp(currentWeather.weatherIcon, "01d") == 0)
+        lv_image_set_src(imgWeather, &map01d_black);
+      else if (strcmp(currentWeather.weatherIcon, "01n") == 0)
+        lv_image_set_src(imgWeather, &map01n_black);
+      else if (strcmp(currentWeather.weatherIcon, "02d") == 0)
+        lv_image_set_src(imgWeather, &map02d_black);
+      else if (strcmp(currentWeather.weatherIcon, "02n") == 0)
+        lv_image_set_src(imgWeather, &map02n_black);
+      else if (strcmp(currentWeather.weatherIcon, "03d") == 0)
+        lv_image_set_src(imgWeather, &map03d_black);
+      else if (strcmp(currentWeather.weatherIcon, "03n") == 0)
+        lv_image_set_src(imgWeather, &map03n_black);
+      else if (strcmp(currentWeather.weatherIcon, "04d") == 0)
+        lv_image_set_src(imgWeather, &map04d_black);
+      else if (strcmp(currentWeather.weatherIcon, "04n") == 0)
+        lv_image_set_src(imgWeather, &map04n_black);
+      else if (strcmp(currentWeather.weatherIcon, "09d") == 0)
+        lv_image_set_src(imgWeather, &map09d_black);
+      else if (strcmp(currentWeather.weatherIcon, "09n") == 0)
+        lv_image_set_src(imgWeather, &map09n_black);
+      else if (strcmp(currentWeather.weatherIcon, "10d") == 0)
+        lv_image_set_src(imgWeather, &map10d_black);
+      else if (strcmp(currentWeather.weatherIcon, "10n") == 0)
+        lv_image_set_src(imgWeather, &map10n_black);
+      else if (strcmp(currentWeather.weatherIcon, "11d") == 0)
+        lv_image_set_src(imgWeather, &map11d_black);
+      else if (strcmp(currentWeather.weatherIcon, "11n") == 0)
+        lv_image_set_src(imgWeather, &map11n_black);
+      else if (strcmp(currentWeather.weatherIcon, "13d") == 0)
+        lv_image_set_src(imgWeather, &map13d_black);
+      else if (strcmp(currentWeather.weatherIcon, "13n") == 0)
+        lv_image_set_src(imgWeather, &map13n_black);
+      else if (strcmp(currentWeather.weatherIcon, "50d") == 0)
+        lv_image_set_src(imgWeather, &map50d_black);
+      else if (strcmp(currentWeather.weatherIcon, "50n") == 0)
+        lv_image_set_src(imgWeather, &map50n_black);
+    }
 
     lv_image_set_scale(imgWeather, 200);
     lv_obj_align(imgWeather, LV_ALIGN_TOP_LEFT, 140, 155);
@@ -261,18 +324,20 @@ void drawWeather() {
     // temperature
     lv_obj_t *labelTemperature = lv_label_create(screen);
     lv_obj_add_style(labelTemperature, &styleLarge, LV_PART_MAIN);
+    lv_obj_align(labelTemperature, LV_ALIGN_TOP_RIGHT, -40, 130);
+    lv_obj_set_style_text_color(labelTemperature, color_text, 0);
     char buf[3];
     snprintf(buf, sizeof(buf), "%d", currentWeather.temperature);
     lv_label_set_text(labelTemperature, buf);
-    lv_obj_align(labelTemperature, LV_ALIGN_TOP_RIGHT, -40, 130);
 
     // unit
     lv_obj_t *labelUnit = lv_label_create(screen);
     lv_obj_add_style(labelUnit, &styleSmall, LV_PART_MAIN);
+    lv_obj_align(labelUnit, LV_ALIGN_TOP_LEFT, 200, 135);
+    lv_obj_set_style_text_color(labelUnit, color_text, 0);
     if (currentWeather.isMetric)
       lv_label_set_text(labelUnit, "°C");
     else
       lv_label_set_text(labelUnit, "°F");
-    lv_obj_align(labelUnit, LV_ALIGN_TOP_LEFT, 200, 135);
   }
 }
