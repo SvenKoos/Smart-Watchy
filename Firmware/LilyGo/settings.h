@@ -2,7 +2,7 @@
 #define SETTINGS_H
 
 #define CITY_ID "2660253"  //Interlaken
-#define OPENWEATHERMAP_APIKEY "--------------------------------"
+#define OPENWEATHERMAP_APIKEY "----------------------"
 #define OPENWEATHERMAP_URL "http://api.openweathermap.org/data/2.5/weather"  //open weather api
 #define TEMP_UNIT "metric"                                                   //metric = Celsius , imperial = Fahrenheit
 #define TEMP_LANG "en"
@@ -16,6 +16,7 @@
 #define TOTP_ACCOUNT "sven.koos@ch.abb.com"
 #define TOTP_SECRET "----------------"
 #define LORA_MAGIC 0xDEADBEEF
+#define BACKGROUND_BLACK true
 
 typedef struct lilygoSettings {
   // Weather Settings
@@ -43,5 +44,6 @@ typedef struct lilygoSettings {
 lilygoSettings setSetting();
 void setTheme(bool inverted);
 void updateIconTheme(lv_obj_t * icon_obj, bool inverted);
+lv_color_t GetTheme(int themeID);
 
 #endif

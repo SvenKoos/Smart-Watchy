@@ -21,7 +21,16 @@
 // UI timeouts
 #define BRIGHTNESS_TIMEOUT_MENU 15
 #define BRIGHTNESS_TIMEOUT_DEFAULT 10
-#define BRIGHTNESS_TIMEOUT_ALERT 5
+#define BRIGHTNESS_TIMEOUT_ALERT 10
+
+// UI themes
+#define THEME_ALERT_DATA 1
+#define THEME_POWER_DATA 2
+#define THEME_ACCELL_DATA 3
+#define THEME_LOCATION_DATA 4
+#define THEME_WEATHER_DATA 5
+#define THEME_DATE_DATA 6
+#define THEME_TIME_DATA 7
 
 // encryption
 // 16-Byte Schlüssel (128-Bit), den T-Watch und T-Echo teilen

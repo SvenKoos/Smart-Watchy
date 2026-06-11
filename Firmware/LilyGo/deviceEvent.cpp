@@ -10,6 +10,7 @@
 #include "watchFace.h"
 #include "timerEvent.h"
 #include "menuHandler.h"
+#include "settings.h"
 
 extern uint32_t stepCounter;
 extern alertData currentAlerts;
@@ -281,7 +282,7 @@ lv_obj_t* prepareAlertScreen() {
   lv_label_set_long_mode(labelTitleBody, LV_LABEL_LONG_WRAP);
   lv_obj_set_width(labelTitleBody, lv_pct(95));  // 90% der Screenbreite nutzen
   lv_obj_align(labelTitleBody, LV_ALIGN_TOP_LEFT, 5, 55);
-  lv_obj_set_style_text_color(labelTitleBody, color_text, 0);
+  lv_obj_set_style_text_color(labelTitleBody, GetTheme(THEME_ALERT_DATA), 0);
 
   last_gesture_time = 0;
 

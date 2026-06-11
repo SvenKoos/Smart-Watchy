@@ -121,7 +121,7 @@ void drawTime() {
   lv_obj_align(label, LV_ALIGN_TOP_LEFT, 5, 5);
 
   // set text color according to schema
-  lv_obj_set_style_text_color(label, color_text, 0);
+  lv_obj_set_style_text_color(label, GetTheme(THEME_TIME_DATA), 0);
 
   // Set the label text
   struct tm timeinfo;
@@ -154,9 +154,9 @@ void drawDate() {
   lv_obj_add_style(labelMonth, &styleSmall, LV_PART_MAIN);
   lv_obj_add_style(labelDayWeek, &styleSmall, LV_PART_MAIN);
 
-  lv_obj_set_style_text_color(labelDay, color_text, 0);
-  lv_obj_set_style_text_color(labelMonth, color_text, 0);
-  lv_obj_set_style_text_color(labelDayWeek, color_text, 0);
+  lv_obj_set_style_text_color(labelDay, GetTheme(THEME_DATE_DATA), 0);
+  lv_obj_set_style_text_color(labelMonth, GetTheme(THEME_DATE_DATA), 0);
+  lv_obj_set_style_text_color(labelDayWeek, GetTheme(THEME_DATE_DATA), 0);
 
   struct tm timeinfo;
   if (getLocalTime(&timeinfo)) {
@@ -185,7 +185,7 @@ void drawSteps() {
 
   lv_obj_t *labelSteps = lv_label_create(screen);
   lv_obj_add_style(labelSteps, &styleMedium, LV_PART_MAIN);
-  lv_obj_set_style_text_color(labelSteps, color_text, 0);
+  lv_obj_set_style_text_color(labelSteps, GetTheme(THEME_ACCELL_DATA), 0);
 
   char buf[7];
   snprintf(buf, sizeof(buf), "%d", currentAccelleration.stepCounter);
@@ -222,7 +222,7 @@ void drawIcons(bool isConnected) {
   lv_obj_t *labelBatteryPercentage = lv_label_create(screen);
   lv_obj_add_style(labelBatteryPercentage, &styleSmall, LV_PART_MAIN);
   lv_obj_set_style_text_align(labelBatteryPercentage, LV_TEXT_ALIGN_RIGHT, 0);
-  lv_obj_set_style_text_color(labelBatteryPercentage, color_text, 0);
+  lv_obj_set_style_text_color(labelBatteryPercentage, GetTheme(THEME_POWER_DATA), 0);
 
   char buf[4];
   snprintf(buf, sizeof(buf), "%d", currentPower.batteryPercent);
@@ -235,7 +235,7 @@ void drawWeather() {
   lv_obj_t *labelLocation = lv_label_create(screen);
   lv_obj_add_style(labelLocation, &styleSmall, LV_PART_MAIN);
   lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 5, 150);
-  lv_obj_set_style_text_color(labelLocation, color_text, 0);
+  lv_obj_set_style_text_color(labelLocation, GetTheme(THEME_LOCATION_DATA), 0);
   lv_label_set_text(labelLocation, currentLocation.cityShort);
 
   if (currentWeather.code == CODE_NO_ERROR) {
@@ -325,7 +325,7 @@ void drawWeather() {
     lv_obj_t *labelTemperature = lv_label_create(screen);
     lv_obj_add_style(labelTemperature, &styleLarge, LV_PART_MAIN);
     lv_obj_align(labelTemperature, LV_ALIGN_TOP_RIGHT, -40, 130);
-    lv_obj_set_style_text_color(labelTemperature, color_text, 0);
+    lv_obj_set_style_text_color(labelTemperature, GetTheme(THEME_WEATHER_DATA), 0);
     char buf[3];
     snprintf(buf, sizeof(buf), "%d", currentWeather.temperature);
     lv_label_set_text(labelTemperature, buf);
@@ -334,7 +334,7 @@ void drawWeather() {
     lv_obj_t *labelUnit = lv_label_create(screen);
     lv_obj_add_style(labelUnit, &styleSmall, LV_PART_MAIN);
     lv_obj_align(labelUnit, LV_ALIGN_TOP_LEFT, 200, 135);
-    lv_obj_set_style_text_color(labelUnit, color_text, 0);
+    lv_obj_set_style_text_color(labelUnit, GetTheme(THEME_WEATHER_DATA), 0);
     if (currentWeather.isMetric)
       lv_label_set_text(labelUnit, "°C");
     else
