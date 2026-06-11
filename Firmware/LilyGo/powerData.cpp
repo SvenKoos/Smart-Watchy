@@ -9,6 +9,7 @@
 #include <Time.h>
 #include <TimeLib.h>
 #include <esp_sntp.h>
+#include <Preferences.h>
 
 #include "config.h"
 #include "dataCollection.h"
@@ -93,4 +94,28 @@ void verifyPowerMgt() {
   Serial.printf("ALDO4 Enabled: %s\n", instance.pmu.isEnableALDO4() ? "YES" : "NO");
   uint32_t freq = getCpuFrequencyMhz();
   Serial.printf("CPU Frequency: %u MHz\n", freq);
+}
+
+void resetBatteryCalibration() {
+  // 0. include this function call in setup() directly before instance.begin()
+  // 1. flash firmware including this function call
+  // 2. load the battery to 100% (ensure loaduing current close to 0)
+  // 3. flash firmware excluding this funtion call
+  // 4. run the T-Watch down to 0 battery capacity without any interruption (switch-off, re-flash, etc.)
+
+  // =================================================================
+  // KALIBRIERUNGS-RESET (BEVOR DIE LIBRARY STARTET)
+  // =================================================================
+  delay(500);
+  Preferences prefs;
+  prefs.begin("lilygo", false);
+
+  Serial.println("Lösche altes Kalibrierungs-Flag im Flash...");
+  // Wir setzen es hart auf false, damit instance.begin() gleich anspringt
+  prefs.putBool("calibration", false);
+  prefs.end();
+
+  // Now start the library - it will see 'calibration = false'
+  // and trigger the internal 470mAh calibration automatically!
+  // in setup(): instance.begin();
 }

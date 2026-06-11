@@ -35,6 +35,7 @@ typedef struct powerData {
 powerData getPowerData();
 void setupPowerMgt();
 void verifyPowerMgt();
+void resetBatteryCalibration();
 
 /**********************
  *      MACROS

@@ -129,6 +129,56 @@ void loop() {
     // light sleep mode test with timer
     esp_sleep_enable_timer_wakeup(1000 * 1000);
     esp_light_sleep_start();
+
+    // ---------------------- Double Tap filter begin
+    // --- HIER WACHT DIE UHR GERADE AUF (JEDE SEKUNDE ODER BEI REIZ) ---
+
+    // Änderung 3: SCHÜTTEL-SCHUTZSCHILD
+    // Prüfen, ob der BMA423-Sensor einen Hardware-Interrupt im Speicher hat
+    if (instance.sensor.readIrqStatus()) {
+      // Hat der Sensor das "Wakeup-Event" (Double-Tap) registriert?
+      if (instance.sensor.isDoubleTap()) {
+        // Änderung 2: Touch-Modul sofort wieder empfangsbereit machen
+        instance.touch.wakeup();
+
+        // Wir deklarieren drei einfache Variablen für die Rohdaten der Achsen
+        int16_t xAcc = 0;
+        int16_t yAcc = 0;
+        int16_t zAcc = 0;
+
+        // Aufruf der korrekten Funktion der Library
+        instance.sensor.getAccelerometer(xAcc, yAcc, zAcc);
+        // Mathematische Filterung: Wir addieren die Querkräfte der X- und Y-Achse.
+        // Beim Klopfen aufs Glas (Z-Achse) bleiben X und Y relativ ruhig.
+        // Beim Schütteln des Arms schlagen X oder Y extrem aus.
+        long lateralMovement = abs(xAcc) + abs(yAcc);
+
+        Serial.printf("[Sensor] Double-Tap detektiert. X/Y-Kräfte: %ld\n", lateralMovement);
+
+        // threshold
+        // Klopfe ganz normal auf das Display und schau, wie hoch der Wert steigt (sollte meist unter 200–300 bleiben)
+        // Schüttle nun deinen Arm so, wie es im Alltag ungewollt passiert, und beobachte den Ausschlag (sollte weit über 500–800 schießen).
+        // Passe die Zahl 450 im Code so an, dass sie genau zwischen deinen Klopf- und deinen Schüttelwerten liegt.
+        if (lateralMovement > 450) {
+          Serial.println("Schüttel-Schutz gegriffen: Unruhige Armbewegung blockiert.");
+
+          // WICHTIG: Wir brechen den aktuellen loop()-Durchlauf hier ab (return).
+          // guiState bleibt DARK_STATE, das Display physisch aus.
+          // Die Uhr läuft im nächsten Durchlauf sofort wieder in den Schlaf.
+          return;
+        }
+
+        // Wenn die Querkräfte unter dem Schwellenwert lagen -> Echtes Klopfen!
+        // handle as in device event SENSOR_DOUBLE_TAP_DETECTED in case of guiState == DARK_STATE
+        Serial.println("Echtes Klopfen erkannt! Wecke System...");
+        guiState = WATCHFACE_STATE;
+        currentAccelleration.isMoved = true;
+        drawWatchFace();
+        displayWakup();
+        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
+      }
+    }
+    // ---------------------- Double Tap filter end
   }
 
   // 2. Prüfen, ob der Hardware-Timer die Flag gesetzt hat
