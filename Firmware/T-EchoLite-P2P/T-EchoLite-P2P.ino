@@ -1,11 +1,3 @@
-/*
- * @Description: Ink screen and SX1262 test
- * @Author: LILYGO_L
- * @Date: 2023-07-25 13:45:02
- * @LastEditTime: 2025-06-05 14:55:44
- * @License: GPL 3.0
- */
-
 #include <Arduino.h>
 #include "Adafruit_EPD.h"
 #include "RadioLib.h"
@@ -187,46 +179,17 @@ bool SX1262_Set_Default_Parameters(String *assertion) {
   return true;
 }
 
-void GFX_Print_TEST(String s) {
-  display.fillScreen(EPD_WHITE);
-  display.setFont(&FreeSans9pt7b);
-  display.setTextSize(2);
-
-  display.setCursor(SCREEN_WIDTH / 4 + 5, SCREEN_HEIGHT / 4 - 15);
-  display.printf("TEST");
-
-  display.setFont(&FreeMono9pt7b);
-  display.setCursor(0, SCREEN_HEIGHT / 4 + 10);
-  display.setTextSize(1);
-  display.print(s);
-
-  display.setFont(&Org_01);
-  display.setCursor(SCREEN_WIDTH / 2 - 5, SCREEN_HEIGHT / 2 + 40);
-  display.setTextSize(4);
-  display.printf("3");
-  display.display();
-  delay(200);
-
-  display.fillRect(SCREEN_WIDTH / 2 - 5, SCREEN_HEIGHT / 2 + 20, 30, 40, EPD_WHITE);
-  display.setCursor(SCREEN_WIDTH / 2 - 5, SCREEN_HEIGHT / 2 + 40);
-  display.printf("2");
-  display.display();
-  delay(200);
-
-  display.fillRect(SCREEN_WIDTH / 2 - 5, SCREEN_HEIGHT / 2 + 20, 30, 30, EPD_WHITE);
-  display.setCursor(SCREEN_WIDTH / 2 + 3, SCREEN_HEIGHT / 2 + 40);
-  display.printf("1");
-  display.display();
-  delay(200);
-}
-
 void GFX_Print_SX1262_Info(void) {
   display.fillScreen(EPD_WHITE);
-  display.setFont(&FreeSans9pt7b);
+
+  display.setFont(&FreeMonoBold9pt7b);
+  display.setCursor(5, 20);
   display.setTextSize(1);
 
-  display.setCursor(5, 20);
   display.printf("SX1262 Info");
+
+  display.setFont(&FreeSans9pt7b);
+
   display.setCursor(5, 40);
   display.printf("MAC 0: %u", Local_MAC[0]);
   display.setCursor(5, 60);
@@ -335,20 +298,21 @@ void GFX_Print_SX1262_Info_Loop(void) {
           // Wir nutzen hier einfache Standard-Schrift-Koordinaten
           display.setFont(&FreeSans9pt7b);
           display.setCursor(5, 20);
+          display.setTextWrap(true);
 
           display.printf("%s\n %s\n %s", receivedMsg.data.appName, receivedMsg.data.title, receivedMsg.data.body);
 
           // Signalstärke unten klein einblenden
           display.setFont(&FreeMonoBold9pt7b);
-          display.setCursor(5, 170);
-          display.printf("RSSI %.0fdBm", SX1262_OP.receive_rssi);
+          // display.setCursor(5, 170);
+          // display.printf("RSSI %.0fdBm", SX1262_OP.receive_rssi);
 
           // Zeitstempel umwandeln
           String timeString = getFormattedTime(receivedMsg.packetCounter);
           // Test-Ausgabe im Seriellen Monitor
           Serial.print("Nachricht empfangen um: ");
           Serial.println(timeString);
-          display.setCursor(130, 170);
+          display.setCursor(135, 170);
           display.print(timeString);
           ;
 
@@ -427,8 +391,6 @@ void setup(void) {
   display.begin();
   display.setRotation(1);
   display.setTextColor(EPD_BLACK);
-
-  GFX_Print_TEST("Callback distance test");
 
   GFX_Print_SX1262_Info();
   if (SX1262_Initialization() == true) {
