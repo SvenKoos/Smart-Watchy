@@ -17,7 +17,8 @@
 
 extern int guiState;
 extern lilygoSettings settings;
-extern uint8_t batteryHistory[1440];
+extern uint8_t batteryCapacityHistory[1440];
+extern uint16_t batteryVoltageHistory[1440];
 extern uint16_t stepCounterHistory[1440];
 
 extern lv_color_t color_bg;
@@ -29,7 +30,7 @@ static lv_obj_t *labelAbout;
 static lv_obj_t *chartBattery;
 static lv_obj_t *labelTOTP;
 static lv_obj_t *barTOTP;
-static lv_obj_t * rollerLoRa;
+static lv_obj_t *rollerLoRa;
 static lv_obj_t *chartStepCounter;
 
 lv_timer_t *timerTOTP = NULL;
@@ -59,8 +60,7 @@ static void eventGestureDefaultCB(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
 
   // 2. Den Code prüfen
-  if ((code == LV_EVENT_SCROLL_END) || (code == LV_EVENT_GESTURE) || (code == LV_EVENT_CLICKED) || (code == LV_EVENT_SCROLL) || 
-      (code == LV_EVENT_VALUE_CHANGED) || (code == LV_EVENT_STATE_CHANGED)) {
+  if ((code == LV_EVENT_SCROLL_END) || (code == LV_EVENT_GESTURE) || (code == LV_EVENT_CLICKED) || (code == LV_EVENT_SCROLL) || (code == LV_EVENT_VALUE_CHANGED) || (code == LV_EVENT_STATE_CHANGED)) {
 
     const char *name = lv_event_code_get_name(code);
     if (name != NULL) {
@@ -181,8 +181,8 @@ static lv_obj_t *subAboutFunction(lv_obj_t *menu) {
 
 static void eventRollerLoRaCB(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
-  lv_obj_t * roller = (lv_obj_t *)lv_event_get_target(e);
-  lv_obj_t * menu = (lv_obj_t *)lv_event_get_user_data(e);
+  lv_obj_t *roller = (lv_obj_t *)lv_event_get_target(e);
+  lv_obj_t *menu = (lv_obj_t *)lv_event_get_user_data(e);
 
   // Wenn der Benutzer den Roller dreht und stoppt (Auswahl ändert sich)
   if (code == LV_EVENT_VALUE_CHANGED) {
@@ -190,7 +190,7 @@ static void eventRollerLoRaCB(lv_event_t *e) {
     char buf[32];
     lv_roller_get_selected_str(roller, buf, sizeof(buf));
     Serial.printf("Roller gedreht. Index: %d, Text: %s\n", sel_idx, buf);
-    
+
     startBrightnessTimer(BRIGHTNESS_TIMEOUT_MENU);
   }
 
@@ -198,7 +198,7 @@ static void eventRollerLoRaCB(lv_event_t *e) {
   if (code == LV_EVENT_CLICKED) {
     uint16_t sel_idx = lv_roller_get_selected(roller);
     Serial.printf("Nachricht ausgewählt zum Senden! Index: %d (Text: %s)\n", sel_idx, msgTypes[sel_idx]);
-    
+
     addMsgToLora(msgTypes[sel_idx]);
 
     lv_obj_send_event(lv_menu_get_main_header_back_button(menu), LV_EVENT_CLICKED, NULL);
@@ -215,7 +215,7 @@ static lv_obj_t *subLoRaMsgFunction(lv_obj_t *menu) {
   /*Create a sub page*/
   lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
   lv_obj_t *contSub = lv_menu_cont_create(pageSub);
-  lv_obj_set_size(contSub, lv_pct(100), lv_pct(100));   // width, height
+  lv_obj_set_size(contSub, lv_pct(100), lv_pct(100));  // width, height
   lv_obj_set_layout(contSub, LV_LAYOUT_NONE);
 
   /* 2. Den Roller (die Text-Walze) erstellen */
@@ -223,7 +223,7 @@ static lv_obj_t *subLoRaMsgFunction(lv_obj_t *menu) {
   lv_obj_set_size(rollerLoRa, lv_pct(100), lv_pct(75));  // Füllt den Container
   // Optionen setzen (Modus: INFINITE erlaubt endloses Durchscrollen im Kreis, normal wäre NORMAL)
   lv_obj_set_style_text_font(rollerLoRa, &lv_font_montserrat_18, LV_PART_MAIN);
-  lv_obj_set_style_text_font(rollerLoRa, &lv_font_montserrat_18, LV_PART_SELECTED); // Ausgewählter Text
+  lv_obj_set_style_text_font(rollerLoRa, &lv_font_montserrat_18, LV_PART_SELECTED);  // Ausgewählter Text
   // Sichtbare Zeilenanzahl automatisch an die Höhe anpassen (z.B. 3 Zeilen sichtbar)
   lv_roller_set_visible_row_count(rollerLoRa, 3);
   // Mittig im oberen/mittleren Bereich platzieren
@@ -246,7 +246,7 @@ static lv_obj_t *subLoRaMsgFunction(lv_obj_t *menu) {
   lv_obj_t *labelHint = lv_label_create(contSub);
   lv_obj_set_style_text_font(labelHint, &lv_font_montserrat_18, 0);
   lv_obj_set_style_text_align(labelHint, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_set_width(labelHint, lv_pct(95));               // Volle Breite des Tabs
+  lv_obj_set_width(labelHint, lv_pct(95));                // Volle Breite des Tabs
   lv_label_set_long_mode(labelHint, LV_LABEL_LONG_WRAP);  // Text umbrechen
   lv_label_set_text(labelHint, "Tap on selected message to send.");
   lv_obj_align(labelHint, LV_ALIGN_BOTTOM_MID, 0, -5);
@@ -316,7 +316,7 @@ static lv_obj_t *subBatteryFunction(lv_obj_t *menu) {
   lv_scale_set_major_tick_every(scale_y, 1);  // Jeder Tick bekommt ein Label
   lv_obj_set_style_text_font(scale_y, &lv_font_montserrat_18, LV_PART_MAIN);
   // Labels setzen
-  static const char *y_labels[] = { "0", "50", "100", NULL };
+  static const char *y_labels[] = { "0/\n3.5\n", "50/\n4.0", "\n100/\n4.5", NULL };
   lv_scale_set_text_src(scale_y, y_labels);
 
   // Skala für die X-Achse erstellen
@@ -334,14 +334,27 @@ static lv_obj_t *subBatteryFunction(lv_obj_t *menu) {
   // spinner
   lv_refr_now(NULL);
 
-  lv_chart_series_t *ser = lv_chart_add_series(chartBattery, lv_palette_main(LV_PALETTE_RED), LV_CHART_AXIS_PRIMARY_Y);
+  // battery capacity
+  lv_chart_series_t *serCapacity = lv_chart_add_series(chartBattery, lv_palette_main(LV_PALETTE_RED), LV_CHART_AXIS_PRIMARY_Y);
   for (int i = 0; i < 1440; i++) {
-    if (batteryHistory[i] > 0)
-      // lv_chart_set_next_value(chartBattery, ser, batteryHistory[i]);
-      lv_chart_set_value_by_id(chartBattery, ser, i, batteryHistory[i]);
+    if (batteryCapacityHistory[i] > 0)
+      lv_chart_set_value_by_id(chartBattery, serCapacity, i, batteryCapacityHistory[i]);
     else
-      // lv_chart_set_next_value(chartBattery, ser, LV_CHART_POINT_NONE);
-      lv_chart_set_value_by_id(chartBattery, ser, i, LV_CHART_POINT_NONE);
+      lv_chart_set_value_by_id(chartBattery, serCapacity, i, LV_CHART_POINT_NONE);
+  }
+
+  // battery voltage
+  lv_chart_series_t *serVoltage = lv_chart_add_series(chartBattery, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
+  for (int i = 0; i < 1440; i++) {
+    uint16_t rawVoltage = batteryVoltageHistory[i];
+
+    if ((rawVoltage >= 3500) && (rawVoltage <= 4500)) {
+      // Mathematisches Mapping in das 0-100er Raster
+      int32_t scaledVoltageValue = (rawVoltage - 3500) / 10;
+      lv_chart_set_value_by_id(chartBattery, serVoltage, i, scaledVoltageValue);
+    } else {
+      lv_chart_set_value_by_id(chartBattery, serVoltage, i, LV_CHART_POINT_NONE);
+    }
   }
 
   return pageSub;

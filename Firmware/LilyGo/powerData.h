@@ -21,9 +21,9 @@ typedef struct powerData {
   bool isCharging;
   bool isDischarge;
   bool isUSBPlugin;
-  uint8_t battVoltagemV;
-  uint8_t vBusVoltagemV;
-  uint8_t systemVoltagemV;
+  uint16_t battVoltagemV;
+  uint16_t vBusVoltagemV;
+  uint16_t systemVoltagemV;
   uint8_t batteryPercent;
   char log[LOG_LEN];
   int code;

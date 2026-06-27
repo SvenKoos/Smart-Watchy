@@ -32,8 +32,17 @@ lv_obj_t* labelTitleBody;
 
 uint32_t last_gesture_time = 0;
 
+LV_FONT_DECLARE(emoji);
+static lv_font_t watchface_font;
+
 void setupDeviceEvent() {
   instance.onEvent(device_event_cb);
+
+  // Wir kopieren die Struktur der eingebauten Montserrat-Schriftart in unser neues Objekt
+  watchface_font = lv_font_montserrat_18;
+  // Da 'watchface_font' im RAM liegt, dürfen wir hier jetzt den Fallback setzen!
+  watchface_font.fallback = &emoji;
+  Serial.println("Custom Watchface-Font mit Emoji-Fallback bereit!");
 }
 
 static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) {
@@ -252,26 +261,27 @@ lv_obj_t* prepareAlertScreen() {
 
   // style
   lv_style_init(&styleAlerts);
-  lv_style_set_text_font(&styleAlerts, &lv_font_montserrat_18);
+  // lv_style_set_text_font(&styleAlerts, &lv_font_montserrat_18);
+  lv_style_set_text_font(&styleAlerts, &watchface_font);
   lv_style_set_border_width(&styleAlerts, 0);
 
   // timestamp
   labelTimestamp = lv_label_create(alert_scr);
   lv_obj_add_style(labelTimestamp, &styleAlerts, LV_PART_MAIN);
-  lv_obj_align(labelTimestamp, LV_ALIGN_TOP_LEFT, 5, 5);
+  lv_obj_align(labelTimestamp, LV_ALIGN_TOP_LEFT, 10, 10);
   lv_obj_set_style_text_color(labelTimestamp, color_text, 0);
 
   // Index
   labelIndex = lv_label_create(alert_scr);
   lv_obj_add_style(labelIndex, &styleAlerts, LV_PART_MAIN);
   lv_obj_set_style_text_align(labelIndex, LV_TEXT_ALIGN_RIGHT, 0);
-  lv_obj_align(labelIndex, LV_ALIGN_TOP_RIGHT, -10, 5);
+  lv_obj_align(labelIndex, LV_ALIGN_TOP_RIGHT, -10, 10);
   lv_obj_set_style_text_color(labelIndex, color_text, 0);
 
   // app
   labelApp = lv_label_create(alert_scr);
   lv_obj_add_style(labelApp, &styleAlerts, LV_PART_MAIN);
-  lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 5, 30);
+  lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 10, 35);
   lv_obj_set_style_text_color(labelApp, color_text, 0);
 
   // title + body
@@ -281,7 +291,7 @@ lv_obj_t* prepareAlertScreen() {
   // und stattdessen die Höhe des Objekts wächst
   lv_label_set_long_mode(labelTitleBody, LV_LABEL_LONG_WRAP);
   lv_obj_set_width(labelTitleBody, lv_pct(95));  // 90% der Screenbreite nutzen
-  lv_obj_align(labelTitleBody, LV_ALIGN_TOP_LEFT, 5, 55);
+  lv_obj_align(labelTitleBody, LV_ALIGN_TOP_LEFT, 10, 60);
   lv_obj_set_style_text_color(labelTitleBody, GetTheme(THEME_ALERT_DATA), 0);
 
   last_gesture_time = 0;
@@ -294,7 +304,21 @@ void showAlert(singleAlert alert, int index, int count) {
 
   lv_label_set_text_fmt(labelTimestamp, "%.16s", alert.timeStamp);
 
-  lv_label_set_text_fmt(labelIndex, "%d / %d", index + 1, count);
+  if (count > 0) {
+    if (index > 0) {
+      sprintf(text, "< %d", index + 1);
+    } else {
+      sprintf(text, "  %d", index + 1);
+    }
+    if (index < count - 1) {
+      strcat(text, " >");
+    } else {
+      strcat(text, "  ");
+    }
+  } else {
+    strcpy(text, "");
+  }
+  lv_label_set_text(labelIndex, text);
 
   lv_label_set_text(labelApp, alert.appName);
 

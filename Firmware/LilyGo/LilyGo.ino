@@ -51,7 +51,8 @@ RTC_DATA_ATTR bool bleBonded = false;
 RTC_DATA_ATTR uint8_t binKey[32];
 RTC_DATA_ATTR int keyLen = 0;
 
-uint8_t batteryHistory[1440];
+uint8_t batteryCapacityHistory[1440];
+uint16_t batteryVoltageHistory[1440];
 
 uint16_t stepCounterHistory[1440];
 
@@ -60,6 +61,9 @@ lv_color_t color_text;
 
 void setup() {
   Serial.begin(115200);
+
+  // onetime action: reset battery calibration
+  // resetBatteryCalibration();
 
   instance.begin();
   Serial.println("setup Instance started");

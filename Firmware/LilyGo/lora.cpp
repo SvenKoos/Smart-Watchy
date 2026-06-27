@@ -30,6 +30,7 @@ uint32_t getEpochTime() {
 
 void setupLora() {
   loraQueue = xQueueCreate(ALERT_MAX_NO, sizeof(LoraNotification));
+  xQueueReset(loraQueue);
 }
 
 void addMsgToLora(const char *msg) {

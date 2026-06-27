@@ -37,6 +37,7 @@ typedef struct singleAlert {
  **********************/
 alertData getAlertData(const String gatewayIP, const String macAdress);
 void vibMotor();
+String cleanNotificationText(String source);
 
 /**********************
  *      MACROS

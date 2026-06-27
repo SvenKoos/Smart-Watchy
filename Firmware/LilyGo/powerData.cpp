@@ -16,7 +16,8 @@
 #include "powerData.h"
 
 extern powerData currentPower;
-extern uint8_t batteryHistory[1440];
+extern uint8_t batteryCapacityHistory[1440];
+extern uint16_t batteryVoltageHistory[1440];
 
 void setupPowerMgt() {
   // Clear all interrupt status
@@ -50,7 +51,8 @@ void setupPowerMgt() {
 
   // Battery history
   for (int i = 0; i < 1440; i++) {
-    batteryHistory[i] = 0;
+    batteryCapacityHistory[i] = 0;
+    batteryVoltageHistory[i] = 0;
   }
 }
 
@@ -68,21 +70,25 @@ powerData getPowerData() {
   currentPower.code = CODE_NO_ERROR;
 
   Serial.print("getPowerData Battery Percent: ");
-  Serial.println(currentPower.batteryPercent, DEC);
+  Serial.print(currentPower.batteryPercent, DEC);
+  Serial.print(", Battery voltage: ");
+  Serial.println(currentPower.battVoltagemV, DEC);
 
   struct tm timeinfo;
   if (getLocalTime(&timeinfo)) {
     // reset battery history at midnight
     if (timeinfo.tm_hour == 0 && timeinfo.tm_min == 0) {
       for (int i = 0; i < 1440; i++) {
-        batteryHistory[i] = 0;
+        batteryCapacityHistory[i] = 0;
+        batteryVoltageHistory[i] = 0;
       }
     }
 
     // store current battery capacity value
     int currentMinuteIndex = 0;
     currentMinuteIndex = timeinfo.tm_hour * 60 + timeinfo.tm_min;
-    batteryHistory[currentMinuteIndex] = currentPower.batteryPercent;
+    batteryCapacityHistory[currentMinuteIndex] = currentPower.batteryPercent;
+    batteryVoltageHistory[currentMinuteIndex] = currentPower.battVoltagemV;
   }
 
   return currentPower;
