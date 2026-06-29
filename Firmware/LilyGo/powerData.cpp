@@ -19,6 +19,10 @@ extern powerData currentPower;
 extern uint8_t batteryCapacityHistory[1440];
 extern uint16_t batteryVoltageHistory[1440];
 
+// Die exakten Eckpunkte aus deinem Diagramm
+const uint16_t maxVolt = 4330;  // 100%
+const uint16_t minVolt = 3550;  // 0%
+
 void setupPowerMgt() {
   // Clear all interrupt status
   instance.pmu.clearIrqStatus();
@@ -65,7 +69,8 @@ powerData getPowerData() {
   currentPower.battVoltagemV = instance.pmu.getBattVoltage();
   currentPower.vBusVoltagemV = instance.pmu.getVbusVoltage();
   currentPower.systemVoltagemV = instance.pmu.getSystemVoltage();
-  currentPower.batteryPercent = instance.pmu.getBatteryPercent();
+  // currentPower.batteryPercent = instance.pmu.getBatteryPercent();
+  currentPower.batteryPercent = getCustomBatteryPercent(currentPower.battVoltagemV);
 
   currentPower.code = CODE_NO_ERROR;
 
@@ -124,4 +129,13 @@ void resetBatteryCalibration() {
   // Now start the library - it will see 'calibration = false'
   // and trigger the internal 470mAh calibration automatically!
   // in setup(): instance.begin();
+}
+
+uint8_t getCustomBatteryPercent(uint16_t mv) {
+  // Sicherheits-Kappen für Ausreißer
+  if (mv >= maxVolt) return 100;
+  if (mv <= minVolt) return 0;
+
+  // Lineares Mapping: Rechnet den Bereich [3550...4330] sauber auf [0...100] um
+  return (uint8_t)(((mv - minVolt) * 100) / (maxVolt - minVolt));
 }

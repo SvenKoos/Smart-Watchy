@@ -77,6 +77,7 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
       _string = (const char *)alert["title"];
       if (_string == "null")
         _string = "";
+      _string = cleanNotificationText(_string);
       strncpy(allAlerts[i].title, _string.c_str(), TITLE_LEN - 1);
       allAlerts[i].title[TITLE_LEN - 1] = '\0';
 
@@ -196,7 +197,7 @@ String cleanNotificationText(String source) {
   source.replace("\xC3\x81", "A");   // \u00c1
   source.replace("\xC3\x82", "A");   // \u00c2
   source.replace("\xC3\x83", "A");   // \u00c3
-  source.replace("\xC3\x84", "Ae");   // \u00c4 (Oder "Ae", falls gewünscht)
+  source.replace("\xC3\x84", "Ae");  // \u00c4 (Oder "Ae", falls gewünscht)
   source.replace("\xC3\x85", "A");   // \u00c5
   source.replace("\xC3\x86", "A");   // \u00c6
   source.replace("\xC3\x87", "C");   // \u00c7
@@ -214,20 +215,20 @@ String cleanNotificationText(String source) {
   source.replace("\xC3\x93", "O");   // \u00d3
   source.replace("\xC3\x94", "O");   // \u00d4
   source.replace("\xC3\x95", "O");   // \u00d5
-  source.replace("\xC3\x96", "Oe");   // \u00d6
+  source.replace("\xC3\x96", "Oe");  // \u00d6
   source.replace("\xC3\x97", "x");   // \u00d7
   source.replace("\xC3\x98", "O");   // \u00d8
   source.replace("\xC3\x99", "U");   // \u00d9
   source.replace("\xC3\x9a", "U");   // \u00da
   source.replace("\xC3\x9b", "U");   // \u00db
-  source.replace("\xC3\x9c", "Ue");   // \u00dc
+  source.replace("\xC3\x9c", "Ue");  // \u00dc
   source.replace("\xC3\x9d", "Y");   // \u00dd
   source.replace("\xC3\x9f", "ss");  // \u00df
   source.replace("\xC3\xa0", "a");   // \u00e0
   source.replace("\xC3\xa1", "a");   // \u00e1
   source.replace("\xC3\xa2", "a");   // \u00e2
   source.replace("\xC3\xa3", "a");   // \u00e3
-  source.replace("\xC3\xa4", "ae");   // \u00e4
+  source.replace("\xC3\xa4", "ae");  // \u00e4
   source.replace("\xC3\xa5", "a");   // \u00e5
   source.replace("\xC3\xa6", "ae");  // \u00e6
   source.replace("\xC3\xa7", "c");   // \u00e7
@@ -245,12 +246,12 @@ String cleanNotificationText(String source) {
   source.replace("\xC3\xb3", "o");   // \u00f3
   source.replace("\xC3\xb4", "o");   // \u00f4
   source.replace("\xC3\xb5", "o");   // \u00f5
-  source.replace("\xC3\xb6", "oe");   // \u00f6
+  source.replace("\xC3\xb6", "oe");  // \u00f6
   source.replace("\xC3\xb8", "o");   // \u00f8
   source.replace("\xC3\xb9", "u");   // \u00f9
   source.replace("\xC3\xba", "u");   // \u00fa
   source.replace("\xC3\xbb", "u");   // \u00fb
-  source.replace("\xC3\xbc", "ue");   // \u00fc
+  source.replace("\xC3\xbc", "ue");  // \u00fc
   source.replace("\xC3\xbd", "y");   // \u00fd
   source.replace("\xC3\xbf", "y");   // \u00ff
 
@@ -379,6 +380,23 @@ String cleanNotificationText(String source) {
   source.replace("\xC5\xbc", "z");   // \u017c
   source.replace("\xC5\xbd", "Z");   // \u017d
   source.replace("\xC5\xbe", "z");   // \u017e
+
+  // Erwähnte Korrekturen & Ergänzungen für Westeuropäisch (Accents)
+  source.replace("\xC3\xA8", "e");  // \u00e8 -> è (Das hat gefehlt!)
+  source.replace("\xC3\xAC", "i");  // \u00ec -> ì
+  source.replace("\xC3\xB2", "o");  // \u00f2 -> ò
+  source.replace("\xC3\xB9", "u");  // \u00f9 -> ù
+
+  // Große Gegenstücke zu den Akzenten (falls jemand SCHREIT)
+  source.replace("\xC3\x88", "E");  // \u00c8 -> È
+  source.replace("\xC3\x89", "E");  // \u00c9 -> É
+  source.replace("\xC3\x8A", "E");  // \u00ca -> Ê
+  source.replace("\xC3\x8B", "E");  // \u00cb -> Ë
+
+  // Geschütztes Leerzeichen (NBSP) durch ein stinknormales Leerzeichen ersetzen
+  source.replace("\xC2\xA0", " ");
+  // Schmales geschütztes Leerzeichen ebenfalls ersetzen
+  source.replace("\xE2\x80\xAF", " ");
 
   return source;
 }
