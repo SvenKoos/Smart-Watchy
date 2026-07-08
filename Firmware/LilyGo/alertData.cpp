@@ -123,7 +123,7 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
       currentAlerts.log[sizeof(currentAlerts.log) - 1] = '\0';
 
       if ((oldNo != newNo) || (oldMin != newMin) || (oldMax != newMax)) {
-        if (currentPower.batteryPercent > 10) {
+        if (currentPower.batteryPercent > 5) {
           vibMotor();
         }
         if (guiState == DARK_STATE) {

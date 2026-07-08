@@ -525,20 +525,23 @@ void menuHandler() {
   cont = lv_menu_cont_create(pageMain);
   lv_obj_add_event_cb(cont, eventFunctionTotpCB, LV_EVENT_CLICKED, menu);
   label = lv_label_create(cont);
+  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
   lv_label_set_text(label, "    TOTP");
   lv_menu_set_load_page_event(menu, cont, subTotpFunction(menu));
 
-  // menu item About
+  // menu item Lora Messages
   cont = lv_menu_cont_create(pageMain);
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
-  lv_label_set_text(label, "    About");
-  lv_menu_set_load_page_event(menu, cont, subAboutFunction(menu));
+  lv_obj_set_style_text_color(label,lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
+  lv_label_set_text(label, "    LoRa Msg");
+  lv_menu_set_load_page_event(menu, cont, subLoRaMsgFunction(menu));
 
   // menu item battery history
   cont = lv_menu_cont_create(pageMain);
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
+  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
   lv_label_set_text(label, "    Battery");
   lv_menu_set_load_page_event(menu, cont, subBatteryFunction(menu));
 
@@ -546,25 +549,29 @@ void menuHandler() {
   cont = lv_menu_cont_create(pageMain);
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
+  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
   lv_label_set_text(label, "    Steps");
   lv_menu_set_load_page_event(menu, cont, subStepCounterFunction(menu));
 
-  // menu item Lora Messages
+  // menu item About
   cont = lv_menu_cont_create(pageMain);
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
-  lv_label_set_text(label, "    LoRa Msg");
-  lv_menu_set_load_page_event(menu, cont, subLoRaMsgFunction(menu));
+  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
+  lv_label_set_text(label, "    About");
+  lv_menu_set_load_page_event(menu, cont, subAboutFunction(menu));
 
   // separator
   cont = lv_menu_cont_create(pageMain);
   label = lv_label_create(cont);
+  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
   lv_label_set_text(label, "    _______");
 
   // menu item Configure WiFi
   cont = lv_menu_cont_create(pageMain);
   lv_obj_add_event_cb(cont, eventFunctionWifiCB, LV_EVENT_CLICKED, menu);
   label = lv_label_create(cont);
+  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
   lv_label_set_text(label, "    WiFi");
   lv_menu_set_load_page_event(menu, cont, subWifiFunction(menu));
 

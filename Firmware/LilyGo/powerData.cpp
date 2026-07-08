@@ -20,8 +20,10 @@ extern uint8_t batteryCapacityHistory[1440];
 extern uint16_t batteryVoltageHistory[1440];
 
 // Die exakten Eckpunkte aus deinem Diagramm
-const uint16_t maxVolt = 4330;  // 100%
-const uint16_t minVolt = 3550;  // 0%
+// const uint16_t maxVolt = 4330;  // 100%
+// const uint16_t minVolt = 3550;  // 0%
+const uint16_t maxVolt = 4300;  // 100%
+const uint16_t minVolt = 3680;  // 0%
 
 void setupPowerMgt() {
   // Clear all interrupt status
