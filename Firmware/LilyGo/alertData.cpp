@@ -131,7 +131,7 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
           guiState = ALERT_STATE;
 
           // prepare the  screen object
-          prepareAlertScreen();
+          prepareAlertScreen(0);
 
           // show the newest alert
           int alertIndex = currentAlerts.count - 1;

@@ -29,12 +29,17 @@ extern lv_color_t color_text;
 
 static lv_display_t *display;
 static lv_obj_t *screen;
+static lv_style_t styleMicro;
 static lv_style_t styleSmall;
 static lv_style_t styleMedium;
 static lv_style_t styleLarge;
 
 void watchFaceSetup() {
   // styles
+  // Set to built-in MICRO
+  lv_style_init(&styleMicro);
+  lv_style_set_text_font(&styleMicro, &lv_font_montserrat_18);
+  lv_style_set_border_width(&styleMicro, 0);
   // Set to built-in SMALL
   lv_style_init(&styleSmall);
   lv_style_set_text_font(&styleSmall, &lv_font_montserrat_24);
@@ -199,16 +204,16 @@ void drawSteps() {
   lv_obj_t *barSteps = lv_bar_create(screen);
   
   // Breite anpassen (z.B. 100 Pixel lang, 4 Pixel hoch für einen filigranen Look)
-  lv_obj_set_size(barSteps, 100, 4);
+  lv_obj_set_size(barSteps, 80, 4);
   
   // Bereich von 0 bis 10.000 Schritten definieren
-  lv_bar_set_range(barSteps, 0, 10000);
+  lv_bar_set_range(barSteps, 0, settings.stepGoal);
   lv_bar_set_value(barSteps, currentAccelleration.stepCounter, LV_ANIM_OFF);
 
   // STYLING FÜR DEN ERREICHTEN TEIL (INDIKATOR):
   // Setzt deine Theme-Farbe (hellgrau) und erzwingt die volle Deckkraft
-  lv_obj_set_style_bg_color(barSteps, GetTheme(THEME_ACCELL_DATA), LV_PART_INDICATOR);
-  lv_obj_set_style_bg_opa(barSteps, LV_OPA_COVER, LV_PART_INDICATOR); // Verhindert das Standard-Blau
+  // lv_obj_set_style_bg_color(barSteps, GetTheme(THEME_ACCELL_DATA), LV_PART_INDICATOR);
+  // lv_obj_set_style_bg_opa(barSteps, LV_OPA_COVER, LV_PART_INDICATOR); // Verhindert das Standard-Blau
   
   // STYLING FÜR DEN UNERREICHTEN TEIL (MAIN):
   // Exakt das gleiche Dunkelgrau wie beim Batterie-Ring
@@ -265,17 +270,16 @@ void drawIcons(bool isConnected) {
   
   // Hintergrundring dezent dunkelgrau oder leicht transparent halten
   lv_obj_set_style_arc_color(arcBattery, lv_color_make(60, 60, 60), LV_PART_MAIN);
-  lv_obj_set_style_arc_width(arcBattery, 2, LV_PART_MAIN);
+  lv_obj_set_style_arc_width(arcBattery, 3, LV_PART_MAIN);
 
   // Positionierung oben rechts (da wo vorher das Icon-Areal war)
   lv_obj_align(arcBattery, LV_ALIGN_TOP_RIGHT, -15, 15);
 
   // 3. Die Prozentzahl exakt im Ring zentrieren
   lv_obj_t *labelBatteryPercentage = lv_label_create(screen);
-  lv_obj_add_style(labelBatteryPercentage, &styleSmall, LV_PART_MAIN);
+  lv_obj_add_style(labelBatteryPercentage, &styleMicro, LV_PART_MAIN);
   
-  // Die Textfarbe folgt nun der dynamischen Batterie-Farbe
-  lv_obj_set_style_text_color(labelBatteryPercentage, batteryColor, 0);
+  lv_obj_set_style_text_color(labelBatteryPercentage, GetTheme(THEME_POWER_DATA), 0);
 
   char buf[4];
   snprintf(buf, sizeof(buf), "%d", currentPower.batteryPercent);

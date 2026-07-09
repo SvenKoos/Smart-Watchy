@@ -25,10 +25,10 @@ int alertIndex = -1;
 
 lv_style_t styleAlerts;
 
-lv_obj_t* labelTimestamp;
-lv_obj_t* labelIndex;
+lv_obj_t* labelTime;
 lv_obj_t* labelApp;
 lv_obj_t* labelTitleBody;
+lv_obj_t *dots_container = NULL; // Speichert den Container für die Punkte
 
 uint32_t last_gesture_time = 0;
 
@@ -160,7 +160,7 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
           // show the  alerts
           if (currentAlerts.count > 0) {
             // prepare the  screen object
-            prepareAlertScreen();
+            prepareAlertScreen(currentAlerts.count);
 
             // GUI state
             guiState = ALERT_STATE;
@@ -238,61 +238,87 @@ static void alertEventCB(lv_event_t* e) {
   }
 }
 
-lv_obj_t* prepareAlertScreen() {
-  // get active screen
+lv_obj_t* prepareAlertScreen(int count) {
+  // Active Screen holen und säubern
   lv_obj_t* alert_scr = lv_screen_active();
-
-  // clean the screen
   lv_obj_clean(alert_scr);
-
-  // set screen background
   lv_obj_set_style_bg_color(alert_scr, color_bg, 0);
 
-  // 2. Scroll-Verhalten aktivieren
-  // Wir erlauben vertikales Scrollen, schalten aber horizontales aus
+  // Vertikales Scrollen aktivieren
   lv_obj_add_flag(alert_scr, LV_OBJ_FLAG_SCROLLABLE);
-
-  // Scrollbalken dezent anzeigen (nur während des Scrollens)
   lv_obj_set_scrollbar_mode(alert_scr, LV_SCROLLBAR_MODE_AUTO);
-
-  // register gestures
-  // https://docs.lvgl.io/master/main-modules/indev/gestures.html
   lv_obj_add_event_cb(alert_scr, alertEventCB, LV_EVENT_GESTURE, NULL);
 
-  // style
-  lv_style_init(&styleAlerts);
-  // lv_style_set_text_font(&styleAlerts, &lv_font_montserrat_18);
-  lv_style_set_text_font(&styleAlerts, &watchface_font);
-  lv_style_set_border_width(&styleAlerts, 0);
+  // --- HEADER AREA ---
+  static lv_style_t styleHeader;
+  lv_style_init(&styleHeader);
+  lv_style_set_text_font(&styleHeader, &lv_font_montserrat_18);
+  lv_style_set_text_color(&styleHeader, lv_color_make(160, 160, 160));
 
-  // timestamp
-  labelTimestamp = lv_label_create(alert_scr);
-  lv_obj_add_style(labelTimestamp, &styleAlerts, LV_PART_MAIN);
-  lv_obj_align(labelTimestamp, LV_ALIGN_TOP_LEFT, 10, 10);
-  lv_obj_set_style_text_color(labelTimestamp, color_text, 0);
-
-  // Index
-  labelIndex = lv_label_create(alert_scr);
-  lv_obj_add_style(labelIndex, &styleAlerts, LV_PART_MAIN);
-  lv_obj_set_style_text_align(labelIndex, LV_TEXT_ALIGN_RIGHT, 0);
-  lv_obj_align(labelIndex, LV_ALIGN_TOP_RIGHT, -10, 10);
-  lv_obj_set_style_text_color(labelIndex, color_text, 0);
-
-  // app
+  // App Name
   labelApp = lv_label_create(alert_scr);
-  lv_obj_add_style(labelApp, &styleAlerts, LV_PART_MAIN);
-  lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 10, 35);
-  lv_obj_set_style_text_color(labelApp, color_text, 0);
+  lv_obj_add_style(labelApp, &styleHeader, LV_PART_MAIN);
+  lv_obj_set_style_text_color(labelApp, GetTheme(THEME_ALERT_DATA), 0);
+  lv_obj_align(labelApp, LV_ALIGN_TOP_LEFT, 12, 10);
 
-  // title + body
-  labelTitleBody = lv_label_create(alert_scr);
-  lv_obj_add_style(labelTitleBody, &styleAlerts, LV_PART_MAIN);
-  // WICHTIG: Long Mode auf WRAP setzen, damit der Text in die Breite passt
-  // und stattdessen die Höhe des Objekts wächst
+  // time
+  labelTime = lv_label_create(alert_scr);
+  lv_obj_add_style(labelTime, &styleHeader, LV_PART_MAIN);
+  lv_obj_set_style_text_align(labelTime, LV_TEXT_ALIGN_RIGHT, 0);
+  lv_obj_align(labelTime, LV_ALIGN_TOP_RIGHT, -12, 10);
+
+  // --- DYNAMISCHE PUNKT-ZEILE (INDEX ANZEIGE) ---
+  dots_container = lv_obj_create(alert_scr);
+  lv_obj_set_size(dots_container, lv_pct(100), 12);
+  lv_obj_align(dots_container, LV_ALIGN_TOP_MID, 0, 40); // Zwischen Header und Karte
+  
+  lv_obj_set_style_bg_opa(dots_container, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(dots_container, 0, 0);
+  lv_obj_set_style_pad_all(dots_container, 0, 0);
+  lv_obj_remove_flag(dots_container, LV_OBJ_FLAG_SCROLLABLE);
+  
+  // Flex-Layout für automatische horizontale Zentrierung
+  lv_obj_set_flex_flow(dots_container, LV_FLEX_FLOW_ROW);
+  lv_obj_set_style_flex_main_place(dots_container, LV_FLEX_ALIGN_CENTER, 0);
+  lv_obj_set_style_flex_cross_place(dots_container, LV_FLEX_ALIGN_CENTER, 0);
+  lv_obj_set_style_pad_column(dots_container, 6, 0);
+
+  // Punkte im Ausgangszustand (alle dunkelgrau) zeichnen
+  for(int i = 0; i < count; i++) {
+    lv_obj_t *dot = lv_obj_create(dots_container);
+    lv_obj_set_size(dot, 5, 5);
+    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_border_width(dot, 0, 0);
+    lv_obj_set_style_bg_color(dot, lv_color_make(50, 50, 50), 0); // Alle dunkelgrau
+  }
+
+  // --- CONTENT CONTAINER ("Die Message-Karte") ---
+  lv_obj_t *card = lv_obj_create(alert_scr);
+  lv_obj_set_size(card, lv_pct(92), LV_SIZE_CONTENT);
+  lv_obj_align(card, LV_ALIGN_TOP_MID, 0, 54); // Platz für die Punkte gelassen
+  
+  lv_obj_set_style_bg_color(card, lv_color_make(30, 35, 45), 0);
+  lv_obj_set_style_radius(card, 8, 0);
+  lv_obj_set_style_border_width(card, 0, 0);
+  lv_obj_set_style_pad_all(card, 10, 0);
+  lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE); 
+
+  // --- VERTICAL ACCENT BAR ---
+  lv_obj_t *accent_bar = lv_obj_create(card);
+  lv_obj_set_size(accent_bar, 3, lv_pct(100));
+  lv_obj_align(accent_bar, LV_ALIGN_LEFT_MID, -4, 0);
+  lv_obj_set_style_bg_color(accent_bar, GetTheme(THEME_ALERT_DATA), 0);
+  lv_obj_set_style_border_width(accent_bar, 0, 0);
+  lv_obj_set_style_radius(accent_bar, 2, 0);
+
+  // --- MESSAGE TEXT ---
+  labelTitleBody = lv_label_create(card);
+  lv_obj_set_style_text_font(labelTitleBody, &watchface_font, LV_PART_MAIN);
+  lv_obj_set_style_text_color(labelTitleBody, lv_color_white(), LV_PART_MAIN);
+  
   lv_label_set_long_mode(labelTitleBody, LV_LABEL_LONG_WRAP);
-  lv_obj_set_width(labelTitleBody, lv_pct(95));  // 90% der Screenbreite nutzen
-  lv_obj_align(labelTitleBody, LV_ALIGN_TOP_LEFT, 10, 60);
-  lv_obj_set_style_text_color(labelTitleBody, GetTheme(THEME_ALERT_DATA), 0);
+  lv_obj_set_width(labelTitleBody, lv_pct(92));
+  lv_obj_align(labelTitleBody, LV_ALIGN_LEFT_MID, 8, 0);
 
   last_gesture_time = 0;
 
@@ -302,31 +328,31 @@ lv_obj_t* prepareAlertScreen() {
 void showAlert(singleAlert alert, int index, int count) {
   char text[TITLE_LEN + BODY_LEN] = "";
 
-  lv_label_set_text_fmt(labelTimestamp, "%.16s", alert.timeStamp);
+  lv_label_set_text_fmt(labelTime, "%.5s", alert.timeStamp + 11);
 
-  if (count > 0) {
-    if (index > 0) {
-      sprintf(text, "< %d", index + 1);
-    } else {
-      sprintf(text, "  %d", index + 1);
-    }
-    if (index < count - 1) {
-      strcat(text, " >");
-    } else {
-      strcat(text, "  ");
-    }
-  } else {
-    strcpy(text, "");
-  }
-  lv_label_set_text(labelIndex, text);
-
+  // 3. App-Name setzen
   lv_label_set_text(labelApp, alert.appName);
 
-  // lv_label_set_text(labelTitle, alert.title);
+  // 4. Inhalt (Titel + Body) zusammenbauen
   strcpy(text, alert.title);
   strcat(text, "\n");
   strcat(text, alert.body);
   lv_label_set_text(labelTitleBody, text);
+
+  // 5. AKTUELLEN PUNKT HELLGRAU INTEGRIEREN
+  if (dots_container != NULL) {
+    uint32_t child_count = lv_obj_get_child_count(dots_container);
+    
+    for(uint32_t i = 0; i < child_count; i++) {
+      lv_obj_t *dot = lv_obj_get_child(dots_container, i);
+      
+      if (i == index) {
+        lv_obj_set_style_bg_color(dot, lv_color_make(180, 180, 180), 0); // Aktueller Index = Hellgrau
+      } else {
+        lv_obj_set_style_bg_color(dot, lv_color_make(50, 50, 50), 0);   // Alle anderen = Dunkelgrau
+      }
+    }
+  }
 }
 
 static void handle_button_emergency_reset() {

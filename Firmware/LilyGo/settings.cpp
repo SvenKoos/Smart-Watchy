@@ -34,6 +34,7 @@ lilygoSettings setSetting() {
   settings.totpAccount = TOTP_ACCOUNT;
   settings.totpSecret = TOTP_SECRET;
   settings.loraMagic = LORA_MAGIC;
+  settings.stepGoal = STEP_GOAL;
 
   settings.displayBGrndBlack = BACKGROUND_BLACK;
   setTheme(settings.displayBGrndBlack);
@@ -59,7 +60,7 @@ void setTheme(bool inverted) {
   colorLocationData = lv_palette_main(LV_PALETTE_PINK);
   colorWeatherData = lv_palette_main(LV_PALETTE_PINK);
   colorDateData = lv_palette_main(LV_PALETTE_DEEP_ORANGE);
-  colorTimeData = lv_palette_main(LV_PALETTE_GREEN);
+  colorTimeData = color_text;
 }
 
 // Funktion, die deine Icons je nach Modus anpasst
