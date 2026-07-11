@@ -19,213 +19,195 @@
 extern lilygoSettings settings;
 
 extern weatherData currentWeather;
-RTC_DATA_ATTR int weatherIntervalCounter;
 
-weatherData getWeatherData(String cityID, String units, String lang, String url, String apiKey, uint8_t updateInterval) {
+weatherData getWeatherData(String cityID, String units, String lang, String url, String apiKey) {
 	Serial.println("getWeatherData Start");
 
 	currentWeather.isMetric = units == String("metric");
 	currentWeather.code = CODE_NO_ERROR;
 
-	if (weatherIntervalCounter < 0) {  //-1 on first run, set to updateInterval
-		weatherIntervalCounter = updateInterval;
-	}
-	if (weatherIntervalCounter >= updateInterval) {  // only update if WEATHER_UPDATE_INTERVAL has elapsed
-		                                               // i.e. 30 minutes
-		Serial.println("getWeatherData Get");
+	Serial.println("getWeatherData Get");
 
-		currentWeather.weatherConditionCode = 0;
-		currentWeather.offset = settings.gmtOffset;
+	currentWeather.weatherConditionCode = 0;
+	currentWeather.offset = settings.gmtOffset;
 
-		HTTPClient http;               // Use Weather API for live data if WiFi is connected
-		http.setConnectTimeout(3000);  // 3 second max timeout
-    http.setTimeout(4000);        // Max. 4 Sek auf die eigentlichen JSON-Daten warten
-		
-		                               // API documentation: https://openweathermap.org/current
-		String weatherQueryURL = url + String("?id=") + cityID + String("&units=") + units + String("&lang=") + lang + String("&appid=") + apiKey;
-		http.begin(weatherQueryURL.c_str());
-		int httpResponseCode = http.GET();
-		if (httpResponseCode == 200) {
-			String payload = http.getString();
-			JSONVar responseObject = JSON.parse(payload);
-			Serial.println(responseObject);
+	HTTPClient http;               // Use Weather API for live data if WiFi is connected
+	http.setConnectTimeout(3000);  // 3 second max timeout
+	http.setTimeout(4000);         // Max. 4 Sek auf die eigentlichen JSON-Daten warten
 
-			if ((!responseObject.hasOwnProperty("main")) || (!responseObject["main"].hasOwnProperty("temp")) || (!responseObject.hasOwnProperty("weather")) || (JSON.typeof(responseObject["weather"]) != "array") || (!responseObject.hasOwnProperty("name")) || (!responseObject.hasOwnProperty("timezone"))) {
-				currentWeather.code = CODE_PARSE_ERROR;
-				strncpy(currentWeather.log, "Missing fields", sizeof(currentWeather.log) - 1);
-				currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
+	// API documentation: https://openweathermap.org/current
+	String weatherQueryURL = url + String("?id=") + cityID + String("&units=") + units + String("&lang=") + lang + String("&appid=") + apiKey;
+	http.begin(weatherQueryURL.c_str());
+	int httpResponseCode = http.GET();
+	if (httpResponseCode == 200) {
+		String payload = http.getString();
+		JSONVar responseObject = JSON.parse(payload);
+		Serial.println(responseObject);
 
-				return currentWeather;
-			}
+		if ((!responseObject.hasOwnProperty("main")) || (!responseObject["main"].hasOwnProperty("temp")) || (!responseObject.hasOwnProperty("weather")) || (JSON.typeof(responseObject["weather"]) != "array") || (!responseObject.hasOwnProperty("name")) || (!responseObject.hasOwnProperty("timezone"))) {
+			currentWeather.code = CODE_PARSE_ERROR;
+			strncpy(currentWeather.log, "Missing fields", sizeof(currentWeather.log) - 1);
+			currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
 
-			currentWeather.temperature = int(responseObject["main"]["temp"]);
-			currentWeather.weatherConditionCode = int(responseObject["weather"][0]["id"]);
-
-			const char* main = (const char*)responseObject["weather"][0]["main"];
-			if (main != nullptr) {
-				strncpy(currentWeather.weatherDescription, main, sizeof(currentWeather.weatherDescription) - 1);
-				currentWeather.weatherDescription[sizeof(currentWeather.weatherDescription) - 1] = '\0';
-			}
-
-			const char* icon = (const char*)responseObject["weather"][0]["icon"];
-			if (icon != nullptr) {
-				strncpy(currentWeather.weatherIcon, icon, sizeof(currentWeather.weatherIcon) - 1);
-				currentWeather.weatherIcon[sizeof(currentWeather.weatherIcon) - 1] = '\0';
-			}
-
-			// sync NTP during weather API call and use timezone of city
-			syncNTP(long(responseObject["timezone"]), settings.ntpServer.c_str());
-
-			const char* name = (const char*)responseObject["name"];
-			if (name != nullptr) {
-				strncpy(currentWeather.city, name, sizeof(currentWeather.city) - 1);
-				currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
-
-				String cityString = Normalize2ASCII(String(currentWeather.city));
-				strncpy(currentWeather.city, cityString.c_str(), sizeof(currentWeather.city) - 1);
-				currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
-
-        // create short city name for display
-        String name;
-        int maxNameLength = 12;
-        if (strlen(currentWeather.city) > maxNameLength) {
-          name = String(currentWeather.city, maxNameLength - 1);
-          if (name[maxNameLength - 2] != ' ') {
-            name = name + String(".");
-          }
-        } else
-          name = currentWeather.city;
-        strcpy(currentWeather.cityShort, name.c_str());
-			} else {
-        strcpy(currentWeather.city, "");
-        strcpy(currentWeather.cityShort, "");
-      }
-
-			currentWeather.offset = long(responseObject["timezone"]);
-
-			Serial.print("getWeatherData Weather: ");
-			Serial.print(currentWeather.weatherIcon);
-			Serial.println(currentWeather.weatherDescription);
-		} else {
-			// http error
-			currentWeather.code = CODE_HTTP_ERROR;
-
-			Serial.print("getWeatherData Error code: ");
-			Serial.println(currentWeather.code, DEC);
+			return currentWeather;
 		}
-		strncpy(currentWeather.log, String(httpResponseCode).c_str(), sizeof(currentWeather.log) - 1);
-		currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
 
-		http.end();
-		weatherIntervalCounter = 0;
+		currentWeather.temperature = int(responseObject["main"]["temp"]);
+		currentWeather.weatherConditionCode = int(responseObject["weather"][0]["id"]);
+
+		const char* main = (const char*)responseObject["weather"][0]["main"];
+		if (main != nullptr) {
+			strncpy(currentWeather.weatherDescription, main, sizeof(currentWeather.weatherDescription) - 1);
+			currentWeather.weatherDescription[sizeof(currentWeather.weatherDescription) - 1] = '\0';
+		}
+
+		const char* icon = (const char*)responseObject["weather"][0]["icon"];
+		if (icon != nullptr) {
+			strncpy(currentWeather.weatherIcon, icon, sizeof(currentWeather.weatherIcon) - 1);
+			currentWeather.weatherIcon[sizeof(currentWeather.weatherIcon) - 1] = '\0';
+		}
+
+		// sync NTP during weather API call and use timezone of city
+		syncNTP(long(responseObject["timezone"]), settings.ntpServer.c_str());
+
+		const char* name = (const char*)responseObject["name"];
+		if (name != nullptr) {
+			strncpy(currentWeather.city, name, sizeof(currentWeather.city) - 1);
+			currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
+
+			String cityString = Normalize2ASCII(String(currentWeather.city));
+			strncpy(currentWeather.city, cityString.c_str(), sizeof(currentWeather.city) - 1);
+			currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
+
+			// create short city name for display
+			String name;
+			int maxNameLength = 12;
+			if (strlen(currentWeather.city) > maxNameLength) {
+				name = String(currentWeather.city, maxNameLength - 1);
+				if (name[maxNameLength - 2] != ' ') {
+					name = name + String(".");
+				}
+			} else
+				name = currentWeather.city;
+			strcpy(currentWeather.cityShort, name.c_str());
+		} else {
+			strcpy(currentWeather.city, "");
+			strcpy(currentWeather.cityShort, "");
+		}
+
+		currentWeather.offset = long(responseObject["timezone"]);
+
+		Serial.print("getWeatherData Weather: ");
+		Serial.print(currentWeather.weatherIcon);
+		Serial.println(currentWeather.weatherDescription);
 	} else {
-		weatherIntervalCounter++;
+		// http error
+		currentWeather.code = CODE_HTTP_ERROR;
+
+		Serial.print("getWeatherData Error code: ");
+		Serial.println(currentWeather.code, DEC);
 	}
+	strncpy(currentWeather.log, String(httpResponseCode).c_str(), sizeof(currentWeather.log) - 1);
+	currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
+
+	http.end();
+
 	return currentWeather;
 }
 
-weatherData getWeatherDataByLocation(double latitude, double longitude, String units, String lang, String url, String apiKey, uint8_t updateInterval) {
+weatherData getWeatherDataByLocation(double latitude, double longitude, String units, String lang, String url, String apiKey) {
 	Serial.println("getWeatherDataByLocation Start");
 
 	currentWeather.isMetric = units == String("metric");
 	currentWeather.code = CODE_NO_ERROR;
 
-	if (weatherIntervalCounter < 0) {  //-1 on first run, set to updateInterval
-		weatherIntervalCounter = updateInterval;
-	}
-	if (weatherIntervalCounter >= updateInterval) {  // only update if WEATHER_UPDATE_INTERVAL has elapsed  i.e. 30 minutes
-		Serial.println("getWeatherDataByLocation Get");
+	Serial.println("getWeatherDataByLocation Get");
 
-		currentWeather.weatherConditionCode = 0;
+	currentWeather.weatherConditionCode = 0;
 
-		HTTPClient http;               // Use Weather API for live data if WiFi is connected
-		http.setConnectTimeout(3000);  // 3 second max timeout
-    http.setTimeout(4000);        // Max. 4 Sek auf die eigentlichen JSON-Daten warten
-		                               // API documentation: https://openweathermap.org/current
-		String weatherQueryURL = url + String("?lat=") + String(latitude) + String("&lon=") + String(longitude) + String("&units=") + units + String("&lang=") + lang + String("&appid=") + apiKey;
-		http.begin(weatherQueryURL.c_str());
-		int httpResponseCode = http.GET();
-		if (httpResponseCode == 200) {
-			String payload = http.getString();
-			JSONVar responseObject = JSON.parse(payload);
-			Serial.println(responseObject);
+	HTTPClient http;               // Use Weather API for live data if WiFi is connected
+	http.setConnectTimeout(3000);  // 3 second max timeout
+	http.setTimeout(4000);         // Max. 4 Sek auf die eigentlichen JSON-Daten warten
+	                               // API documentation: https://openweathermap.org/current
+	String weatherQueryURL = url + String("?lat=") + String(latitude) + String("&lon=") + String(longitude) + String("&units=") + units + String("&lang=") + lang + String("&appid=") + apiKey;
+	http.begin(weatherQueryURL.c_str());
+	int httpResponseCode = http.GET();
+	if (httpResponseCode == 200) {
+		String payload = http.getString();
+		JSONVar responseObject = JSON.parse(payload);
+		Serial.println(responseObject);
 
-			if ((!responseObject.hasOwnProperty("main")) || (!responseObject["main"].hasOwnProperty("temp")) || (!responseObject.hasOwnProperty("weather")) || (JSON.typeof(responseObject["weather"]) != "array") || (!responseObject.hasOwnProperty("name")) || (!responseObject.hasOwnProperty("timezone"))) {
-				currentWeather.code = CODE_PARSE_ERROR;
-				strncpy(currentWeather.log, "Missing fields", sizeof(currentWeather.log) - 1);
-				currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
+		if ((!responseObject.hasOwnProperty("main")) || (!responseObject["main"].hasOwnProperty("temp")) || (!responseObject.hasOwnProperty("weather")) || (JSON.typeof(responseObject["weather"]) != "array") || (!responseObject.hasOwnProperty("name")) || (!responseObject.hasOwnProperty("timezone"))) {
+			currentWeather.code = CODE_PARSE_ERROR;
+			strncpy(currentWeather.log, "Missing fields", sizeof(currentWeather.log) - 1);
+			currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
 
-				return currentWeather;
-			}
-
-			currentWeather.temperature = int(responseObject["main"]["temp"]);
-			currentWeather.weatherConditionCode = int(responseObject["weather"][0]["id"]);
-
-			const char* main = (const char*)responseObject["weather"][0]["main"];
-			if (main != nullptr) {
-				strncpy(currentWeather.weatherDescription, main, sizeof(currentWeather.weatherDescription) - 1);
-				currentWeather.weatherDescription[sizeof(currentWeather.weatherDescription) - 1] = '\0';
-			}
-
-			const char* icon = (const char*)responseObject["weather"][0]["icon"];
-			if (icon != nullptr) {
-				strncpy(currentWeather.weatherIcon, icon, sizeof(currentWeather.weatherIcon) - 1);
-				currentWeather.weatherIcon[sizeof(currentWeather.weatherIcon) - 1] = '\0';
-			}
-
-			const char* name = (const char*)responseObject["name"];
-			if (name != nullptr) {
-				strncpy(currentWeather.city, name, sizeof(currentWeather.city) - 1);
-				currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
-
-				String cityString = Normalize2ASCII(String(currentWeather.city));
-				strncpy(currentWeather.city, cityString.c_str(), sizeof(currentWeather.city) - 1);
-				currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
-
-        // create short city name for display
-        String name;
-        int maxNameLength = 12;
-        if (strlen(currentWeather.city) > maxNameLength) {
-          name = String(currentWeather.city, maxNameLength - 1);
-          if (name[maxNameLength - 2] != ' ') {
-            name = name + String(".");
-          }
-        } else
-          name = currentWeather.city;
-        strcpy(currentWeather.cityShort, name.c_str());
-			} else {
-        strcpy(currentWeather.city, "");
-        strcpy(currentWeather.cityShort, "");
-      }
-
-			// sync NTP during weather API call and use timezone of city
-			syncNTP(long(responseObject["timezone"]), settings.ntpServer.c_str());
-
-			currentWeather.offset = long(responseObject["timezone"]);
-
-			Serial.print("getWeatherData Weather: ");
-			Serial.print(currentWeather.weatherIcon);
-			Serial.println(currentWeather.weatherDescription);
-		} else {
-			// http error
-			currentWeather.code = CODE_HTTP_ERROR;
-
-			Serial.print("getWeatherDataByLocation Error code: ");
-			Serial.println(currentWeather.code, DEC);
+			return currentWeather;
 		}
-		strncpy(currentWeather.log, String(httpResponseCode).c_str(), sizeof(currentWeather.log) - 1);
-		currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
-		http.end();
-		weatherIntervalCounter = 0;
+
+		currentWeather.temperature = int(responseObject["main"]["temp"]);
+		currentWeather.weatherConditionCode = int(responseObject["weather"][0]["id"]);
+
+		const char* main = (const char*)responseObject["weather"][0]["main"];
+		if (main != nullptr) {
+			strncpy(currentWeather.weatherDescription, main, sizeof(currentWeather.weatherDescription) - 1);
+			currentWeather.weatherDescription[sizeof(currentWeather.weatherDescription) - 1] = '\0';
+		}
+
+		const char* icon = (const char*)responseObject["weather"][0]["icon"];
+		if (icon != nullptr) {
+			strncpy(currentWeather.weatherIcon, icon, sizeof(currentWeather.weatherIcon) - 1);
+			currentWeather.weatherIcon[sizeof(currentWeather.weatherIcon) - 1] = '\0';
+		}
+
+		const char* name = (const char*)responseObject["name"];
+		if (name != nullptr) {
+			strncpy(currentWeather.city, name, sizeof(currentWeather.city) - 1);
+			currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
+
+			String cityString = Normalize2ASCII(String(currentWeather.city));
+			strncpy(currentWeather.city, cityString.c_str(), sizeof(currentWeather.city) - 1);
+			currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
+
+			// create short city name for display
+			String name;
+			int maxNameLength = 12;
+			if (strlen(currentWeather.city) > maxNameLength) {
+				name = String(currentWeather.city, maxNameLength - 1);
+				if (name[maxNameLength - 2] != ' ') {
+					name = name + String(".");
+				}
+			} else
+				name = currentWeather.city;
+			strcpy(currentWeather.cityShort, name.c_str());
+		} else {
+			strcpy(currentWeather.city, "");
+			strcpy(currentWeather.cityShort, "");
+		}
+
+		// sync NTP during weather API call and use timezone of city
+		syncNTP(long(responseObject["timezone"]), settings.ntpServer.c_str());
+
+		currentWeather.offset = long(responseObject["timezone"]);
+
+		Serial.print("getWeatherData Weather: ");
+		Serial.print(currentWeather.weatherIcon);
+		Serial.println(currentWeather.weatherDescription);
 	} else {
-		weatherIntervalCounter++;
+		// http error
+		currentWeather.code = CODE_HTTP_ERROR;
+
+		Serial.print("getWeatherDataByLocation Error code: ");
+		Serial.println(currentWeather.code, DEC);
 	}
+	strncpy(currentWeather.log, String(httpResponseCode).c_str(), sizeof(currentWeather.log) - 1);
+	currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
+	http.end();
+
 	return currentWeather;
 }
 
 void setupWeatherData() {
-	weatherIntervalCounter = -1;
-
 	currentWeather.weatherConditionCode = 0;
 	currentWeather.offset = 0;
 	currentWeather.temperature = 0;

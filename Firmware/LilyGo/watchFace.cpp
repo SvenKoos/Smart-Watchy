@@ -204,7 +204,7 @@ void drawSteps() {
   lv_obj_t *barSteps = lv_bar_create(screen);
   
   // Breite anpassen (z.B. 100 Pixel lang, 4 Pixel hoch für einen filigranen Look)
-  lv_obj_set_size(barSteps, 80, 4);
+  lv_obj_set_size(barSteps, 100, 4);
   
   // Bereich von 0 bis 10.000 Schritten definieren
   lv_bar_set_range(barSteps, 0, settings.stepGoal);
@@ -229,14 +229,14 @@ void drawIcons(bool isConnected) {
     lv_obj_t *imgAlerts = lv_image_create(screen);
     lv_image_set_src(imgAlerts, &iconNotify);
     updateIconTheme(imgAlerts, settings.displayBGrndBlack);
-    lv_obj_align(imgAlerts, LV_ALIGN_TOP_LEFT, 165, 80);
+    lv_obj_align(imgAlerts, LV_ALIGN_TOP_LEFT, 165, 200);
   }
 
   if (isConnected) {
     lv_obj_t *imgWifi = lv_image_create(screen);
     lv_image_set_src(imgWifi, &iconWifi);
     updateIconTheme(imgWifi, settings.displayBGrndBlack);
-    lv_obj_align(imgWifi, LV_ALIGN_TOP_LEFT, 195, 80);
+    lv_obj_align(imgWifi, LV_ALIGN_TOP_LEFT, 195, 200);
   }
 
   // 1. Die dynamische Farbe anhand der Prozent ermitteln
@@ -273,7 +273,7 @@ void drawIcons(bool isConnected) {
   lv_obj_set_style_arc_width(arcBattery, 3, LV_PART_MAIN);
 
   // Positionierung oben rechts (da wo vorher das Icon-Areal war)
-  lv_obj_align(arcBattery, LV_ALIGN_TOP_RIGHT, -15, 15);
+  lv_obj_align(arcBattery, LV_ALIGN_TOP_RIGHT, -10, 10);
 
   // 3. Die Prozentzahl exakt im Ring zentrieren
   lv_obj_t *labelBatteryPercentage = lv_label_create(screen);

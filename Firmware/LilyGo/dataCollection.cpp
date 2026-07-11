@@ -33,11 +33,16 @@ extern alertData currentAlerts;
 extern powerData currentPower;
 extern accellData currentAccelleration;
 
+RTC_DATA_ATTR int locationIntervalCounter;
+
 String scannedWifiNetworks;
 
 void setupDataCollection() {
   WiFi.persistent(false);
+
   scannedWifiNetworks.clear();
+
+  locationIntervalCounter = -1;
 }
 
 void collectData(void) {
@@ -49,7 +54,11 @@ void collectData(void) {
   double ltd = 0;
   double lng = 0;
 
-  scannedWifiNetworks = discoverWiFiNetworks(settings.locationUpdateInterval);
+  if ((locationIntervalCounter == settings.locationUpdateInterval) || (locationIntervalCounter < 0)) {  // only update if UPDATE_INTERVAL has elapsed
+    scannedWifiNetworks = discoverWiFiNetworks();
+  } else {
+    scannedWifiNetworks.clear();
+  }
 
   if (connectWiFi(localIP, gatewayIP, macAdress)) {
     WIFI_CONNECTED = true;
@@ -60,41 +69,51 @@ void collectData(void) {
     strncpy(currentLocation.gatewayIP, gatewayIP.c_str(), sizeof(currentLocation.gatewayIP) - 1);
     currentLocation.gatewayIP[sizeof(currentLocation.gatewayIP) - 1] = '\0';
 
-    // 1. Google Geolocation
-    if (scannedWifiNetworks.length() > 0) {
-      currentLocation = getLocationDataGoogle(settings.googleGeoLocationURL, settings.googleApiKey, scannedWifiNetworks);
-      if (currentLocation.code == CODE_NO_ERROR) {
-        ltd = currentLocation.latitudeGoogle;
-        lng = currentLocation.longitudeGoogle;
-        Serial.println("Google Geolocation succesfull.");
-      } else {
-        Serial.println("Google Geolocation failed.");
-      }
+    if (locationIntervalCounter < 0) {  //-1 on first run, set to updateInterval
+      locationIntervalCounter = settings.locationUpdateInterval;
     }
 
-    // IP based geolocation
-    if ((ltd == 0) || (lng == 0)) {
-      currentLocation = getLocationData(settings.geoipURL, settings.locationUpdateInterval);
-      if (currentLocation.code == CODE_NO_ERROR) {
-        ltd = currentLocation.latitude;
-        lng = currentLocation.longitude;
-        Serial.println("IP-based Geolocation succesfull.");
-      } else {
-        Serial.println("IP-based Geolocation failed.");
+    if (locationIntervalCounter >= settings.locationUpdateInterval) {  // only update if UPDATE_INTERVAL has elapsed
+      // 1. Google Geolocation
+      if (scannedWifiNetworks.length() > 0) {
+        currentLocation = getLocationDataGoogle(settings.googleGeoLocationURL, settings.googleApiKey, scannedWifiNetworks);
+        if (currentLocation.code == CODE_NO_ERROR) {
+          ltd = currentLocation.latitudeGoogle;
+          lng = currentLocation.longitudeGoogle;
+          Serial.println("Google Geolocation succesfull.");
+        } else {
+          Serial.println("Google Geolocation failed.");
+        }
       }
-    }
 
-    // get weather data
-    if ((ltd != 0) && (lng != 0)) {
-      // get weather data of discovered location
-      currentWeather = getWeatherDataByLocation(ltd, lng, settings.weatherUnit,
-                                                settings.weatherLang, settings.weatherURL,
-                                                settings.weatherAPIKey, settings.weatherUpdateInterval);
+      // IP based geolocation
+      if ((ltd == 0) || (lng == 0)) {
+        currentLocation = getLocationData(settings.geoipURL);
+        if (currentLocation.code == CODE_NO_ERROR) {
+          ltd = currentLocation.latitude;
+          lng = currentLocation.longitude;
+          Serial.println("IP-based Geolocation succesfull.");
+        } else {
+          Serial.println("IP-based Geolocation failed.");
+        }
+      }
+
+      // get weather data
+      if ((ltd != 0) && (lng != 0)) {
+        // get weather data of discovered location
+        currentWeather = getWeatherDataByLocation(ltd, lng, settings.weatherUnit,
+                                                  settings.weatherLang, settings.weatherURL,
+                                                  settings.weatherAPIKey);
+      } else {
+        // get weather of default location
+        currentWeather = getWeatherData(settings.cityID, settings.weatherUnit,
+                                        settings.weatherLang, settings.weatherURL,
+                                        settings.weatherAPIKey);
+      }
+
+      locationIntervalCounter = 0;
     } else {
-      // get weather of default location
-      currentWeather = getWeatherData(settings.cityID, settings.weatherUnit,
-                                      settings.weatherLang, settings.weatherURL,
-                                      settings.weatherAPIKey, settings.weatherUpdateInterval);
+      locationIntervalCounter++;
     }
 
     // get alert data

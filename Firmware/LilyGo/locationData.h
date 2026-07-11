@@ -35,10 +35,10 @@ typedef struct locationData {
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-locationData getLocationData(String url, uint8_t updateInterval);
+locationData getLocationData(String url);
 locationData getLocationDataGoogle(String geoLocURL, String googleApiKey, String jsonScan);
 void setupLocationData();
-String discoverWiFiNetworks(uint8_t updateInterval);
+String discoverWiFiNetworks();
 
 /**********************
  *      MACROS

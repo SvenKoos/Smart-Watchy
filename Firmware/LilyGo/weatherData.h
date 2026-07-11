@@ -33,8 +33,8 @@ typedef struct weatherData {
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-weatherData getWeatherData(String cityID, String units, String lang, String url, String apiKey, uint8_t updateInterval);
-weatherData getWeatherDataByLocation(double latitude, double longitude, String units, String lang, String url, String apiKey, uint8_t updateInterval);
+weatherData getWeatherData(String cityID, String units, String lang, String url, String apiKey);
+weatherData getWeatherDataByLocation(double latitude, double longitude, String units, String lang, String url, String apiKey);
 void setupWeatherData();
 String Normalize2ASCII(String source);
 

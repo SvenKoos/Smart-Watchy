@@ -6,7 +6,6 @@
 #define OPENWEATHERMAP_URL "http://api.openweathermap.org/data/2.5/weather"  //open weather api
 #define TEMP_UNIT "metric"                                                   //metric = Celsius , imperial = Fahrenheit
 #define TEMP_LANG "en"
-#define WEATHER_UPDATE_INTERVAL 15  //default 30, must be greater than 5, measured in minutes
 #define NTP_SERVER "pool.ntp.org"
 #define GMT_OFFSET_SEC 3600 * 1      //CET
 #define GEOIP_URL "http://ipwho.is"  //  GeoIP (Get IP address location in JSON format)
@@ -28,21 +27,25 @@ typedef struct lilygoSettings {
   String weatherURL;
   String weatherUnit;
   String weatherLang;
-  int8_t weatherUpdateInterval;
   // NTP Settings
   String ntpServer;
   int gmtOffset;
   int dstOffset;
+  // location settings
   String geoipURL;
   int8_t locationUpdateInterval;
+  // WiFi settings
   String wifiApSSID;
   String wifiSSID;
   String wifiPwd;
+  // TOTP settings
   String totpAccount;
   String totpSecret;
+  // General settings
   uint32_t loraMagic;
   bool displayBGrndBlack;
   int16_t stepGoal;
+  // Google settings
   String googleApiKey;
   String googleGeoLocationURL;
 } lilygoSettings;
