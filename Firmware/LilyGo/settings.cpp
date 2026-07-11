@@ -35,6 +35,8 @@ lilygoSettings setSetting() {
   settings.totpSecret = TOTP_SECRET;
   settings.loraMagic = LORA_MAGIC;
   settings.stepGoal = STEP_GOAL;
+  settings.googleApiKey = GOOGLE_APIKEY;
+  settings.googleGeoLocationURL = GOOGLE_LOCATION_URL;
 
   settings.displayBGrndBlack = BACKGROUND_BLACK;
   setTheme(settings.displayBGrndBlack);

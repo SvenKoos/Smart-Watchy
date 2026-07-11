@@ -295,11 +295,14 @@ void drawWeather() {
 
   // 1. LOCATION
   lv_obj_t *labelLocation = lv_label_create(screen);
-  lv_obj_add_style(labelLocation, &styleSmall, LV_PART_MAIN);
+  if (strlen(currentWeather.cityShort) < 8)
+    lv_obj_add_style(labelLocation, &styleSmall, LV_PART_MAIN);
+  else
+    lv_obj_add_style(labelLocation, &styleMicro, LV_PART_MAIN);
   // Fester Startpunkt links im unteren Drittel
-  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 5, 145);
+  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 5, 150);
   lv_obj_set_style_text_color(labelLocation, weatherColor, 0); // Einheitliche Farbe
-  lv_label_set_text(labelLocation, currentLocation.cityShort);
+  lv_label_set_text(labelLocation, currentWeather.cityShort);
 
   if (currentWeather.code == CODE_NO_ERROR) {
     // 2. WEATHER ICON
@@ -351,7 +354,7 @@ void drawWeather() {
 
     // 3. TEMPERATURE
     lv_obj_t *labelTemperature = lv_label_create(screen);
-    lv_obj_add_style(labelTemperature, &styleMedium, LV_PART_MAIN); // Medium statt Large für eine harmonische Zeile
+    lv_obj_add_style(labelTemperature, &styleSmall, LV_PART_MAIN); // Medium statt Large für eine harmonische Zeile
     lv_obj_set_style_text_color(labelTemperature, weatherColor, 0);
     
     char buf[6]; // Puffer leicht vergrößert für Sicherheit
@@ -363,7 +366,7 @@ void drawWeather() {
 
     // 4. UNIT (°C / °F)
     lv_obj_t *labelUnit = lv_label_create(screen);
-    lv_obj_add_style(labelUnit, &styleSmall, LV_PART_MAIN);
+    lv_obj_add_style(labelUnit, &styleMicro, LV_PART_MAIN);
     lv_obj_set_style_text_color(labelUnit, weatherColor, 0);
     
     if (currentWeather.isMetric)

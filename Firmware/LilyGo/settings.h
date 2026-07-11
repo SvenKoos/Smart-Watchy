@@ -13,11 +13,13 @@
 #define LOCATION_UPDATE_INTERVAL 15
 #define WIFI_SSID "--------"
 #define WIFI_PWD "--------"
-#define TOTP_ACCOUNT "--------------------"
+#define TOTP_ACCOUNT "----------------"
 #define TOTP_SECRET "----------------"
 #define LORA_MAGIC 0xDEADBEEF
 #define BACKGROUND_BLACK true
 #define STEP_GOAL 10000
+#define GOOGLE_APIKEY "--------------------------------"
+#define GOOGLE_LOCATION_URL "https://www.googleapis.com/geolocation/v1/geolocate"
 
 typedef struct lilygoSettings {
   // Weather Settings
@@ -41,6 +43,8 @@ typedef struct lilygoSettings {
   uint32_t loraMagic;
   bool displayBGrndBlack;
   int16_t stepGoal;
+  String googleApiKey;
+  String googleGeoLocationURL;
 } lilygoSettings;
 
 lilygoSettings setSetting();

@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include <lvgl.h>
 #include <LilyGoLib.h>
 #include <WiFi.h>
@@ -32,8 +33,11 @@ extern alertData currentAlerts;
 extern powerData currentPower;
 extern accellData currentAccelleration;
 
+String scannedWifiNetworks;
+
 void setupDataCollection() {
   WiFi.persistent(false);
+  scannedWifiNetworks.clear();
 }
 
 void collectData(void) {
@@ -41,21 +45,53 @@ void collectData(void) {
   String gatewayIP;
   String macAdress;
 
+  String scannedWifiNetworks;
+  double ltd = 0;
+  double lng = 0;
+
+  scannedWifiNetworks = discoverWiFiNetworks(settings.locationUpdateInterval);
+
   if (connectWiFi(localIP, gatewayIP, macAdress)) {
     WIFI_CONNECTED = true;
 
-    // get location data
-    currentLocation = getLocationData(settings.geoipURL, settings.locationUpdateInterval);
-    if (currentLocation.code == CODE_NO_ERROR) {
-      // get IP data
-      strncpy(currentLocation.localIP, localIP.c_str(), sizeof(currentLocation.localIP) - 1);
-      currentLocation.localIP[sizeof(currentLocation.localIP) - 1] = '\0';
-      strncpy(currentLocation.gatewayIP, gatewayIP.c_str(), sizeof(currentLocation.gatewayIP) - 1);
-      currentLocation.gatewayIP[sizeof(currentLocation.gatewayIP) - 1] = '\0';
+    // get IP data
+    strncpy(currentLocation.localIP, localIP.c_str(), sizeof(currentLocation.localIP) - 1);
+    currentLocation.localIP[sizeof(currentLocation.localIP) - 1] = '\0';
+    strncpy(currentLocation.gatewayIP, gatewayIP.c_str(), sizeof(currentLocation.gatewayIP) - 1);
+    currentLocation.gatewayIP[sizeof(currentLocation.gatewayIP) - 1] = '\0';
 
-      // get weather data
-      currentWeather = getWeatherDataExt(currentLocation.latitude, currentLocation.longitude);
+    // 1. Google Geolocation
+    if (scannedWifiNetworks.length() > 0) {
+      currentLocation = getLocationDataGoogle(settings.googleGeoLocationURL, settings.googleApiKey, scannedWifiNetworks);
+      if (currentLocation.code == CODE_NO_ERROR) {
+        ltd = currentLocation.latitudeGoogle;
+        lng = currentLocation.longitudeGoogle;
+        Serial.println("Google Geolocation succesfull.");
+      } else {
+        Serial.println("Google Geolocation failed.");
+      }
+    }
+
+    // IP based geolocation
+    if ((ltd == 0) || (lng == 0)) {
+      currentLocation = getLocationData(settings.geoipURL, settings.locationUpdateInterval);
+      if (currentLocation.code == CODE_NO_ERROR) {
+        ltd = currentLocation.latitude;
+        lng = currentLocation.longitude;
+        Serial.println("IP-based Geolocation succesfull.");
+      } else {
+        Serial.println("IP-based Geolocation failed.");
+      }
+    }
+
+    // get weather data
+    if ((ltd != 0) && (lng != 0)) {
+      // get weather data of discovered location
+      currentWeather = getWeatherDataByLocation(ltd, lng, settings.weatherUnit,
+                                                settings.weatherLang, settings.weatherURL,
+                                                settings.weatherAPIKey, settings.weatherUpdateInterval);
     } else {
+      // get weather of default location
       currentWeather = getWeatherData(settings.cityID, settings.weatherUnit,
                                       settings.weatherLang, settings.weatherURL,
                                       settings.weatherAPIKey, settings.weatherUpdateInterval);

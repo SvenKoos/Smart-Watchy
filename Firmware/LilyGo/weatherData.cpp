@@ -19,7 +19,7 @@
 extern lilygoSettings settings;
 
 extern weatherData currentWeather;
-RTC_DATA_ATTR int weatherIntervalCounter = -1;
+RTC_DATA_ATTR int weatherIntervalCounter;
 
 weatherData getWeatherData(String cityID, String units, String lang, String url, String apiKey, uint8_t updateInterval) {
 	Serial.println("getWeatherData Start");
@@ -32,7 +32,7 @@ weatherData getWeatherData(String cityID, String units, String lang, String url,
 	}
 	if (weatherIntervalCounter >= updateInterval) {  // only update if WEATHER_UPDATE_INTERVAL has elapsed
 		                                               // i.e. 30 minutes
-  	Serial.println("getWeatherData Get");
+		Serial.println("getWeatherData Get");
 
 		currentWeather.weatherConditionCode = 0;
 		currentWeather.offset = settings.gmtOffset;
@@ -46,6 +46,7 @@ weatherData getWeatherData(String cityID, String units, String lang, String url,
 		if (httpResponseCode == 200) {
 			String payload = http.getString();
 			JSONVar responseObject = JSON.parse(payload);
+			Serial.println(responseObject);
 
 			if ((!responseObject.hasOwnProperty("main")) || (!responseObject["main"].hasOwnProperty("temp")) || (!responseObject.hasOwnProperty("weather")) || (JSON.typeof(responseObject["weather"]) != "array") || (!responseObject.hasOwnProperty("name")) || (!responseObject.hasOwnProperty("timezone"))) {
 				currentWeather.code = CODE_PARSE_ERROR;
@@ -75,22 +76,40 @@ weatherData getWeatherData(String cityID, String units, String lang, String url,
 
 			const char* name = (const char*)responseObject["name"];
 			if (name != nullptr) {
-				strncpy(currentWeather.name, name, sizeof(currentWeather.name) - 1);
-				currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
-			}
+				strncpy(currentWeather.city, name, sizeof(currentWeather.city) - 1);
+				currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
 
-			String cityString = Normalize2ASCII(String(currentWeather.name));
-			strncpy(currentWeather.name, cityString.c_str(), sizeof(currentWeather.name) - 1);
-			currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
+				String cityString = Normalize2ASCII(String(currentWeather.city));
+				strncpy(currentWeather.city, cityString.c_str(), sizeof(currentWeather.city) - 1);
+				currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
+
+        // create short city name for display
+        String name;
+        int maxNameLength = 12;
+        if (strlen(currentWeather.city) > maxNameLength) {
+          name = String(currentWeather.city, maxNameLength - 1);
+          if (name[maxNameLength - 2] != ' ') {
+            name = name + String(".");
+          }
+        } else
+          name = currentWeather.city;
+        strcpy(currentWeather.cityShort, name.c_str());
+			} else {
+        strcpy(currentWeather.city, "");
+        strcpy(currentWeather.cityShort, "");
+      }
 
 			currentWeather.offset = long(responseObject["timezone"]);
 
-      Serial.print("getWeatherData Weather: "); Serial.print(currentWeather.weatherIcon); Serial.println(currentWeather.weatherDescription);
+			Serial.print("getWeatherData Weather: ");
+			Serial.print(currentWeather.weatherIcon);
+			Serial.println(currentWeather.weatherDescription);
 		} else {
 			// http error
 			currentWeather.code = CODE_HTTP_ERROR;
 
-      Serial.print("getWeatherData Error code: "); Serial.println(currentWeather.code, DEC);
+			Serial.print("getWeatherData Error code: ");
+			Serial.println(currentWeather.code, DEC);
 		}
 		strncpy(currentWeather.log, String(httpResponseCode).c_str(), sizeof(currentWeather.log) - 1);
 		currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
@@ -101,12 +120,6 @@ weatherData getWeatherData(String cityID, String units, String lang, String url,
 		weatherIntervalCounter++;
 	}
 	return currentWeather;
-}
-
-weatherData getWeatherDataExt(double latitude, double longitude) {
-	return getWeatherDataByLocation(latitude, longitude, settings.weatherUnit,
-	                                settings.weatherLang, settings.weatherURL,
-	                                settings.weatherAPIKey, settings.weatherUpdateInterval);
 }
 
 weatherData getWeatherDataByLocation(double latitude, double longitude, String units, String lang, String url, String apiKey, uint8_t updateInterval) {
@@ -119,6 +132,7 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 		weatherIntervalCounter = updateInterval;
 	}
 	if (weatherIntervalCounter >= updateInterval) {  // only update if WEATHER_UPDATE_INTERVAL has elapsed  i.e. 30 minutes
+		Serial.println("getWeatherDataByLocation Get");
 
 		currentWeather.weatherConditionCode = 0;
 
@@ -131,6 +145,7 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 		if (httpResponseCode == 200) {
 			String payload = http.getString();
 			JSONVar responseObject = JSON.parse(payload);
+			Serial.println(responseObject);
 
 			if ((!responseObject.hasOwnProperty("main")) || (!responseObject["main"].hasOwnProperty("temp")) || (!responseObject.hasOwnProperty("weather")) || (JSON.typeof(responseObject["weather"]) != "array") || (!responseObject.hasOwnProperty("name")) || (!responseObject.hasOwnProperty("timezone"))) {
 				currentWeather.code = CODE_PARSE_ERROR;
@@ -157,25 +172,43 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 
 			const char* name = (const char*)responseObject["name"];
 			if (name != nullptr) {
-				strncpy(currentWeather.name, name, sizeof(currentWeather.name) - 1);
-				currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
-			}
+				strncpy(currentWeather.city, name, sizeof(currentWeather.city) - 1);
+				currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
+
+				String cityString = Normalize2ASCII(String(currentWeather.city));
+				strncpy(currentWeather.city, cityString.c_str(), sizeof(currentWeather.city) - 1);
+				currentWeather.city[sizeof(currentWeather.city) - 1] = '\0';
+
+        // create short city name for display
+        String name;
+        int maxNameLength = 12;
+        if (strlen(currentWeather.city) > maxNameLength) {
+          name = String(currentWeather.city, maxNameLength - 1);
+          if (name[maxNameLength - 2] != ' ') {
+            name = name + String(".");
+          }
+        } else
+          name = currentWeather.city;
+        strcpy(currentWeather.cityShort, name.c_str());
+			} else {
+        strcpy(currentWeather.city, "");
+        strcpy(currentWeather.cityShort, "");
+      }
 
 			// sync NTP during weather API call and use timezone of city
 			syncNTP(long(responseObject["timezone"]), settings.ntpServer.c_str());
 
 			currentWeather.offset = long(responseObject["timezone"]);
 
-			String cityString = Normalize2ASCII(String(currentWeather.name));
-			strncpy(currentWeather.name, cityString.c_str(), sizeof(currentWeather.name) - 1);
-			currentWeather.name[sizeof(currentWeather.name) - 1] = '\0';
-
-      Serial.print("getWeatherData Weather: "); Serial.print(currentWeather.weatherIcon); Serial.println(currentWeather.weatherDescription);
+			Serial.print("getWeatherData Weather: ");
+			Serial.print(currentWeather.weatherIcon);
+			Serial.println(currentWeather.weatherDescription);
 		} else {
 			// http error
 			currentWeather.code = CODE_HTTP_ERROR;
 
-      Serial.print("getWeatherDataByLocation Error code: "); Serial.println(currentWeather.code, DEC);
+			Serial.print("getWeatherDataByLocation Error code: ");
+			Serial.println(currentWeather.code, DEC);
 		}
 		strncpy(currentWeather.log, String(httpResponseCode).c_str(), sizeof(currentWeather.log) - 1);
 		currentWeather.log[sizeof(currentWeather.log) - 1] = '\0';
@@ -185,6 +218,17 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 		weatherIntervalCounter++;
 	}
 	return currentWeather;
+}
+
+void setupWeatherData() {
+	weatherIntervalCounter = -1;
+	currentWeather.weatherConditionCode = 0;
+	currentWeather.offset = 0;
+	currentWeather.temperature = 0;
+	strcpy(currentWeather.weatherDescription, "");
+	strcpy(currentWeather.weatherIcon, "");
+	strcpy(currentWeather.city, "");
+	strcpy(currentWeather.cityShort, "");
 }
 
 String Normalize2ASCII(String source) {

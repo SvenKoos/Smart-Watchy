@@ -88,6 +88,7 @@ The firmware is based on LilyGo library 0.1.0 sharing the same features as firmw
 - time-based one-time password (TOTP) compatible with Microsoft Entra.ID and Google
 - remaining battery capacity daily chart in the menü
 - step counter daily chart in the menü
+- Support for Google Geolocation API to discover the location
 
 ### Build and Deployment
 Change additionally the TOTP secret in settings.h to your own.

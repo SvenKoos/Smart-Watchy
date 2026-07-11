@@ -15,8 +15,9 @@
 
 WiFiUDP ntpUDP;
 
-void syncNTP(long gmt, const char *ntpServer) {
+bool syncNTP(long gmt, const char *ntpServer) {
   struct tm hwTimeinfo;
+  bool success = false; 
 
   Serial.println("syncNTP Start");
 
@@ -50,8 +51,12 @@ void syncNTP(long gmt, const char *ntpServer) {
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo)) {
     Serial.println("syncNTP No time available (yet)");
+    success = false;
   } else {
     Serial.print("syncNTP system clock: ");
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+    success = true;
   }
+  
+  return success;
 }

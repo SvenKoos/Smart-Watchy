@@ -22,7 +22,8 @@ typedef struct weatherData {
   int16_t weatherConditionCode;
   bool isMetric;
   char weatherDescription[NAME_LEN];
-  char name[NAME_LEN];
+  char city[NAME_LEN];
+  char cityShort[NAME_LEN];
   long offset;
   char weatherIcon[NAME_LEN];
   char log[LOG_LEN];
@@ -33,8 +34,8 @@ typedef struct weatherData {
  * GLOBAL PROTOTYPES
  **********************/
 weatherData getWeatherData(String cityID, String units, String lang, String url, String apiKey, uint8_t updateInterval);
-weatherData getWeatherDataExt(double latitude, double longitude);
 weatherData getWeatherDataByLocation(double latitude, double longitude, String units, String lang, String url, String apiKey, uint8_t updateInterval);
+void setupWeatherData();
 String Normalize2ASCII(String source);
 
 /**********************

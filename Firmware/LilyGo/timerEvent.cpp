@@ -83,7 +83,7 @@ void displayWakup() {
   // 4. Licht wieder an
   uint brightness = DEVICE_MAX_BRIGHTNESS_LEVEL;
   if (currentWeather.weatherIcon[2] == 'd')
-    brightness = 150;
+    brightness = 200;
   else if (currentWeather.weatherIcon[2] == 'n')
     brightness = 100;
   // instance.incrementalBrightness(brightness);

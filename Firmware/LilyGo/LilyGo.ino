@@ -88,6 +88,10 @@ void setup() {
   setupPowerMgt();
   Serial.println("setup power management");
 
+  // setup location and weather data
+  setupLocationData();
+  setupWeatherData();
+
   // setup data collection
   setupDataCollection();
 

@@ -21,7 +21,7 @@
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-void syncNTP(long gmt, const char *ntpServer);
+bool syncNTP(long gmt, const char *ntpServer);
 
 /**********************
  *      MACROS

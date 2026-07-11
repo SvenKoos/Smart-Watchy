@@ -20,6 +20,8 @@
 typedef struct locationData {
   double latitude;
   double longitude;
+  double latitudeGoogle;
+  double longitudeGoogle;
   char city[NAME_LEN];
   char cityShort[NAME_LEN];
   char publicIP[IP_LEN];
@@ -34,6 +36,9 @@ typedef struct locationData {
  * GLOBAL PROTOTYPES
  **********************/
 locationData getLocationData(String url, uint8_t updateInterval);
+locationData getLocationDataGoogle(String geoLocURL, String googleApiKey, String jsonScan);
+void setupLocationData();
+String discoverWiFiNetworks(uint8_t updateInterval);
 
 /**********************
  *      MACROS
