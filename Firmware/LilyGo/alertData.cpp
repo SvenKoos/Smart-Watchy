@@ -33,6 +33,8 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
   currentAlerts.code = CODE_NO_ERROR;
   HTTPClient http;               // Use location API if WiFi is connected
   http.setConnectTimeout(3000);  // 3 second max timeout
+  http.setTimeout(4000);        // Max. 4 Sek auf die eigentlichen JSON-Daten warten
+  
   String locationQueryURL = "http://" + gatewayIP + ":8080/alert?MAC=" + macAdress;
   http.begin(locationQueryURL.c_str());
   int httpResponseCode = http.GET();

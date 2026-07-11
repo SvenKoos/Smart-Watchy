@@ -39,6 +39,8 @@ weatherData getWeatherData(String cityID, String units, String lang, String url,
 
 		HTTPClient http;               // Use Weather API for live data if WiFi is connected
 		http.setConnectTimeout(3000);  // 3 second max timeout
+    http.setTimeout(4000);        // Max. 4 Sek auf die eigentlichen JSON-Daten warten
+		
 		                               // API documentation: https://openweathermap.org/current
 		String weatherQueryURL = url + String("?id=") + cityID + String("&units=") + units + String("&lang=") + lang + String("&appid=") + apiKey;
 		http.begin(weatherQueryURL.c_str());
@@ -138,6 +140,7 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 
 		HTTPClient http;               // Use Weather API for live data if WiFi is connected
 		http.setConnectTimeout(3000);  // 3 second max timeout
+    http.setTimeout(4000);        // Max. 4 Sek auf die eigentlichen JSON-Daten warten
 		                               // API documentation: https://openweathermap.org/current
 		String weatherQueryURL = url + String("?lat=") + String(latitude) + String("&lon=") + String(longitude) + String("&units=") + units + String("&lang=") + lang + String("&appid=") + apiKey;
 		http.begin(weatherQueryURL.c_str());
@@ -222,6 +225,7 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 
 void setupWeatherData() {
 	weatherIntervalCounter = -1;
+
 	currentWeather.weatherConditionCode = 0;
 	currentWeather.offset = 0;
 	currentWeather.temperature = 0;

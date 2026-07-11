@@ -36,6 +36,8 @@ locationData getLocationData(String url, uint8_t updateInterval) {
 
     HTTPClient http;               // Use location API if WiFi is connected
     http.setConnectTimeout(3000);  // 3 second max timeout
+    http.setTimeout(4000);        // Max. 4 Sek auf die eigentlichen JSON-Daten warten
+    
     String locationQueryURL = url;
     http.begin(locationQueryURL.c_str());
     int httpResponseCode = http.GET();
@@ -162,6 +164,8 @@ locationData getLocationDataGoogle(String geoLocURL, String googleApiKey, String
     // HTTP POST an Google
     HTTPClient http;
     http.setConnectTimeout(3000);  // 3 second max timeout
+    http.setTimeout(4000);        // Max. 4 Sek auf die eigentlichen JSON-Daten warten
+
     String url = geoLocURL + "?key=" + googleApiKey;
 
     http.begin(url);
@@ -199,7 +203,7 @@ locationData getLocationDataGoogle(String geoLocURL, String googleApiKey, String
 
       Serial.print("getLocationData Error code: ");
       Serial.println(currentLocation.code, DEC);
-      Serial.printf("Fehler beim API-Aufruf: %d\n", httpResponseCode);
+      Serial.printf("Fehler beim API-Aufruf: %s (%d)\n", http.errorToString(httpResponseCode).c_str(), httpResponseCode);
 
       strncpy(currentLocation.log, "http error", sizeof(currentLocation.log) - 1);
       currentLocation.log[sizeof(currentLocation.log) - 1] = '\0';
