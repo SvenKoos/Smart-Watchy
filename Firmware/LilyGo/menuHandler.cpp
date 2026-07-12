@@ -485,102 +485,6 @@ static lv_obj_t *subTotpFunction(lv_obj_t *menu) {
 
   return pageSub;
 }
-/*
-void menuHandler() {
-  // menu
-  lv_obj_t *menu = lv_menu_create(lv_screen_active());
-  lv_menu_set_mode_root_back_button(menu, LV_MENU_ROOT_BACK_BUTTON_ENABLED);
-  lv_obj_add_event_cb(menu, back_event_handler, LV_EVENT_CLICKED, menu);
-  lv_obj_set_size(menu, lv_display_get_horizontal_resolution(NULL) - 10, lv_display_get_vertical_resolution(NULL) - 10);
-  lv_obj_center(menu);
-  lv_obj_add_event_cb(menu, eventGestureDefaultCB, LV_EVENT_SCROLL, NULL);
-
-  // style
-  lv_obj_set_style_text_font(menu, &lv_font_montserrat_34, LV_PART_MAIN);
-  lv_obj_set_style_bg_color(menu, color_bg, 0);
-  lv_obj_set_style_text_color(menu, color_text, 0);
-
-  // spinner
-  lv_obj_t *spinner = lv_spinner_create(lv_screen_active());
-  lv_obj_set_size(spinner, 80, 80);
-  lv_obj_center(spinner);
-
-  // Modify the header
-  lv_obj_t *back_btn = lv_menu_get_main_header_back_button(menu);
-  lv_obj_set_style_bg_color(back_btn, color_bg, LV_PART_MAIN);
-  lv_obj_set_style_text_color(back_btn, color_text, LV_PART_MAIN);
-  lv_obj_t *back_button_label = lv_label_create(back_btn);
-  lv_obj_set_style_text_font(back_button_label, &lv_font_montserrat_36, LV_PART_MAIN);
-  lv_obj_set_style_bg_color(back_button_label, color_bg, LV_PART_MAIN);
-  lv_obj_set_style_text_color(back_button_label, color_text, LV_PART_MAIN);
-  lv_label_set_text(back_button_label, " Back");
-
-  lv_obj_t *cont;
-  lv_obj_t *label;
-
-  //Create a main page
-  pageMain = lv_menu_page_create(menu, NULL);
-
-  // menu item TOTP
-  cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventFunctionTotpCB, LV_EVENT_CLICKED, menu);
-  label = lv_label_create(cont);
-  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
-  lv_label_set_text(label, "    TOTP");
-  lv_menu_set_load_page_event(menu, cont, subTotpFunction(menu));
-
-  // menu item Lora Messages
-  cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
-  label = lv_label_create(cont);
-  lv_obj_set_style_text_color(label,lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
-  lv_label_set_text(label, "    LoRa Msg");
-  lv_menu_set_load_page_event(menu, cont, subLoRaMsgFunction(menu));
-
-  // menu item battery history
-  cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
-  label = lv_label_create(cont);
-  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
-  lv_label_set_text(label, "    Battery");
-  lv_menu_set_load_page_event(menu, cont, subBatteryFunction(menu));
-
-  // menu item step counterhistory
-  cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
-  label = lv_label_create(cont);
-  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
-  lv_label_set_text(label, "    Steps");
-  lv_menu_set_load_page_event(menu, cont, subStepCounterFunction(menu));
-
-  // menu item About
-  cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
-  label = lv_label_create(cont);
-  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
-  lv_label_set_text(label, "    About");
-  lv_menu_set_load_page_event(menu, cont, subAboutFunction(menu));
-
-  // separator
-  cont = lv_menu_cont_create(pageMain);
-  label = lv_label_create(cont);
-  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
-  lv_label_set_text(label, "    _______");
-
-  // menu item Configure WiFi
-  cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_event_cb(cont, eventFunctionWifiCB, LV_EVENT_CLICKED, menu);
-  label = lv_label_create(cont);
-  lv_obj_set_style_text_color(label, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
-  lv_label_set_text(label, "    WiFi");
-  lv_menu_set_load_page_event(menu, cont, subWifiFunction(menu));
-
-  // spinner
-  lv_obj_delete(spinner);
-
-  lv_menu_set_page(menu, pageMain);
-}
-*/
 
 void menuHandler() {
   // 1. Basis-Farben und Themes holen
@@ -647,6 +551,12 @@ void menuHandler() {
 
   // Färbt den Hintergrund der Hauptseite direkt ein
   lv_obj_set_style_bg_color(pageMain, color_bg, 0);
+
+  // symbols
+  // LV_SYMBOL_SETTINGS (Zahnrad), LV_SYMBOL_LIST (Listen-Striche), LV_SYMBOL_BULLET (Aufzählungspunkt), LV_SYMBOL_OK (Häkchen), LV_SYMBOL_CLOSE (Kreuz)
+  // LV_SYMBOL_REFRESH (Synchronisieren), LV_SYMBOL_EDIT (Stift), LV_SYMBOL_DOWNLOAD (Download), LV_SYMBOL_EYE_OPEN / EYE_CLOSE (Auge)
+  // LV_SYMBOL_ENVELOPE (Briefumschlag für LoRa Msg), LV_SYMBOL_CHARGE (Blitz für Battery), LV_SYMBOL_IMAGE (Bild für Steps – als Platzhalter für Grafik/Historie)
+  // LV_SYMBOL_WIFI (WLAN für WiFi) 
 
   lv_obj_t *cont;
   lv_obj_t *label;

@@ -148,6 +148,10 @@ weatherData getWeatherDataByLocation(double latitude, double longitude, String u
 		currentWeather.temperature = int(responseObject["main"]["temp"]);
 		currentWeather.weatherConditionCode = int(responseObject["weather"][0]["id"]);
 
+		currentWeather.currentSunrise = uint32_t(responseObject["sys"]["sunrise"]);
+		currentWeather.currentSunset = uint32_t(responseObject["sys"]["sunset"]);
+		currentWeather.currentDT = uint32_t(responseObject["dt"]);
+
 		const char* main = (const char*)responseObject["weather"][0]["main"];
 		if (main != nullptr) {
 			strncpy(currentWeather.weatherDescription, main, sizeof(currentWeather.weatherDescription) - 1);

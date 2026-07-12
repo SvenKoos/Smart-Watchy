@@ -34,6 +34,9 @@ static lv_style_t styleSmall;
 static lv_style_t styleMedium;
 static lv_style_t styleLarge;
 
+LV_FONT_DECLARE(emoji);
+static lv_font_t watchface_font;
+
 void watchFaceSetup() {
   // styles
   // Set to built-in MICRO
@@ -104,6 +107,7 @@ void drawWatchFace() {
 
     if (WIFI_CONNECTED) {
       drawWeather();
+      drawSolarArc(currentWeather.currentSunrise, currentWeather.currentSunset, currentWeather.currentDT);
     }
 
     drawSteps();
@@ -191,7 +195,7 @@ void drawSteps() {
 
   // 2. Schrittzahl-Label (Jetzt in styleSmall für mehr Platz)
   lv_obj_t *labelSteps = lv_label_create(screen);
-  lv_obj_add_style(labelSteps, &styleSmall, LV_PART_MAIN); // Geändert auf styleSmall
+  lv_obj_add_style(labelSteps, &styleSmall, LV_PART_MAIN);  // Geändert auf styleSmall
   lv_obj_set_style_text_color(labelSteps, GetTheme(THEME_ACCELL_DATA), 0);
 
   char buf[7];
@@ -202,10 +206,10 @@ void drawSteps() {
 
   // 3. Der Fortschrittsbalken (Bar)
   lv_obj_t *barSteps = lv_bar_create(screen);
-  
+
   // Breite anpassen (z.B. 100 Pixel lang, 4 Pixel hoch für einen filigranen Look)
   lv_obj_set_size(barSteps, 100, 4);
-  
+
   // Bereich von 0 bis 10.000 Schritten definieren
   lv_bar_set_range(barSteps, 0, settings.stepGoal);
   lv_bar_set_value(barSteps, currentAccelleration.stepCounter, LV_ANIM_OFF);
@@ -214,7 +218,7 @@ void drawSteps() {
   // Setzt deine Theme-Farbe (hellgrau) und erzwingt die volle Deckkraft
   // lv_obj_set_style_bg_color(barSteps, GetTheme(THEME_ACCELL_DATA), LV_PART_INDICATOR);
   // lv_obj_set_style_bg_opa(barSteps, LV_OPA_COVER, LV_PART_INDICATOR); // Verhindert das Standard-Blau
-  
+
   // STYLING FÜR DEN UNERREICHTEN TEIL (MAIN):
   // Exakt das gleiche Dunkelgrau wie beim Batterie-Ring
   lv_obj_set_style_bg_color(barSteps, lv_palette_darken(LV_PALETTE_GREY, 3), LV_PART_MAIN);
@@ -250,24 +254,24 @@ void drawIcons(bool isConnected) {
   }
 
   // 2. Den Batterie-Ring (Arc) erstellen
-  lv_obj_t * arcBattery = lv_arc_create(screen);
-  
+  lv_obj_t *arcBattery = lv_arc_create(screen);
+
   // Größe so wählen, dass er die Zahl elegant umschließt (z.B. 45x45 Pixel)
   lv_obj_set_size(arcBattery, 45, 45);
-  
+
   // Start bei 12 Uhr (270 Grad) und Ende je nach Prozent im Uhrzeigersinn
   lv_arc_set_rotation(arcBattery, 270);
-  lv_arc_set_bg_angles(arcBattery, 0, 360); // Der graue Hintergrund-Ring ist geschlossen
+  lv_arc_set_bg_angles(arcBattery, 0, 360);  // Der graue Hintergrund-Ring ist geschlossen
   lv_arc_set_value(arcBattery, currentPower.batteryPercent);
-  
+
   // Den interaktiven "Knopf" des Arcs verstecken, wir wollen nur den Ring sehen
   lv_obj_remove_style(arcBattery, NULL, LV_PART_KNOB);
-  lv_obj_remove_flag(arcBattery, LV_OBJ_FLAG_CLICKABLE); // Keine Touch-Interaktion
-  
+  lv_obj_remove_flag(arcBattery, LV_OBJ_FLAG_CLICKABLE);  // Keine Touch-Interaktion
+
   // Styling für den aktiven (Vordergrund) und inaktiven (Hintergrund) Ring
   lv_obj_set_style_arc_color(arcBattery, batteryColor, LV_PART_INDICATOR);
-  lv_obj_set_style_arc_width(arcBattery, 3, LV_PART_INDICATOR); // 3 Pixel dünner Ring
-  
+  lv_obj_set_style_arc_width(arcBattery, 3, LV_PART_INDICATOR);  // 3 Pixel dünner Ring
+
   // Hintergrundring dezent dunkelgrau oder leicht transparent halten
   lv_obj_set_style_arc_color(arcBattery, lv_palette_darken(LV_PALETTE_GREY, 3), LV_PART_MAIN);
   lv_obj_set_style_arc_width(arcBattery, 3, LV_PART_MAIN);
@@ -278,13 +282,13 @@ void drawIcons(bool isConnected) {
   // 3. Die Prozentzahl exakt im Ring zentrieren
   lv_obj_t *labelBatteryPercentage = lv_label_create(screen);
   lv_obj_add_style(labelBatteryPercentage, &styleMicro, LV_PART_MAIN);
-  
+
   lv_obj_set_style_text_color(labelBatteryPercentage, GetTheme(THEME_POWER_DATA), 0);
 
   char buf[4];
   snprintf(buf, sizeof(buf), "%d", currentPower.batteryPercent);
   lv_label_set_text(labelBatteryPercentage, buf);
-  
+
   // LV_ALIGN_CENTER direkt auf den arcBattery beziehen, damit es mathematisch perfekt mittig sitzt!
   lv_obj_align_to(labelBatteryPercentage, arcBattery, LV_ALIGN_CENTER, 0, 0);
 }
@@ -301,7 +305,7 @@ void drawWeather() {
     lv_obj_add_style(labelLocation, &styleMicro, LV_PART_MAIN);
   // Fester Startpunkt links im unteren Drittel
   lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 5, 150);
-  lv_obj_set_style_text_color(labelLocation, weatherColor, 0); // Einheitliche Farbe
+  lv_obj_set_style_text_color(labelLocation, weatherColor, 0);  // Einheitliche Farbe
   lv_label_set_text(labelLocation, currentWeather.cityShort);
 
   if (currentWeather.code == CODE_NO_ERROR) {
@@ -354,13 +358,13 @@ void drawWeather() {
 
     // 3. TEMPERATURE
     lv_obj_t *labelTemperature = lv_label_create(screen);
-    lv_obj_add_style(labelTemperature, &styleSmall, LV_PART_MAIN); // Medium statt Large für eine harmonische Zeile
+    lv_obj_add_style(labelTemperature, &styleSmall, LV_PART_MAIN);  // Medium statt Large für eine harmonische Zeile
     lv_obj_set_style_text_color(labelTemperature, weatherColor, 0);
-    
-    char buf[6]; // Puffer leicht vergrößert für Sicherheit
+
+    char buf[6];  // Puffer leicht vergrößert für Sicherheit
     snprintf(buf, sizeof(buf), "%d", currentWeather.temperature);
     lv_label_set_text(labelTemperature, buf);
-    
+
     // DYNAMISCH: Die Temperatur folgt direkt rechts neben dem Icon
     lv_obj_align_to(labelTemperature, imgWeather, LV_ALIGN_OUT_RIGHT_MID, -10, 0);
 
@@ -368,13 +372,111 @@ void drawWeather() {
     lv_obj_t *labelUnit = lv_label_create(screen);
     lv_obj_add_style(labelUnit, &styleMicro, LV_PART_MAIN);
     lv_obj_set_style_text_color(labelUnit, weatherColor, 0);
-    
+
     if (currentWeather.isMetric)
       lv_label_set_text(labelUnit, "°C");
     else
       lv_label_set_text(labelUnit, "°F");
-      
+
     // DYNAMISCH: Die Einheit klebt direkt oben rechts neben der Temperatur-Zahl
     lv_obj_align_to(labelUnit, labelTemperature, LV_ALIGN_OUT_RIGHT_TOP, 0, -2);
   }
+}
+
+void drawSolarArc(uint32_t sunrise_timestamp, uint32_t sunset_timestamp, uint32_t current_timestamp) {
+  // 1. Basis-Hintergrundfarben aus deinem System
+  lv_color_t arc_bg_color = lv_palette_darken(LV_PALETTE_GREY, 3);  // Dezenter Bogen-Hintergrund (~RGB 60)
+  lv_color_t accent_color = GetTheme(THEME_DATE_DATA);              // Deine aktive Themenfarbe (z.B. Orange/Gelb)
+
+  // NEU: Farben für die Kreise aus dem Bogen-Theme abgeleitet
+  lv_color_t sunrise_color = lv_palette_lighten(LV_PALETTE_GREY, 2);  // Helleres Grau für Aufgang (~RGB 180)
+  lv_color_t sunset_color = lv_palette_darken(LV_PALETTE_GREY, 4);    // Sehr dunkles Anthrazit für Untergang (~RGB 50)
+
+  // 2. Haupt-Container für das Solar-Widget erstellen (Auf 100x70 angepasst)
+  lv_obj_t *solar_cont = lv_obj_create(lv_screen_active());
+  lv_obj_set_size(solar_cont, 100, 70);
+  lv_obj_set_style_bg_opa(solar_cont, LV_OPA_TRANSP, 0);  // Transparent
+  lv_obj_set_style_border_width(solar_cont, 0, 0);
+  lv_obj_set_style_pad_all(solar_cont, 0, 0);
+
+  // RETTUNG GEGEN DEN GRAUEN STRICH: Schaltet die automatische Scrollbar komplett ab!
+  lv_obj_set_scrollbar_mode(solar_cont, LV_SCROLLBAR_MODE_OFF);
+
+  // Positionierung (unverändert)
+  lv_obj_align(solar_cont, LV_ALIGN_TOP_LEFT, 130, 60);
+
+  // 3. Der Sonnenbogen (Arc)
+  lv_obj_t *arc = lv_arc_create(solar_cont);
+  lv_obj_set_size(arc, 80, 80);  // Bogen füllt die Breite
+
+  // RETTUNG: Wir nutzen wieder TOP_MID, drücken den Bogen aber mit +25px deutlich tiefer!
+  // Falls er noch einen Tick zu hoch/tief ist, einfach den Wert 25 anpassen.
+  lv_obj_align(arc, LV_ALIGN_TOP_MID, 0, 10);
+
+  // Winkel (unverändert ein perfekter oberer Halbkreis)
+  lv_arc_set_angles(arc, 180, 360);
+  lv_arc_set_bg_angles(arc, 180, 360);
+
+  lv_obj_set_style_arc_width(arc, 4, LV_PART_MAIN);
+  lv_obj_set_style_arc_color(arc, arc_bg_color, LV_PART_MAIN);
+
+  lv_obj_set_style_arc_width(arc, 4, LV_PART_INDICATOR);
+  lv_obj_set_style_arc_color(arc, accent_color, LV_PART_INDICATOR);
+
+  lv_obj_set_style_bg_color(arc, lv_color_white(), LV_PART_KNOB);
+  lv_obj_set_style_pad_all(arc, 2, LV_PART_KNOB);
+
+  // 4. Berechnung der aktuellen Sonnenposition (0 bis 100%)
+  int32_t total_daylight = sunset_timestamp - sunrise_timestamp;
+  int32_t current_progress = current_timestamp - sunrise_timestamp;
+  int32_t percent = 0;
+  bool is_night = false;
+
+  if (total_daylight > 0) {
+    percent = (current_progress * 100) / total_daylight;
+
+    // Prüfen, ob wir uns außerhalb der Tageszeit befinden
+    if (current_timestamp < sunrise_timestamp || current_timestamp > sunset_timestamp) {
+      is_night = true;
+    }
+
+    if (percent < 0) percent = 0;
+    if (percent > 100) percent = 100;
+  }
+
+  lv_arc_set_range(arc, 0, 100);
+  lv_arc_set_value(arc, percent);
+
+  // Dynamische Farbanpassung für die Nacht
+  if (is_night) {
+    // Nachts: Der aktive Bogen wird unsichtbar/grau wie der Hintergrund
+    lv_obj_set_style_arc_color(arc, arc_bg_color, LV_PART_INDICATOR);
+    // Nachts: Den weißen Punkt (Sonne) komplett ausblenden
+    lv_obj_set_style_bg_opa(arc, LV_OPA_TRANSP, LV_PART_KNOB);
+  } else {
+    // Tagsüber: Normale Akzentfarbe und weiße Sonne
+    lv_obj_set_style_arc_color(arc, accent_color, LV_PART_INDICATOR);
+    lv_obj_set_style_bg_color(arc, lv_palette_main(LV_PALETTE_YELLOW), LV_PART_KNOB);
+    lv_obj_set_style_bg_opa(arc, LV_OPA_COVER, LV_PART_KNOB);
+  }
+
+  // 5. Linker Kreis: Sonnenaufgang (Nur noch reine Farbe, keine Emojis)
+  lv_obj_t *btn_sunrise = lv_obj_create(solar_cont);
+  lv_obj_set_size(btn_sunrise, 16, 16);                    // Etwas verkleinert (16x16), wirkt eleganter als reiner Farbpunkt
+  lv_obj_align(btn_sunrise, LV_ALIGN_BOTTOM_LEFT, 6, -4);  // Perfekt an den flachen Bogenrand geschmiegt
+  lv_obj_set_style_radius(btn_sunrise, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(btn_sunrise, sunrise_color, 0);  // Die hellere Farbe des Themes
+  lv_obj_set_style_bg_opa(btn_sunrise, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(btn_sunrise, 0, 0);  // Keine Border nötig, da vollflächig farbig
+  lv_obj_set_style_pad_all(btn_sunrise, 0, 0);
+
+  // 6. Rechter Kreis: Sonnenuntergang (Nur noch reine Farbe)
+  lv_obj_t *btn_sunset = lv_obj_create(solar_cont);
+  lv_obj_set_size(btn_sunset, 16, 16);
+  lv_obj_align(btn_sunset, LV_ALIGN_BOTTOM_RIGHT, -6, -4);
+  lv_obj_set_style_radius(btn_sunset, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(btn_sunset, sunset_color, 0);  // Die dunklere Farbe des Themes
+  lv_obj_set_style_bg_opa(btn_sunset, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(btn_sunset, 0, 0);
+  lv_obj_set_style_pad_all(btn_sunset, 0, 0);
 }

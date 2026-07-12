@@ -28,6 +28,9 @@ typedef struct weatherData {
   char weatherIcon[NAME_LEN];
   char log[LOG_LEN];
   int code;
+  uint32_t currentDT;
+  uint32_t currentSunrise;
+  uint32_t currentSunset;
 } weatherData;
 
 /**********************
