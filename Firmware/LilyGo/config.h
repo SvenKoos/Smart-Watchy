@@ -33,6 +33,10 @@
 #define THEME_TIME_DATA 7
 #define THEME_MENU 8
 
+// watch types
+#define DIGITAL_WATCH 1
+#define ANALOGUE_WATCH 2
+
 // encryption
 // 16-Byte Schlüssel (128-Bit), den T-Watch und T-Echo teilen
 const byte key[16] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 

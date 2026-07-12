@@ -1,6 +1,7 @@
 #include <lvgl.h>
 #include <LilyGoLib.h>
 #include <WiFiManager.h>
+#include <cmath>
 
 #include "watchFace.h"
 #include "dataCollection.h"
@@ -26,6 +27,8 @@ extern lilygoSettings settings;
 
 extern lv_color_t color_bg;
 extern lv_color_t color_text;
+
+extern int watchType;
 
 static lv_display_t *display;
 static lv_obj_t *screen;
@@ -100,8 +103,6 @@ void drawWatchFace() {
   // Inhalt des Screens löschen
   lv_obj_clean(screen);
 
-  drawTime();
-
   if (currentAccelleration.isMoved) {
     drawBattery();
 
@@ -118,7 +119,14 @@ void drawWatchFace() {
     drawSteps();
   }
 
-  drawDate();
+  if (watchType == DIGITAL_WATCH) {
+    // digital clock
+    drawDate();
+    drawTime();
+  } else if (watchType == ANALOGUE_WATCH) {
+    // analogue clock
+    drawAnalogClock();
+  }
 
   // draw the screen
   lv_scr_load(screen);
@@ -192,11 +200,11 @@ void drawDate() {
 }
 
 void drawSteps() {
-  // 1. Icon erstellen (Bleibt an seiner Position)
-  lv_obj_t *img = lv_image_create(screen);
-  lv_image_set_src(img, &iconSteps);
-  updateIconTheme(img, settings.displayBGrndBlack);
-  lv_obj_align(img, LV_ALIGN_TOP_LEFT, 5, 197);
+  lv_obj_t *labelSymbol = lv_label_create(screen);
+  lv_obj_add_style(labelSymbol, &styleMedium, 0);
+  lv_label_set_text(labelSymbol, LV_SYMBOL_IMAGE "");
+  lv_obj_align(labelSymbol, LV_ALIGN_TOP_LEFT, 15, 192);
+  lv_obj_set_style_text_color(labelSymbol, GetTheme(THEME_ACCELL_DATA), 0);
 
   // 2. Schrittzahl-Label (Jetzt in styleSmall für mehr Platz)
   lv_obj_t *labelSteps = lv_label_create(screen);
@@ -207,7 +215,7 @@ void drawSteps() {
   snprintf(buf, sizeof(buf), "%d", currentAccelleration.stepCounter);
   lv_label_set_text(labelSteps, buf);
   // Leicht nach oben gezogen (Y=190), damit der Balken darunter passt
-  lv_obj_align(labelSteps, LV_ALIGN_TOP_LEFT, 35, 190);
+  lv_obj_align(labelSteps, LV_ALIGN_TOP_LEFT, 55, 192);
 
   // 3. Der Fortschrittsbalken (Bar)
   lv_obj_t *barSteps = lv_bar_create(screen);
@@ -268,7 +276,7 @@ void drawBattery() {
   lv_obj_set_style_arc_width(arcBattery, 3, LV_PART_MAIN);
 
   // Positionierung oben rechts (da wo vorher das Icon-Areal war)
-  lv_obj_align(arcBattery, LV_ALIGN_TOP_RIGHT, -10, 10);
+  lv_obj_align(arcBattery, LV_ALIGN_TOP_RIGHT, -12, 12);
 
   // 3. Die Prozentzahl exakt im Ring zentrieren
   lv_obj_t *labelBatteryPercentage = lv_label_create(screen);
@@ -295,7 +303,7 @@ void drawWeather() {
   else
     lv_obj_add_style(labelLocation, &styleMicro, LV_PART_MAIN);
   // Fester Startpunkt links im unteren Drittel
-  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 10, 150);
+  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 10, 155);
   lv_obj_set_style_text_color(labelLocation, weatherColor, 0);  // Einheitliche Farbe
   lv_label_set_text(labelLocation, currentWeather.cityShort);
 
@@ -394,7 +402,7 @@ void drawSolarArc(uint32_t sunrise_timestamp, uint32_t sunset_timestamp, uint32_
   lv_obj_set_scrollbar_mode(solar_cont, LV_SCROLLBAR_MODE_OFF);
 
   // Positionierung (unverändert)
-  lv_obj_align(solar_cont, LV_ALIGN_TOP_LEFT, 130, 60);
+  lv_obj_align(solar_cont, LV_ALIGN_TOP_LEFT, 135, 60);
 
   // 3. Der Sonnenbogen (Arc)
   lv_obj_t *arc = lv_arc_create(solar_cont);
@@ -474,7 +482,7 @@ void drawSolarArc(uint32_t sunrise_timestamp, uint32_t sunset_timestamp, uint32_
 
 void drawAlert() {
   // Erstellt ein Objekt über den gesamten Bildschirm
-  lv_obj_t* alert_frame = lv_obj_create(lv_screen_active());
+  lv_obj_t *alert_frame = lv_obj_create(lv_screen_active());
   lv_obj_set_size(alert_frame, LV_PCT(100), LV_PCT(100));
   lv_obj_center(alert_frame);
 
@@ -493,4 +501,136 @@ void drawAlert() {
   lv_obj_set_style_border_color(alert_frame, GetTheme(THEME_ALERT_DATA), 0);
   lv_obj_set_style_border_width(alert_frame, 2, 0);
   lv_obj_set_style_border_opa(alert_frame, LV_OPA_COVER, 0);
+}
+
+// Speicher für die Koordinaten der Zeiger (X0, Y0, X1, Y1)
+static lv_point_precise_t hour_points[2] = { { 60, 60 }, { 60, 30 } };
+static lv_point_precise_t min_points[2] = { { 60, 60 }, { 60, 15 } };
+
+void drawAnalogClock() {
+  lv_color_t main_white = lv_color_white();                        // Knackiges Weiß für Ziffern & Hauptstriche
+  lv_color_t minor_gray = lv_palette_lighten(LV_PALETTE_GREY, 2);  // Klares Hellgrau für Zwischenstriche
+  lv_color_t accent_color = GetTheme(THEME_DATE_DATA);             // Deine Datumsfarbe
+
+  // 1. Haupt-Container vergrößert auf 120x120
+  lv_obj_t *clock_cont = lv_obj_create(lv_screen_active());
+  lv_obj_set_size(clock_cont, 120, 120);
+  lv_obj_align(clock_cont, LV_ALIGN_TOP_LEFT, 12, 12);  // Abstand 10 von links und oben
+  lv_obj_set_style_bg_opa(clock_cont, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(clock_cont, 0, 0);
+  lv_obj_set_style_pad_all(clock_cont, 0, 0);
+  lv_obj_set_scrollbar_mode(clock_cont, LV_SCROLLBAR_MODE_OFF);
+
+  // 2. Das Ziffernblatt (Skala) - Jetzt REIN für die Striche, ohne Text-Stress
+  lv_obj_t *scale = lv_scale_create(clock_cont);
+  lv_obj_set_size(scale, 120, 120);
+  lv_obj_center(scale);
+
+  lv_scale_set_mode(scale, LV_SCALE_MODE_ROUND_INNER);
+  lv_scale_set_rotation(scale, 270);  // 12 Uhr oben
+  lv_scale_set_angle_range(scale, 360);
+
+  lv_scale_set_range(scale, 0, 12);
+  lv_scale_set_total_tick_count(scale, 13);
+  lv_scale_set_major_tick_every(scale, 3);  // Striche bei 12, 3, 6, 9
+
+  // STYLES für Striche
+  lv_obj_set_style_length(scale, 8, LV_PART_INDICATOR);  // Schöne, feine Striche
+  lv_obj_set_style_length(scale, 4, LV_PART_ITEMS);
+  lv_obj_set_style_line_color(scale, main_white, LV_PART_INDICATOR);
+  lv_obj_set_style_line_color(scale, minor_gray, LV_PART_ITEMS);
+  lv_obj_set_style_line_width(scale, 2, LV_PART_INDICATOR);
+
+  lv_obj_set_style_arc_color(scale, minor_gray, LV_PART_MAIN);
+  lv_obj_set_style_arc_width(scale, 1, LV_PART_MAIN);
+
+  lv_obj_set_style_text_opa(scale, LV_OPA_TRANSP, LV_PART_MAIN);
+
+  // ==========================================
+  // NEU: Absolute Kontrolle über die 4 Zahlen via Labels
+  // ==========================================
+
+  // 12 Uhr (Oben zentriert, leicht nach unten versetzt)
+  lv_obj_t *lbl_12 = lv_label_create(clock_cont);
+  lv_obj_set_style_text_font(lbl_12, &lv_font_montserrat_12, 0);
+  lv_obj_set_style_text_color(lbl_12, main_white, 0);
+  lv_label_set_text(lbl_12, "12");
+  lv_obj_align(lbl_12, LV_ALIGN_TOP_MID, 0, 12);
+
+  // 6 Uhr (Unten zentriert, leicht nach oben versetzt)
+  lv_obj_t *lbl_6 = lv_label_create(clock_cont);
+  lv_obj_set_style_text_font(lbl_6, &lv_font_montserrat_12, 0);
+  lv_obj_set_style_text_color(lbl_6, main_white, 0);
+  lv_label_set_text(lbl_6, "6");
+  lv_obj_align(lbl_6, LV_ALIGN_BOTTOM_MID, 0, -12);
+
+  // 9 Uhr (Links zentriert, leicht nach rechts versetzt)
+  lv_obj_t *lbl_9 = lv_label_create(clock_cont);
+  lv_obj_set_style_text_font(lbl_9, &lv_font_montserrat_12, 0);
+  lv_obj_set_style_text_color(lbl_9, main_white, 0);
+  lv_label_set_text(lbl_9, "9");
+  lv_obj_align(lbl_9, LV_ALIGN_LEFT_MID, 12, 0);
+
+  // 3 Uhr (Rechts zentriert, leicht nach links versetzt)
+  lv_obj_t *lbl_3 = lv_label_create(clock_cont);
+  lv_obj_set_style_text_font(lbl_3, &lv_font_montserrat_12, 0);
+  lv_obj_set_style_text_color(lbl_3, main_white, 0);
+  lv_label_set_text(lbl_3, "3");
+  lv_obj_align(lbl_3, LV_ALIGN_RIGHT_MID, -12, 0);
+
+  // 3. Datumsanzeige (Perfekt LINKS neben der eben erstellten "3")
+  lv_obj_t *date_label = lv_label_create(clock_cont);
+  lv_obj_set_style_text_font(date_label, &lv_font_montserrat_16, 0);
+  lv_obj_set_style_text_color(date_label, accent_color, 0);
+
+  // Da die "3" bei -12px vom rechten Rand sitzt, platzieren wir das Datum
+  // einfach bei -26px. So steht es wunderschön links daneben!
+  lv_obj_align(date_label, LV_ALIGN_RIGHT_MID, -26, 0);
+
+  // 4. Zeiger (Stunde)
+  lv_obj_t *hour_line = lv_line_create(clock_cont);
+  lv_line_set_points(hour_line, hour_points, 2);
+  lv_obj_set_style_line_width(hour_line, 4, 0);
+  lv_obj_set_style_line_color(hour_line, main_white, 0);
+  lv_obj_set_style_line_rounded(hour_line, true, 0);
+
+  // 5. Zeiger (Minute)
+  lv_obj_t *min_line = lv_line_create(clock_cont);
+  lv_line_set_points(min_line, min_points, 2);
+  lv_obj_set_style_line_width(min_line, 2, 0);
+  lv_obj_set_style_line_color(min_line, minor_gray, 0);
+  lv_obj_set_style_line_rounded(min_line, true, 0);
+
+  struct tm timeinfo;
+  int hours;
+  int minutes;
+  int day;
+
+  if (getLocalTime(&timeinfo)) {
+    hours = timeinfo.tm_hour;
+    minutes = timeinfo.tm_min;
+    day = timeinfo.tm_mday;
+  }
+
+  lv_label_set_text_fmt(date_label, "%02d", day);
+
+  // NEU: Neuer Mittelpunkt für 120x120
+  const int cx = 60;
+  const int cy = 60;
+
+  // NEU: Längen an die neue Skala angepasst (Zahlen liegen weiter innen)
+  const int hour_len = 28;
+  const int min_len = 42;
+
+  double min_angle = (minutes * 6.0) * M_PI / 180.0 - M_PI_2;
+  double hour_angle = ((hours % 12) * 30.0 + minutes * 0.5) * M_PI / 180.0 - M_PI_2;
+
+  hour_points[1].x = cx + cos(hour_angle) * hour_len;
+  hour_points[1].y = cy + sin(hour_angle) * hour_len;
+
+  min_points[1].x = cx + cos(min_angle) * min_len;
+  min_points[1].y = cy + sin(min_angle) * min_len;
+
+  lv_obj_invalidate(hour_line);
+  lv_obj_invalidate(min_line);
 }

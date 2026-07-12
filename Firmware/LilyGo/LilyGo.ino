@@ -51,6 +51,8 @@ RTC_DATA_ATTR bool bleBonded = false;
 RTC_DATA_ATTR uint8_t binKey[32];
 RTC_DATA_ATTR int keyLen = 0;
 
+int watchType = DIGITAL_WATCH;
+
 uint8_t batteryCapacityHistory[1440];
 uint16_t batteryVoltageHistory[1440];
 

@@ -24,6 +24,8 @@ extern uint16_t stepCounterHistory[1440];
 extern lv_color_t color_bg;
 extern lv_color_t color_text;
 
+extern int watchType;
+
 static lv_obj_t *pageMain;
 static lv_obj_t *labelWifi;
 static lv_obj_t *labelAbout;
@@ -32,6 +34,7 @@ static lv_obj_t *labelTOTP;
 static lv_obj_t *barTOTP;
 static lv_obj_t *rollerLoRa;
 static lv_obj_t *chartStepCounter;
+static lv_obj_t *labelWatchType;
 
 lv_timer_t *timerTOTP = NULL;
 
@@ -427,6 +430,35 @@ static lv_obj_t *subStepCounterFunction(lv_obj_t *menu) {
   return pageSub;
 }
 
+// sub page: watch type page
+static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
+  Serial.println("Watch type  function started");
+
+  // spinner
+  lv_refr_now(NULL);
+
+  /*Create a sub page*/
+  lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
+  lv_obj_t *contSub = lv_menu_cont_create(pageSub);
+
+  labelWatchType = lv_label_create(contSub);
+  lv_obj_set_style_text_font(labelWatchType, &lv_font_montserrat_18, LV_PART_MAIN);
+  lv_obj_set_width(labelWatchType, lv_pct(95));
+  lv_label_set_long_mode(labelWatchType, LV_LABEL_LONG_WRAP);
+  registerDefaultEvents(labelWatchType);
+
+  if (watchType == DIGITAL_WATCH)
+    watchType = ANALOGUE_WATCH;
+  else
+    watchType = DIGITAL_WATCH;
+
+  char watchTypeText[128] = "Watch type switched.";
+
+  lv_label_set_text(labelWatchType, watchTypeText);
+
+  return pageSub;
+}
+
 // sub page: TOTP page
 // Diese Funktion wird vom Timer aufgerufen (z.B. jede Sekunde)
 static void update_totp_status(lv_timer_t *timer) {
@@ -596,6 +628,15 @@ void menuHandler() {
   lv_obj_add_style(label, &styleLabel, 0);
   lv_label_set_text(label, LV_SYMBOL_IMAGE "  Steps"); // Platzhalter für Aktivität
   lv_menu_set_load_page_event(menu, cont, subStepCounterFunction(menu));
+
+  // --- ITEM: Watch Type ---
+  cont = lv_menu_cont_create(pageMain);
+  lv_obj_add_style(cont, &styleCont, 0);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
+  label = lv_label_create(cont);
+  lv_obj_add_style(label, &styleLabel, 0);
+  lv_label_set_text(label, LV_SYMBOL_SETTINGS "  Watch"); // Platzhalter für Aktivität
+  lv_menu_set_load_page_event(menu, cont, subWatchTypeFunction(menu));
 
   // --- ITEM: ABOUT ---
   cont = lv_menu_cont_create(pageMain);
