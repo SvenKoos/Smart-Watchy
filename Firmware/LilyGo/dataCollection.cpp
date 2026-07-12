@@ -54,80 +54,82 @@ void collectData(void) {
   double ltd = 0;
   double lng = 0;
 
-  if ((locationIntervalCounter == settings.locationUpdateInterval) || (locationIntervalCounter < 0)) {  // only update if UPDATE_INTERVAL has elapsed
-    scannedWifiNetworks = discoverWiFiNetworks();
-  } else {
-    scannedWifiNetworks.clear();
-  }
-
-  if (connectWiFi(localIP, gatewayIP, macAdress)) {
-    WIFI_CONNECTED = true;
-
-    // get IP data
-    strncpy(currentLocation.localIP, localIP.c_str(), sizeof(currentLocation.localIP) - 1);
-    currentLocation.localIP[sizeof(currentLocation.localIP) - 1] = '\0';
-    strncpy(currentLocation.gatewayIP, gatewayIP.c_str(), sizeof(currentLocation.gatewayIP) - 1);
-    currentLocation.gatewayIP[sizeof(currentLocation.gatewayIP) - 1] = '\0';
-
-    if (locationIntervalCounter < 0) {  //-1 on first run, set to updateInterval
-      locationIntervalCounter = settings.locationUpdateInterval;
-    }
-
-    if (locationIntervalCounter >= settings.locationUpdateInterval) {  // only update if UPDATE_INTERVAL has elapsed
-      // 1. Google Geolocation
-      if (scannedWifiNetworks.length() > 0) {
-        currentLocation = getLocationDataGoogle(settings.googleGeoLocationURL, settings.googleApiKey, scannedWifiNetworks);
-        if (currentLocation.code == CODE_NO_ERROR) {
-          ltd = currentLocation.latitudeGoogle;
-          lng = currentLocation.longitudeGoogle;
-          Serial.println("Google Geolocation succesfull.");
-        } else {
-          Serial.println("Google Geolocation failed.");
-        }
-      }
-
-      // IP based geolocation
-      if ((ltd == 0) || (lng == 0)) {
-        currentLocation = getLocationData(settings.geoipURL);
-        if (currentLocation.code == CODE_NO_ERROR) {
-          ltd = currentLocation.latitude;
-          lng = currentLocation.longitude;
-          Serial.println("IP-based Geolocation succesfull.");
-        } else {
-          Serial.println("IP-based Geolocation failed.");
-        }
-      }
-
-      // get weather data
-      if ((ltd != 0) && (lng != 0)) {
-        // get weather data of discovered location
-        currentWeather = getWeatherDataByLocation(ltd, lng, settings.weatherUnit,
-                                                  settings.weatherLang, settings.weatherURL,
-                                                  settings.weatherAPIKey);
-      } else {
-        // get weather of default location
-        currentWeather = getWeatherData(settings.cityID, settings.weatherUnit,
-                                        settings.weatherLang, settings.weatherURL,
-                                        settings.weatherAPIKey);
-      }
-
-      locationIntervalCounter = 0;
-    } else {
-      locationIntervalCounter++;
-    }
-
-    // get alert data
-    currentAlerts = getAlertData(gatewayIP, macAdress);
-
-    disconnectWifi();
-  } else
-    WIFI_CONNECTED = false;
+  // get power data
+  currentPower = getPowerData();
 
   // get accelleration data
   currentAccelleration = getAccellData();
 
-  // get power data
-  currentPower = getPowerData();
+  if (currentAccelleration.isMoved) {
+    if ((locationIntervalCounter >= settings.locationUpdateInterval) || (locationIntervalCounter < 0)) {  // only update if UPDATE_INTERVAL has elapsed
+      scannedWifiNetworks = discoverWiFiNetworks();
+    } else {
+      scannedWifiNetworks.clear();
+    }
+
+    if (connectWiFi(localIP, gatewayIP, macAdress)) {
+      WIFI_CONNECTED = true;
+
+      // get IP data
+      strncpy(currentLocation.localIP, localIP.c_str(), sizeof(currentLocation.localIP) - 1);
+      currentLocation.localIP[sizeof(currentLocation.localIP) - 1] = '\0';
+      strncpy(currentLocation.gatewayIP, gatewayIP.c_str(), sizeof(currentLocation.gatewayIP) - 1);
+      currentLocation.gatewayIP[sizeof(currentLocation.gatewayIP) - 1] = '\0';
+
+      if (locationIntervalCounter < 0) {  //-1 on first run, set to updateInterval
+        locationIntervalCounter = settings.locationUpdateInterval;
+      }
+
+      if (locationIntervalCounter >= settings.locationUpdateInterval) {  // only update if UPDATE_INTERVAL has elapsed
+        // 1. Google Geolocation
+        if (scannedWifiNetworks.length() > 0) {
+          currentLocation = getLocationDataGoogle(settings.googleGeoLocationURL, settings.googleApiKey, scannedWifiNetworks);
+          if (currentLocation.code == CODE_NO_ERROR) {
+            ltd = currentLocation.latitudeGoogle;
+            lng = currentLocation.longitudeGoogle;
+            Serial.println("Google Geolocation succesfull.");
+          } else {
+            Serial.println("Google Geolocation failed.");
+          }
+        }
+
+        // IP based geolocation
+        if ((ltd == 0) || (lng == 0)) {
+          currentLocation = getLocationData(settings.geoipURL);
+          if (currentLocation.code == CODE_NO_ERROR) {
+            ltd = currentLocation.latitude;
+            lng = currentLocation.longitude;
+            Serial.println("IP-based Geolocation succesfull.");
+          } else {
+            Serial.println("IP-based Geolocation failed.");
+          }
+        }
+
+        // get weather data
+        if ((ltd != 0) && (lng != 0)) {
+          // get weather data of discovered location
+          currentWeather = getWeatherDataByLocation(ltd, lng, settings.weatherUnit,
+                                                    settings.weatherLang, settings.weatherURL,
+                                                    settings.weatherAPIKey);
+        } else {
+          // get weather of default location
+          currentWeather = getWeatherData(settings.cityID, settings.weatherUnit,
+                                          settings.weatherLang, settings.weatherURL,
+                                          settings.weatherAPIKey);
+        }
+
+        locationIntervalCounter = 0;
+      } else {
+        locationIntervalCounter++;
+      }
+
+      // get alert data
+      currentAlerts = getAlertData(gatewayIP, macAdress);
+
+      disconnectWifi();
+    } else
+      WIFI_CONNECTED = false;
+  }
 
   // handle the Lora queue
   transmitAlertsToLora();
