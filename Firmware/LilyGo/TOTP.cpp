@@ -82,6 +82,6 @@ String calculateTotpCode() {
 
   // Als 6-stelligen String mit führenden Nullen zurückgeben
   char buf[8];
-  sprintf(buf, "%06u", finalCode);
+  snprintf(buf, sizeof(buf), "%06u", finalCode);
   return String(buf);
 }
