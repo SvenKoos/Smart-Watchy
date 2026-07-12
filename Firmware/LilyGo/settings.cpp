@@ -56,14 +56,14 @@ void setTheme(bool inverted) {
   // LV_PALETTE_RED, LV_PALETTE_PINK, LV_PALETTE_PURPLE, LV_PALETTE_DEEP_PURPLE, LV_PALETTE_INDIGO, LV_PALETTE_BLUE, LV_PALETTE_LIGHT_BLUE
   // LV_PALETTE_CYAN, LV_PALETTE_TEAL, LV_PALETTE_GREEN, LV_PALETTE_LIGHT_GREEN, LV_PALETTE_LIME, LV_PALETTE_YELLOW, LV_PALETTE_AMBER
   // LV_PALETTE_ORANGE, LV_PALETTE_DEEP_ORANGE, LV_PALETTE_BROWN, LV_PALETTE_BLUE_GREY, LV_PALETTE_GREY
-  colorAlertData = lv_palette_main(LV_PALETTE_LIGHT_BLUE);
+  colorAlertData = lv_palette_main(LV_PALETTE_INDIGO);
   colorPowerData = lv_palette_main(LV_PALETTE_GREY);
   colorAccellData = lv_palette_main(LV_PALETTE_GREY);
   colorLocationData = lv_palette_main(LV_PALETTE_PINK);
   colorWeatherData = lv_palette_main(LV_PALETTE_PINK);
   colorDateData = lv_palette_main(LV_PALETTE_DEEP_ORANGE);
   colorTimeData = color_text;
-  colorMenu = lv_palette_main(LV_PALETTE_INDIGO);
+  colorMenu = lv_palette_main(LV_PALETTE_LIGHT_BLUE);
 }
 
 // Funktion, die deine Icons je nach Modus anpasst

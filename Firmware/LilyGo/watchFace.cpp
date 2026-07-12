@@ -103,11 +103,16 @@ void drawWatchFace() {
   drawTime();
 
   if (currentAccelleration.isMoved) {
-    drawIcons(WIFI_CONNECTED);
+    drawBattery();
 
     if (WIFI_CONNECTED) {
       drawWeather();
+
       drawSolarArc(currentWeather.currentSunrise, currentWeather.currentSunset, currentWeather.currentDT);
+
+      if (currentAlerts.count > 0) {
+        drawAlert();
+      }
     }
 
     drawSteps();
@@ -127,7 +132,7 @@ void drawTime() {
   lv_obj_add_style(label, &styleLarge, LV_PART_MAIN);
 
   // position the label
-  lv_obj_align(label, LV_ALIGN_TOP_LEFT, 5, 5);
+  lv_obj_align(label, LV_ALIGN_TOP_LEFT, 10, 5);
 
   // set text color according to schema
   lv_obj_set_style_text_color(label, GetTheme(THEME_TIME_DATA), 0);
@@ -180,9 +185,9 @@ void drawDate() {
     int wday = timeinfo.tm_wday;  // 0–6
     lv_label_set_text(labelDayWeek, weekday_names[wday]);
 
-    lv_obj_align(labelDay, LV_ALIGN_TOP_RIGHT, -185, 98);
-    lv_obj_align(labelMonth, LV_ALIGN_TOP_LEFT, 60, 100);
-    lv_obj_align(labelDayWeek, LV_ALIGN_TOP_LEFT, 5, 70);
+    lv_obj_align(labelDay, LV_ALIGN_TOP_RIGHT, -180, 98);
+    lv_obj_align(labelMonth, LV_ALIGN_TOP_LEFT, 65, 100);
+    lv_obj_align(labelDayWeek, LV_ALIGN_TOP_LEFT, 10, 70);
   }
 }
 
@@ -228,21 +233,7 @@ void drawSteps() {
   lv_obj_align_to(barSteps, labelSteps, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 5);
 }
 
-void drawIcons(bool isConnected) {
-  if (currentAlerts.count > 0) {
-    lv_obj_t *imgAlerts = lv_image_create(screen);
-    lv_image_set_src(imgAlerts, &iconNotify);
-    updateIconTheme(imgAlerts, settings.displayBGrndBlack);
-    lv_obj_align(imgAlerts, LV_ALIGN_TOP_LEFT, 165, 200);
-  }
-
-  if (isConnected) {
-    lv_obj_t *imgWifi = lv_image_create(screen);
-    lv_image_set_src(imgWifi, &iconWifi);
-    updateIconTheme(imgWifi, settings.displayBGrndBlack);
-    lv_obj_align(imgWifi, LV_ALIGN_TOP_LEFT, 195, 200);
-  }
-
+void drawBattery() {
   // 1. Die dynamische Farbe anhand der Prozent ermitteln
   lv_color_t batteryColor;
   if (currentPower.batteryPercent > 70) {
@@ -304,7 +295,7 @@ void drawWeather() {
   else
     lv_obj_add_style(labelLocation, &styleMicro, LV_PART_MAIN);
   // Fester Startpunkt links im unteren Drittel
-  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 5, 150);
+  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 10, 150);
   lv_obj_set_style_text_color(labelLocation, weatherColor, 0);  // Einheitliche Farbe
   lv_label_set_text(labelLocation, currentWeather.cityShort);
 
@@ -479,4 +470,27 @@ void drawSolarArc(uint32_t sunrise_timestamp, uint32_t sunset_timestamp, uint32_
   lv_obj_set_style_bg_opa(btn_sunset, LV_OPA_COVER, 0);
   lv_obj_set_style_border_width(btn_sunset, 0, 0);
   lv_obj_set_style_pad_all(btn_sunset, 0, 0);
+}
+
+void drawAlert() {
+  // Erstellt ein Objekt über den gesamten Bildschirm
+  lv_obj_t* alert_frame = lv_obj_create(lv_screen_active());
+  lv_obj_set_size(alert_frame, LV_PCT(100), LV_PCT(100));
+  lv_obj_center(alert_frame);
+
+  // Grund-Styles: Absolut transparent im Inneren, keine Paddings
+  lv_obj_set_style_bg_opa(alert_frame, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_pad_all(alert_frame, 0, 0);
+
+  // Leicht abgerundete Ecken für den Rahmen (z.B. 16px oder je nach Display)
+  lv_obj_set_style_radius(alert_frame, 16, 0);
+
+  // Wichtig: Klicks durchlassen, damit das restliche Watchface bedienbar bleibt
+  lv_obj_add_flag(alert_frame, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+  lv_obj_remove_flag(alert_frame, LV_OBJ_FLAG_SCROLLABLE);
+
+  // Rahmen aktivieren: 3 Pixel breit in der Alarm-Themenfarbe
+  lv_obj_set_style_border_color(alert_frame, GetTheme(THEME_ALERT_DATA), 0);
+  lv_obj_set_style_border_width(alert_frame, 2, 0);
+  lv_obj_set_style_border_opa(alert_frame, LV_OPA_COVER, 0);
 }
