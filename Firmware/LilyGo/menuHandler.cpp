@@ -430,31 +430,82 @@ static lv_obj_t *subStepCounterFunction(lv_obj_t *menu) {
   return pageSub;
 }
 
-// sub page: watch type page
-static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
-  Serial.println("Watch type  function started");
+// Event-Callback für die Radio-Buttons
+static void watch_type_event_cb(lv_event_t * e) {
+    lv_obj_t * obj = (lv_obj_t *)lv_event_get_target(e);
+    uint32_t id = lv_buttonmatrix_get_selected_button(obj);
+    
+    if(id == 0) {
+        watchType = ANALOGUE_WATCH;
+        Serial.println("Watch type set to: ANALOGUE");
+    } else if(id == 1) {
+        watchType = DIGITAL_WATCH;
+        Serial.println("Watch type set to: DIGITAL");
+    }
+    // Hier kannst du in Zukunft einfach erweitern: else if(id == 2) { ... }
+}
 
-  // spinner
+static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
+  Serial.println("Watch type function started");
+
+  // Spinner/Refresh erzwingen
   lv_refr_now(NULL);
 
-  /*Create a sub page*/
+  /* Sub-Page und Container erstellen */
   lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
+  
+  // Wir nutzen hier ein einfaches Flex-Layout im Container, damit die Elemente untereinander stehen
   lv_obj_t *contSub = lv_menu_cont_create(pageSub);
+  lv_obj_set_flex_flow(contSub, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_style_pad_all(contSub, 10, 0);
+  lv_obj_set_style_pad_row(contSub, 15, 0); // Abstand zwischen den Zeilen (Titel und Buttons)
 
+  // 1. Statischer Titel oben
   labelWatchType = lv_label_create(contSub);
   lv_obj_set_style_text_font(labelWatchType, &lv_font_montserrat_18, LV_PART_MAIN);
-  lv_obj_set_width(labelWatchType, lv_pct(95));
-  lv_label_set_long_mode(labelWatchType, LV_LABEL_LONG_WRAP);
-  registerDefaultEvents(labelWatchType);
+  lv_obj_set_style_text_color(labelWatchType, lv_color_white(), LV_PART_MAIN);
+  lv_label_set_text(labelWatchType, "Watch Type");
+  registerDefaultEvents(labelWatchType); // Deine Event-Registrierung beibehalten
 
-  if (watchType == DIGITAL_WATCH)
-    watchType = ANALOGUE_WATCH;
-  else
-    watchType = DIGITAL_WATCH;
+  // 2. Die Radio-Button-Matrix erstellen
+  // WICHTIG: Die Namen der Buttons. Das "\n" sorgt dafür, dass sie UNTEREINANDER stehen!
+  static const char * btn_map[] = {"Analog", "\n", "Digital", ""};
 
-  char watchTypeText[128] = "Watch type switched.";
+  lv_obj_t * radio_matrix = lv_buttonmatrix_create(contSub);
+  lv_buttonmatrix_set_map(radio_matrix, btn_map);
+  lv_obj_set_width(radio_matrix, lv_pct(100));
+  
+  // Button-Matrix optisch aufräumen (kein Hintergrund, flacher Look)
+  lv_obj_set_style_bg_opa(radio_matrix, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(radio_matrix, 0, 0);
 
-  lv_label_set_text(labelWatchType, watchTypeText);
+  // One-Check aktivieren (wirkt wie Radio-Buttons: nur einer kann aktiv sein)
+  lv_buttonmatrix_set_one_checked(radio_matrix, true);
+
+  // Buttons als "Checkable" (einrastend) markieren
+  lv_buttonmatrix_set_button_ctrl_all(radio_matrix, LV_BUTTONMATRIX_CTRL_CHECKABLE);
+
+  // 3. Den aktuell aktiven Status beim Öffnen der Seite vorselektieren
+  if (watchType == ANALOGUE_WATCH) {
+      lv_buttonmatrix_set_button_ctrl(radio_matrix, 0, LV_BUTTONMATRIX_CTRL_CHECKED);
+  } else {
+      lv_buttonmatrix_set_button_ctrl(radio_matrix, 1, LV_BUTTONMATRIX_CTRL_CHECKED);
+  }
+
+  // 4. Styles für die gedrückten/aktiven Zustände verpassen
+  // Wenn ausgewählt, leuchtet der Button in deiner Alert/Theme-Farbe
+  // lv_obj_set_style_bg_color(radio_matrix, GetTheme(THEME_ALERT_DATA), LV_PART_ITEMS | LV_STATE_CHECKED);
+  // lv_obj_set_style_text_color(radio_matrix, lv_color_white(), LV_PART_ITEMS | LV_STATE_CHECKED);
+  
+  // Unausgewählte Buttons dezent grau/dunkel halten
+  // lv_obj_set_style_bg_color(radio_matrix, lv_palette_darken(LV_PALETTE_GREY, 3), LV_PART_ITEMS);
+  // lv_obj_set_style_text_color(radio_matrix, lv_palette_lighten(LV_PALETTE_GREY, 1), LV_PART_ITEMS);
+
+  lv_obj_set_style_radius(radio_matrix, 8, LV_PART_ITEMS); // Leicht abgerundete Ecken für die Buttons
+  lv_obj_set_style_text_font(radio_matrix, &lv_font_montserrat_18, LV_PART_MAIN);
+
+  // Event-Handler anhängen
+  lv_obj_add_event_cb(radio_matrix, watch_type_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
   return pageSub;
 }
