@@ -253,7 +253,7 @@ lv_obj_t* prepareAlertScreen(int count) {
   static lv_style_t styleHeader;
   lv_style_init(&styleHeader);
   lv_style_set_text_font(&styleHeader, &lv_font_montserrat_18);
-  lv_style_set_text_color(&styleHeader, lv_color_make(160, 160, 160));
+  lv_style_set_text_color(&styleHeader, lv_palette_lighten(LV_PALETTE_GREY, 1));
 
   // App Name
   labelApp = lv_label_create(alert_scr);
@@ -289,7 +289,7 @@ lv_obj_t* prepareAlertScreen(int count) {
     lv_obj_set_size(dot, 5, 5);
     lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_border_width(dot, 0, 0);
-    lv_obj_set_style_bg_color(dot, lv_color_make(50, 50, 50), 0); // Alle dunkelgrau
+    lv_obj_set_style_bg_color(dot, lv_palette_darken(LV_PALETTE_GREY, 4), 0); // Alle dunkelgrau
   }
 
   // --- CONTENT CONTAINER ("Die Message-Karte") ---
@@ -297,7 +297,7 @@ lv_obj_t* prepareAlertScreen(int count) {
   lv_obj_set_size(card, lv_pct(92), LV_SIZE_CONTENT);
   lv_obj_align(card, LV_ALIGN_TOP_MID, 0, 54); // Platz für die Punkte gelassen
   
-  lv_obj_set_style_bg_color(card, lv_color_make(30, 35, 45), 0);
+  lv_obj_set_style_bg_color(card, lv_palette_darken(LV_PALETTE_BLUE_GREY, 4), 0);
   lv_obj_set_style_radius(card, 8, 0);
   lv_obj_set_style_border_width(card, 0, 0);
   lv_obj_set_style_pad_all(card, 10, 0);
@@ -347,9 +347,9 @@ void showAlert(singleAlert alert, int index, int count) {
       lv_obj_t *dot = lv_obj_get_child(dots_container, i);
       
       if (i == index) {
-        lv_obj_set_style_bg_color(dot, lv_color_make(180, 180, 180), 0); // Aktueller Index = Hellgrau
+        lv_obj_set_style_bg_color(dot, lv_palette_lighten(LV_PALETTE_GREY, 2), 0); // Aktueller Index = Hellgrau
       } else {
-        lv_obj_set_style_bg_color(dot, lv_color_make(50, 50, 50), 0);   // Alle anderen = Dunkelgrau
+        lv_obj_set_style_bg_color(dot, lv_palette_darken(LV_PALETTE_GREY, 4), 0);   // Alle anderen = Dunkelgrau
       }
     }
   }

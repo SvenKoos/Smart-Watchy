@@ -31,6 +31,7 @@
 #define THEME_WEATHER_DATA 5
 #define THEME_DATE_DATA 6
 #define THEME_TIME_DATA 7
+#define THEME_MENU 8
 
 // encryption
 // 16-Byte Schlüssel (128-Bit), den T-Watch und T-Echo teilen

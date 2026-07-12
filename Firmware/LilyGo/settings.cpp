@@ -14,6 +14,7 @@ lv_color_t colorLocationData;
 lv_color_t colorWeatherData;
 lv_color_t colorDateData;
 lv_color_t colorTimeData;
+lv_color_t colorMenu;
 
 lilygoSettings setSetting() {
   lilygoSettings settings;
@@ -62,6 +63,7 @@ void setTheme(bool inverted) {
   colorWeatherData = lv_palette_main(LV_PALETTE_PINK);
   colorDateData = lv_palette_main(LV_PALETTE_DEEP_ORANGE);
   colorTimeData = color_text;
+  colorMenu = lv_palette_main(LV_PALETTE_INDIGO);
 }
 
 // Funktion, die deine Icons je nach Modus anpasst
@@ -94,6 +96,7 @@ lv_color_t GetTheme(int themeID) {
     case THEME_WEATHER_DATA: color = colorWeatherData; break;
     case THEME_DATE_DATA: color = colorDateData; break;
     case THEME_TIME_DATA: color = colorTimeData; break;
+    case THEME_MENU: color = colorMenu; break;
   }
 
   return color;

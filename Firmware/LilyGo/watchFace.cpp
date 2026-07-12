@@ -217,7 +217,7 @@ void drawSteps() {
   
   // STYLING FÜR DEN UNERREICHTEN TEIL (MAIN):
   // Exakt das gleiche Dunkelgrau wie beim Batterie-Ring
-  lv_obj_set_style_bg_color(barSteps, lv_color_make(60, 60, 60), LV_PART_MAIN);
+  lv_obj_set_style_bg_color(barSteps, lv_palette_darken(LV_PALETTE_GREY, 3), LV_PART_MAIN);
   lv_obj_set_style_bg_opa(barSteps, LV_OPA_COVER, LV_PART_MAIN);
 
   // Positionierung
@@ -269,7 +269,7 @@ void drawIcons(bool isConnected) {
   lv_obj_set_style_arc_width(arcBattery, 3, LV_PART_INDICATOR); // 3 Pixel dünner Ring
   
   // Hintergrundring dezent dunkelgrau oder leicht transparent halten
-  lv_obj_set_style_arc_color(arcBattery, lv_color_make(60, 60, 60), LV_PART_MAIN);
+  lv_obj_set_style_arc_color(arcBattery, lv_palette_darken(LV_PALETTE_GREY, 3), LV_PART_MAIN);
   lv_obj_set_style_arc_width(arcBattery, 3, LV_PART_MAIN);
 
   // Positionierung oben rechts (da wo vorher das Icon-Areal war)
