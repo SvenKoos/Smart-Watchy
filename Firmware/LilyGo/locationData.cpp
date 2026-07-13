@@ -13,8 +13,8 @@
 #include <esp_sntp.h>
 
 #include "dataCollection.h"
-#include "weatherData.h"
 #include "locationData.h"
+#include "weatherData.h"
 #include "config.h"
 #include "settings.h"
 
@@ -80,7 +80,6 @@ locationData getLocationData(String url) {
 
     currentLocation.latitude = double(responseObject["latitude"]);
     currentLocation.longitude = double(responseObject["longitude"]);
-    currentLocation.offset = long(responseObject["timezone"]["offset"]);
 
     Serial.print("getLocationData City: ");
     Serial.println(currentLocation.city);
@@ -203,7 +202,6 @@ locationData getLocationDataGoogle(String geoLocURL, String googleApiKey, String
 void setupLocationData() {
   currentLocation.latitude = 0;
   currentLocation.longitude = 0;
-  currentLocation.offset = 0;
   strcpy(currentLocation.city, "");
   strcpy(currentLocation.cityShort, "");
   currentLocation.latitudeGoogle = 0;

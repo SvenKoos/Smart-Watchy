@@ -298,14 +298,14 @@ void drawWeather() {
 
   // 1. LOCATION
   lv_obj_t *labelLocation = lv_label_create(screen);
-  if (strlen(currentWeather.cityShort) < 8)
+  if (strlen(currentLocation.cityShort) < 8)
     lv_obj_add_style(labelLocation, &styleSmall, LV_PART_MAIN);
   else
     lv_obj_add_style(labelLocation, &styleMicro, LV_PART_MAIN);
   // Fester Startpunkt links im unteren Drittel
   lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 10, 155);
   lv_obj_set_style_text_color(labelLocation, weatherColor, 0);  // Einheitliche Farbe
-  lv_label_set_text(labelLocation, currentWeather.cityShort);
+  lv_label_set_text(labelLocation, currentLocation.cityShort);
 
   if (currentWeather.code == CODE_NO_ERROR) {
     // 2. WEATHER ICON

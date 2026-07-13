@@ -88,6 +88,8 @@ void collectData(void) {
             ltd = currentLocation.latitudeGoogle;
             lng = currentLocation.longitudeGoogle;
             Serial.println("Google Geolocation succesfull.");
+
+            currentLocation = getReverseLocation(currentLocation.latitudeGoogle, currentLocation.longitudeGoogle, settings.weatherReverseLocationURL, settings.weatherAPIKey);
           } else {
             Serial.println("Google Geolocation failed.");
           }
@@ -111,12 +113,7 @@ void collectData(void) {
           currentWeather = getWeatherDataByLocation(ltd, lng, settings.weatherUnit,
                                                     settings.weatherLang, settings.weatherURL,
                                                     settings.weatherAPIKey);
-        } else {
-          // get weather of default location
-          currentWeather = getWeatherData(settings.cityID, settings.weatherUnit,
-                                          settings.weatherLang, settings.weatherURL,
-                                          settings.weatherAPIKey);
-        }
+        } 
 
         locationIntervalCounter = 0;
       } else {

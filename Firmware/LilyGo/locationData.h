@@ -27,7 +27,6 @@ typedef struct locationData {
   char publicIP[IP_LEN];
   char localIP[IP_LEN];
   char gatewayIP[IP_LEN];
-  long offset;
   char log[LOG_LEN];
   int code;
 } locationData;

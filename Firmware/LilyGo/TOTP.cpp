@@ -6,6 +6,7 @@
 #include "settings.h"
 #include "mbedtls/md.h"  // Standardmäßig im ESP32 vorhanden!
 #include "dataCollection.h"
+#include "locationData.h"
 #include "weatherData.h"
 
 // Preferences prefs;

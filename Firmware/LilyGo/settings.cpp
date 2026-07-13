@@ -19,13 +19,11 @@ lv_color_t colorMenu;
 lilygoSettings setSetting() {
   lilygoSettings settings;
 
-  settings.cityID = CITY_ID;
   settings.weatherAPIKey = OPENWEATHERMAP_APIKEY;
   settings.weatherURL = OPENWEATHERMAP_URL;
   settings.weatherUnit = TEMP_UNIT;
   settings.weatherLang = TEMP_LANG;
   settings.ntpServer = NTP_SERVER;
-  settings.gmtOffset = GMT_OFFSET_SEC;
   settings.dstOffset = 0;
   settings.geoipURL = GEOIP_URL;
   settings.locationUpdateInterval = LOCATION_UPDATE_INTERVAL;
@@ -37,6 +35,7 @@ lilygoSettings setSetting() {
   settings.stepGoal = STEP_GOAL;
   settings.googleApiKey = GOOGLE_APIKEY;
   settings.googleGeoLocationURL = GOOGLE_LOCATION_URL;
+  settings.weatherReverseLocationURL = REVERSE_LOCATION_URL;
 
   settings.displayBGrndBlack = BACKGROUND_BLACK;
   setTheme(settings.displayBGrndBlack);

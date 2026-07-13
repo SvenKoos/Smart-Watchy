@@ -1,13 +1,11 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#define CITY_ID "2660253"  //Interlaken
 #define OPENWEATHERMAP_APIKEY "--------------------------------"
-#define OPENWEATHERMAP_URL "http://api.openweathermap.org/data/2.5/weather"  //open weather api
+#define OPENWEATHERMAP_URL "https://api.openweathermap.org/data/4.0/onecall/current?exclude=minutely,hourly,daily,alerts"  //open weather api
 #define TEMP_UNIT "metric"                                                   //metric = Celsius , imperial = Fahrenheit
 #define TEMP_LANG "en"
 #define NTP_SERVER "pool.ntp.org"
-#define GMT_OFFSET_SEC 3600 * 1      //CET
 #define GEOIP_URL "http://ipwho.is"  //  GeoIP (Get IP address location in JSON format)
 #define LOCATION_UPDATE_INTERVAL 15
 #define WIFI_SSID "--------"
@@ -19,17 +17,16 @@
 #define STEP_GOAL 10000
 #define GOOGLE_APIKEY "--------------------------------"
 #define GOOGLE_LOCATION_URL "https://www.googleapis.com/geolocation/v1/geolocate"
+#define REVERSE_LOCATION_URL "https://api.openweathermap.org/geo/1.0/reverse"
 
 typedef struct lilygoSettings {
   // Weather Settings
-  String cityID;
   String weatherAPIKey;
   String weatherURL;
   String weatherUnit;
   String weatherLang;
   // NTP Settings
   String ntpServer;
-  int gmtOffset;
   int dstOffset;
   // location settings
   String geoipURL;
@@ -48,6 +45,7 @@ typedef struct lilygoSettings {
   // Google settings
   String googleApiKey;
   String googleGeoLocationURL;
+  String weatherReverseLocationURL;
 } lilygoSettings;
 
 lilygoSettings setSetting();

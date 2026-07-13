@@ -6,6 +6,7 @@
 #include "watchFace.h"
 #include "dataCollection.h"
 #include "config.h"
+#include "locationData.h"
 #include "weatherData.h"
 
 extern bool update_gui_request;
