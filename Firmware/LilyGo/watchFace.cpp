@@ -112,6 +112,8 @@ void drawWatchFace() {
 
       drawSolarArc(currentWeather.currentSunrise, currentWeather.currentSunset, currentWeather.currentDT);
 
+      drawUVI(currentWeather.uvi);
+
       if (newAlertsIndicator == true) {
         drawAlert();
       }
@@ -175,7 +177,7 @@ void drawDate() {
 
   lv_obj_add_style(labelDay, &styleMedium, LV_PART_MAIN);
   lv_obj_add_style(labelMonth, &styleSmall, LV_PART_MAIN);
-  lv_obj_add_style(labelDayWeek, &styleSmall, LV_PART_MAIN);
+  lv_obj_add_style(labelDayWeek, &styleMicro, LV_PART_MAIN);
 
   lv_obj_set_style_text_color(labelDay, GetTheme(THEME_DATE_DATA), 0);
   lv_obj_set_style_text_color(labelMonth, GetTheme(THEME_DATE_DATA), 0);
@@ -194,9 +196,9 @@ void drawDate() {
     int wday = timeinfo.tm_wday;  // 0–6
     lv_label_set_text(labelDayWeek, weekday_names[wday]);
 
-    lv_obj_align(labelDay, LV_ALIGN_TOP_RIGHT, -180, 98);
-    lv_obj_align(labelMonth, LV_ALIGN_TOP_LEFT, 65, 100);
-    lv_obj_align(labelDayWeek, LV_ALIGN_TOP_LEFT, 10, 70);
+    lv_obj_align(labelDayWeek, LV_ALIGN_TOP_LEFT, 10, 68);
+    lv_obj_align(labelDay, LV_ALIGN_TOP_RIGHT, -180, 93);
+    lv_obj_align(labelMonth, LV_ALIGN_TOP_LEFT, 65, 95);
   }
 }
 
@@ -216,7 +218,7 @@ void drawSteps() {
   snprintf(buf, sizeof(buf), "%d", currentAccelleration.stepCounter);
   lv_label_set_text(labelSteps, buf);
   // Leicht nach oben gezogen (Y=190), damit der Balken darunter passt
-  lv_obj_align(labelSteps, LV_ALIGN_TOP_LEFT, 55, 192);
+  lv_obj_align(labelSteps, LV_ALIGN_TOP_LEFT, 60, 192);
 
   // 3. Der Fortschrittsbalken (Bar)
   lv_obj_t *barSteps = lv_bar_create(screen);
@@ -304,8 +306,8 @@ void drawWeather() {
   else
     lv_obj_add_style(labelLocation, &styleMicro, LV_PART_MAIN);
   // Fester Startpunkt links im unteren Drittel
-  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 10, 152);
-  lv_obj_set_style_text_color(labelLocation, weatherColor, 0);  // Einheitliche Farbe
+  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 10, 145);
+  lv_obj_set_style_text_color(labelLocation, GetTheme(THEME_LOCATION_DATA), 0);  // Einheitliche Farbe
   lv_label_set_text(labelLocation, currentLocation.cityShort);
 
   if (currentWeather.code == CODE_NO_ERROR) {
@@ -354,7 +356,7 @@ void drawWeather() {
 
     lv_image_set_scale(imgWeather, 200);
     // DYNAMISCH: Das Icon wird direkt rechts neben das Location-Label gekettet
-    lv_obj_align_to(imgWeather, labelLocation, LV_ALIGN_OUT_RIGHT_MID, -10, 0);
+    lv_obj_align_to(imgWeather, labelLocation, LV_ALIGN_OUT_RIGHT_MID, -15, 0);
 
     // 3. TEMPERATURE
     lv_obj_t *labelTemperature = lv_label_create(screen);
@@ -366,7 +368,7 @@ void drawWeather() {
     lv_label_set_text(labelTemperature, buf);
 
     // DYNAMISCH: Die Temperatur folgt direkt rechts neben dem Icon
-    lv_obj_align_to(labelTemperature, imgWeather, LV_ALIGN_OUT_RIGHT_MID, -10, 0);
+    lv_obj_align_to(labelTemperature, imgWeather, LV_ALIGN_OUT_RIGHT_MID, -15, 0);
 
     // 4. UNIT (°C / °F)
     lv_obj_t *labelUnit = lv_label_create(screen);
@@ -634,4 +636,97 @@ void drawAnalogClock() {
 
   lv_obj_invalidate(hour_line);
   lv_obj_invalidate(min_line);
+}
+
+void drawUVI(double uvi_val) {
+  lv_obj_t *uvi_control;
+  lv_obj_t *uvi_arc;
+  lv_obj_t *uvi_label_value;
+  lv_obj_t *uvi_label_title;
+
+  uvi_control = lv_obj_create(screen);
+  lv_obj_set_size(uvi_control, 60, 60);
+  lv_obj_set_style_bg_opa(uvi_control, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(uvi_control, 0, 0);
+  lv_obj_set_style_pad_all(uvi_control, 0, 0);
+
+  lv_obj_align(uvi_control, LV_ALIGN_BOTTOM_RIGHT, -10, -3);
+
+  // 1. Der Haupt-Bogen (Steuert nur die Position des Knobs)
+  uvi_arc = lv_arc_create(uvi_control);
+  lv_obj_set_size(uvi_arc, 55, 55);  // Leicht angepasst für 5px Stärke
+  lv_obj_center(uvi_arc);
+  lv_obj_remove_flag(uvi_arc, LV_OBJ_FLAG_CLICKABLE);
+
+  // WICHTIG: Sowohl Hintergrund als auch den aktiven Balken (Indicator) unsichtbar machen!
+  lv_obj_set_style_arc_opa(uvi_arc, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_arc_opa(uvi_arc, LV_OPA_TRANSP, LV_PART_INDICATOR);
+
+  // Den KNOB (Zeigerpunkt) aktivieren und stylen
+  lv_obj_set_style_bg_opa(uvi_arc, LV_OPA_COVER, LV_PART_KNOB);
+  lv_obj_set_style_bg_color(uvi_arc, lv_color_white(), LV_PART_KNOB);
+  // Den Punkt perfekt auf die 5px Stärke ausrichten (kein zusätzliches Padding)
+  lv_obj_set_style_pad_all(uvi_arc, 0, LV_PART_KNOB);
+
+  lv_arc_set_bg_angles(uvi_arc, 0, 260);
+  lv_arc_set_rotation(uvi_arc, 140);
+  lv_arc_set_range(uvi_arc, 0, 110);
+
+  // 2. Die 5 Hintergrund-Segmente mit helleren Farben und 5px Stärke
+  lv_color_t color_low = lv_palette_main(LV_PALETTE_GREEN);   // Helles Grün
+  lv_color_t color_mod = lv_palette_main(LV_PALETTE_YELLOW);  // Helles Gelb
+  lv_color_t color_high = lv_palette_main(LV_PALETTE_ORANGE);  // Helles Orange
+  lv_color_t color_very = lv_palette_main(LV_PALETTE_RED);  // Helles Rot
+  lv_color_t color_ext = lv_palette_main(LV_PALETTE_PURPLE);  // Helles Violett
+
+  for (int i = 0; i < 5; i++) {
+    lv_obj_t *background_arc = lv_arc_create(uvi_control);
+    lv_obj_set_size(background_arc, 55, 55);
+    lv_obj_center(background_arc);
+    lv_obj_remove_flag(background_arc, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_obj_set_style_arc_opa(background_arc, LV_OPA_TRANSP, LV_PART_INDICATOR);
+    lv_obj_set_style_bg_opa(background_arc, LV_OPA_TRANSP, LV_PART_KNOB);
+
+    lv_arc_set_bg_angles(background_arc, 0, 52);
+    lv_arc_set_rotation(background_arc, 140 + (i * 52));
+
+    // Stärke jetzt auf 5 Pixel erhöht
+    lv_obj_set_style_arc_width(background_arc, 5, LV_PART_MAIN);
+    // Deckkraft auf 70% hochgesetzt, damit die Farben deutlich kräftiger und heller leuchten
+    lv_obj_set_style_arc_opa(background_arc, LV_OPA_70, LV_PART_MAIN);
+
+    if (i == 0) lv_obj_set_style_arc_color(background_arc, color_low, LV_PART_MAIN);
+    if (i == 1) lv_obj_set_style_arc_color(background_arc, color_mod, LV_PART_MAIN);
+    if (i == 2) lv_obj_set_style_arc_color(background_arc, color_high, LV_PART_MAIN);
+    if (i == 3) lv_obj_set_style_arc_color(background_arc, color_very, LV_PART_MAIN);
+    if (i == 4) lv_obj_set_style_arc_color(background_arc, color_ext, LV_PART_MAIN);
+  }
+
+  // Den Hauptbogen mit dem weißen Zeigerpunkt nach ganz vorne holen
+  lv_obj_move_foreground(uvi_arc);
+
+  // 3. Labels (Positionierung bleibt optimiert)
+  uvi_label_value = lv_label_create(uvi_control);
+  lv_obj_set_style_text_font(uvi_label_value, &lv_font_montserrat_20, LV_PART_MAIN);
+  lv_obj_set_style_text_color(uvi_label_value, lv_color_white(), LV_PART_MAIN);
+  lv_obj_align(uvi_label_value, LV_ALIGN_CENTER, 0, -3);
+
+  uvi_label_title = lv_label_create(uvi_control);
+  lv_obj_set_style_text_font(uvi_label_title, &lv_font_montserrat_10, LV_PART_MAIN);
+  lv_obj_set_style_text_color(uvi_label_title, GetTheme(THEME_WEATHER_DATA), LV_PART_MAIN);
+  lv_label_set_text(uvi_label_title, "UV");
+  lv_obj_align(uvi_label_title, LV_ALIGN_CENTER, 0, 15);
+
+  // -----------------------
+
+  int arc_value = (int)(uvi_val * 10.0f);
+  if (arc_value > 110) arc_value = 110;
+  if (arc_value < 0) arc_value = 0;
+
+  lv_arc_set_value(uvi_arc, arc_value);
+
+  char buf[16];
+  lv_snprintf(buf, sizeof(buf), "%.1f", uvi_val);
+  lv_label_set_text(uvi_label_value, buf);
 }
