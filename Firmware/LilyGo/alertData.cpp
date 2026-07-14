@@ -23,6 +23,7 @@ extern alertData currentAlerts;
 extern singleAlert allAlerts[ALERT_MAX_NO];
 extern powerData currentPower;
 extern int guiState;
+extern bool newAlertsIndicator;
 
 
 alertData getAlertData(const String gatewayIP, const String macAdress) {
@@ -125,6 +126,8 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
       currentAlerts.log[sizeof(currentAlerts.log) - 1] = '\0';
 
       if ((oldNo != newNo) || (oldMin != newMin) || (oldMax != newMax)) {
+        newAlertsIndicator = true;
+        
         if (currentPower.batteryPercent > 5) {
           vibMotor();
         }

@@ -19,6 +19,7 @@ extern alertData currentAlerts;
 extern powerData currentPower;
 extern locationData currentLocation;
 extern weatherData currentWeather;
+extern bool newAlertsIndicator;
 
 extern bool WIFI_CONFIGURED;
 extern bool WIFI_CONNECTED;
@@ -111,7 +112,7 @@ void drawWatchFace() {
 
       drawSolarArc(currentWeather.currentSunrise, currentWeather.currentSunset, currentWeather.currentDT);
 
-      if (currentAlerts.count > 0) {
+      if (newAlertsIndicator == true) {
         drawAlert();
       }
     }

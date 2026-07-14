@@ -53,6 +53,8 @@ RTC_DATA_ATTR int keyLen = 0;
 
 int watchType = DIGITAL_WATCH;
 
+bool newAlertsIndicator = false;
+
 uint8_t batteryCapacityHistory[1440];
 uint16_t batteryVoltageHistory[1440];
 

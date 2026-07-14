@@ -17,6 +17,7 @@ extern alertData currentAlerts;
 extern singleAlert allAlerts[ALERT_MAX_NO];
 extern int guiState;
 extern accellData currentAccelleration;
+extern bool newAlertsIndicator;
 
 extern lv_color_t color_bg;
 extern lv_color_t color_text;
@@ -168,6 +169,8 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
             // alert
             alertIndex = currentAlerts.count - 1;
             showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
+
+            newAlertsIndicator = false;
           }
         } else if (guiState == ALERT_STATE) {
           Serial.println("DoubleTap event: alert state");
