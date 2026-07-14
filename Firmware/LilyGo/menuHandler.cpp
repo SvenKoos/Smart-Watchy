@@ -15,6 +15,7 @@
 #include "alertData.h"
 #include "lora.h"
 
+extern int locationIntervalCounter;
 extern int guiState;
 extern lilygoSettings settings;
 extern uint8_t batteryCapacityHistory[1440];
@@ -35,6 +36,7 @@ static lv_obj_t *barTOTP;
 static lv_obj_t *rollerLoRa;
 static lv_obj_t *chartStepCounter;
 static lv_obj_t *labelWatchType;
+static lv_obj_t *labelRefreshData;
 
 lv_timer_t *timerTOTP = NULL;
 
@@ -569,6 +571,32 @@ static lv_obj_t *subTotpFunction(lv_obj_t *menu) {
   return pageSub;
 }
 
+// sub page: Refresh data page
+static lv_obj_t *subRefreshDataFunction(lv_obj_t *menu) {
+  Serial.println("Fresh data function started");
+
+  // spinner
+  lv_refr_now(NULL);
+
+  /*Create a sub page*/
+  lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
+  lv_obj_t *contSub = lv_menu_cont_create(pageSub);
+
+  labelRefreshData = lv_label_create(contSub);
+  lv_obj_set_style_text_font(labelRefreshData, &lv_font_montserrat_18, LV_PART_MAIN);
+  lv_obj_set_width(labelRefreshData, lv_pct(95));
+  lv_label_set_long_mode(labelRefreshData, LV_LABEL_LONG_WRAP);
+  registerDefaultEvents(labelRefreshData);
+
+  locationIntervalCounter = -1;
+
+  char refreshDataText[256] = "";
+  strcpy(refreshDataText, "Refresh of WiFi, location, weather and message data requested. Please expect up to 1min delay.\n");
+  lv_label_set_text(labelRefreshData, refreshDataText);
+
+  return pageSub;
+}
+
 void menuHandler() {
   // 1. Basis-Farben und Themes holen
   lv_color_t item_bg_color = lv_palette_darken(LV_PALETTE_BLUE_GREY, 4); // Elegantes Anthrazit analog zur Message-Card
@@ -596,7 +624,7 @@ void menuHandler() {
   lv_obj_set_size(spinner, 80, 80);
   lv_obj_center(spinner);
 
-/* Modify the header / Back Button */
+  // Modify the header / Back Button
   lv_obj_t *back_btn = lv_menu_get_main_header_back_button(menu);
   lv_obj_set_style_pad_top(back_btn, 12, LV_PART_MAIN);
   lv_obj_set_style_pad_bottom(back_btn, 12, LV_PART_MAIN);
@@ -636,10 +664,20 @@ void menuHandler() {
   lv_obj_set_style_bg_color(pageMain, color_bg, 0);
 
   // symbols
-  // LV_SYMBOL_SETTINGS (Zahnrad), LV_SYMBOL_LIST (Listen-Striche), LV_SYMBOL_BULLET (Aufzählungspunkt), LV_SYMBOL_OK (Häkchen), LV_SYMBOL_CLOSE (Kreuz)
-  // LV_SYMBOL_REFRESH (Synchronisieren), LV_SYMBOL_EDIT (Stift), LV_SYMBOL_DOWNLOAD (Download), LV_SYMBOL_EYE_OPEN / EYE_CLOSE (Auge)
-  // LV_SYMBOL_ENVELOPE (Briefumschlag für LoRa Msg), LV_SYMBOL_CHARGE (Blitz für Battery), LV_SYMBOL_IMAGE (Bild für Steps – als Platzhalter für Grafik/Historie)
-  // LV_SYMBOL_WIFI (WLAN für WiFi) 
+  // LV_SYMBOL_SETTINGS (Zahnrad) ==> Watch Type
+  // LV_SYMBOL_LIST (Listen-Striche) ==> About
+  // LV_SYMBOL_BULLET (Aufzählungspunkt) ==> -
+  // LV_SYMBOL_OK (Häkchen) ==> -
+  // LV_SYMBOL_CLOSE (Kreuz) ==> -
+  // LV_SYMBOL_REFRESH (Synchronisieren) ==> Refresh Data
+  // LV_SYMBOL_EDIT (Stift) ==> -
+  // LV_SYMBOL_DOWNLOAD (Download) ==> -
+  // LV_SYMBOL_EYE_OPEN (Auge) ==> TOTP
+  // LV_SYMBOL_EYE_CLOSE (Auge) ==> -
+  // LV_SYMBOL_ENVELOPE (Briefumschlag), ==> LoRa
+  // LV_SYMBOL_CHARGE (Blitz) ==> Battery
+  //  LV_SYMBOL_IMAGE (Bild) ==> Steps
+  // LV_SYMBOL_WIFI (WLAN) ==> WiFi
 
   lv_obj_t *cont;
   lv_obj_t *label;
@@ -661,6 +699,15 @@ void menuHandler() {
   lv_obj_add_style(label, &styleLabel, 0);
   lv_label_set_text(label, LV_SYMBOL_ENVELOPE "  LoRa Msg"); // Brief-Icon
   lv_menu_set_load_page_event(menu, cont, subLoRaMsgFunction(menu));
+
+  // --- ITEM: Refresh Data ---
+  cont = lv_menu_cont_create(pageMain);
+  lv_obj_add_style(cont, &styleCont, 0);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
+  label = lv_label_create(cont);
+  lv_obj_add_style(label, &styleLabel, 0);
+  lv_label_set_text(label, LV_SYMBOL_REFRESH "  New Data"); // Refresh Icon
+  lv_menu_set_load_page_event(menu, cont, subRefreshDataFunction(menu));
 
   // --- ITEM: BATTERY ---
   cont = lv_menu_cont_create(pageMain);

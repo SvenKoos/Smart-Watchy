@@ -222,7 +222,7 @@ void drawSteps() {
   lv_obj_t *barSteps = lv_bar_create(screen);
 
   // Breite anpassen (z.B. 100 Pixel lang, 4 Pixel hoch für einen filigranen Look)
-  lv_obj_set_size(barSteps, 100, 4);
+  lv_obj_set_size(barSteps, 80, 4);
 
   // Bereich von 0 bis 10.000 Schritten definieren
   lv_bar_set_range(barSteps, 0, settings.stepGoal);
@@ -304,7 +304,7 @@ void drawWeather() {
   else
     lv_obj_add_style(labelLocation, &styleMicro, LV_PART_MAIN);
   // Fester Startpunkt links im unteren Drittel
-  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 10, 155);
+  lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 10, 152);
   lv_obj_set_style_text_color(labelLocation, weatherColor, 0);  // Einheitliche Farbe
   lv_label_set_text(labelLocation, currentLocation.cityShort);
 
