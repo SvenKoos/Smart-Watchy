@@ -301,10 +301,7 @@ void drawWeather() {
 
   // 1. LOCATION
   lv_obj_t *labelLocation = lv_label_create(screen);
-  if (strlen(currentLocation.cityShort) < 8)
-    lv_obj_add_style(labelLocation, &styleSmall, LV_PART_MAIN);
-  else
-    lv_obj_add_style(labelLocation, &styleMicro, LV_PART_MAIN);
+  lv_obj_add_style(labelLocation, &styleMicro, LV_PART_MAIN);
   // Fester Startpunkt links im unteren Drittel
   lv_obj_align(labelLocation, LV_ALIGN_TOP_LEFT, 10, 145);
   lv_obj_set_style_text_color(labelLocation, GetTheme(THEME_LOCATION_DATA), 0);  // Einheitliche Farbe
@@ -356,11 +353,11 @@ void drawWeather() {
 
     lv_image_set_scale(imgWeather, 200);
     // DYNAMISCH: Das Icon wird direkt rechts neben das Location-Label gekettet
-    lv_obj_align_to(imgWeather, labelLocation, LV_ALIGN_OUT_RIGHT_MID, -15, 0);
+    lv_obj_align_to(imgWeather, labelLocation, LV_ALIGN_OUT_RIGHT_MID, -13, 0);
 
     // 3. TEMPERATURE
     lv_obj_t *labelTemperature = lv_label_create(screen);
-    lv_obj_add_style(labelTemperature, &styleSmall, LV_PART_MAIN);  // Medium statt Large für eine harmonische Zeile
+    lv_obj_add_style(labelTemperature, &styleMicro, LV_PART_MAIN);  // Medium statt Large für eine harmonische Zeile
     lv_obj_set_style_text_color(labelTemperature, weatherColor, 0);
 
     char buf[6];  // Puffer leicht vergrößert für Sicherheit
@@ -368,7 +365,7 @@ void drawWeather() {
     lv_label_set_text(labelTemperature, buf);
 
     // DYNAMISCH: Die Temperatur folgt direkt rechts neben dem Icon
-    lv_obj_align_to(labelTemperature, imgWeather, LV_ALIGN_OUT_RIGHT_MID, -15, 0);
+    lv_obj_align_to(labelTemperature, imgWeather, LV_ALIGN_OUT_RIGHT_MID, -13, 0);
 
     // 4. UNIT (°C / °F)
     lv_obj_t *labelUnit = lv_label_create(screen);
@@ -381,7 +378,7 @@ void drawWeather() {
       lv_label_set_text(labelUnit, "°F");
 
     // DYNAMISCH: Die Einheit klebt direkt oben rechts neben der Temperatur-Zahl
-    lv_obj_align_to(labelUnit, labelTemperature, LV_ALIGN_OUT_RIGHT_TOP, 0, -2);
+    lv_obj_align_to(labelUnit, labelTemperature, LV_ALIGN_OUT_RIGHT_TOP, 0, -3);
   }
 }
 
@@ -481,6 +478,12 @@ void drawSolarArc(uint32_t sunrise_timestamp, uint32_t sunset_timestamp, uint32_
   lv_obj_set_style_bg_opa(btn_sunset, LV_OPA_COVER, 0);
   lv_obj_set_style_border_width(btn_sunset, 0, 0);
   lv_obj_set_style_pad_all(btn_sunset, 0, 0);
+
+  lv_obj_t *day_label_title = lv_label_create(solar_cont);
+  lv_obj_set_style_text_font(day_label_title, &lv_font_montserrat_14, LV_PART_MAIN);
+  lv_obj_set_style_text_color(day_label_title, GetTheme(THEME_DATE_DATA), LV_PART_MAIN);
+  lv_label_set_text(day_label_title, "Day");
+  lv_obj_align(day_label_title, LV_ALIGN_CENTER, 0, 25);
 }
 
 void drawAlert() {
@@ -664,9 +667,12 @@ void drawUVI(double uvi_val) {
 
   // Den KNOB (Zeigerpunkt) aktivieren und stylen
   lv_obj_set_style_bg_opa(uvi_arc, LV_OPA_COVER, LV_PART_KNOB);
-  lv_obj_set_style_bg_color(uvi_arc, lv_color_white(), LV_PART_KNOB);
+  if (uvi_val > 0)
+    lv_obj_set_style_bg_color(uvi_arc, lv_palette_main(LV_PALETTE_YELLOW), LV_PART_KNOB);
+  else
+    lv_obj_set_style_bg_color(uvi_arc, lv_palette_main(LV_PALETTE_GREY), LV_PART_KNOB);
   // Den Punkt perfekt auf die 5px Stärke ausrichten (kein zusätzliches Padding)
-  lv_obj_set_style_pad_all(uvi_arc, 0, LV_PART_KNOB);
+  lv_obj_set_style_pad_all(uvi_arc, -2, LV_PART_KNOB);
 
   lv_arc_set_bg_angles(uvi_arc, 0, 260);
   lv_arc_set_rotation(uvi_arc, 140);
@@ -708,8 +714,8 @@ void drawUVI(double uvi_val) {
 
   // 3. Labels (Positionierung bleibt optimiert)
   uvi_label_value = lv_label_create(uvi_control);
-  lv_obj_set_style_text_font(uvi_label_value, &lv_font_montserrat_20, LV_PART_MAIN);
-  lv_obj_set_style_text_color(uvi_label_value, lv_color_white(), LV_PART_MAIN);
+  lv_obj_set_style_text_font(uvi_label_value, &lv_font_montserrat_18, LV_PART_MAIN);
+  lv_obj_set_style_text_color(uvi_label_value, lv_palette_main(LV_PALETTE_GREY), LV_PART_MAIN);
   lv_obj_align(uvi_label_value, LV_ALIGN_CENTER, 0, -3);
 
   uvi_label_title = lv_label_create(uvi_control);
