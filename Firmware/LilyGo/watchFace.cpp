@@ -105,21 +105,25 @@ void drawWatchFace() {
   lv_obj_clean(screen);
 
   if (currentAccelleration.isMoved) {
-    drawBattery();
+    if (watchType != QLOCKTWO_WATCH)
+      drawBattery();
 
     if (WIFI_CONNECTED) {
-      drawWeather();
+      if (watchType != QLOCKTWO_WATCH) {
+        drawWeather();
 
-      drawSolarArc(currentWeather.currentSunrise, currentWeather.currentSunset, currentWeather.currentDT);
+        drawSolarArc(currentWeather.currentSunrise, currentWeather.currentSunset, currentWeather.currentDT);
 
-      drawUVI(currentWeather.uvi);
+        drawUVI(currentWeather.uvi);
+      }
 
       if (newAlertsIndicator == true) {
         drawAlert();
       }
     }
 
-    drawSteps();
+    if (watchType != QLOCKTWO_WATCH)
+      drawSteps();
   }
 
   if (watchType == DIGITAL_WATCH) {
@@ -129,6 +133,9 @@ void drawWatchFace() {
   } else if (watchType == ANALOGUE_WATCH) {
     // analogue clock
     drawAnalogClock();
+  } else if (watchType == QLOCKTWO_WATCH) {
+    // analogue clock
+    drawQlockTwo();
   }
 
   // draw the screen
@@ -482,7 +489,10 @@ void drawSolarArc(uint32_t sunrise_timestamp, uint32_t sunset_timestamp, uint32_
   lv_obj_t *day_label_title = lv_label_create(solar_cont);
   lv_obj_set_style_text_font(day_label_title, &lv_font_montserrat_14, LV_PART_MAIN);
   lv_obj_set_style_text_color(day_label_title, GetTheme(THEME_DATE_DATA), LV_PART_MAIN);
-  lv_label_set_text(day_label_title, "Day");
+  if (is_night)
+    lv_label_set_text(day_label_title, "Night");
+  else
+    lv_label_set_text(day_label_title, "Day");
   lv_obj_align(day_label_title, LV_ALIGN_CENTER, 0, 25);
 }
 
@@ -514,7 +524,7 @@ static lv_point_precise_t hour_points[2] = { { 60, 60 }, { 60, 30 } };
 static lv_point_precise_t min_points[2] = { { 60, 60 }, { 60, 15 } };
 
 void drawAnalogClock() {
-  lv_color_t main_white = lv_color_white();                        // Knackiges Weiß für Ziffern & Hauptstriche
+  lv_color_t main_white = color_text;                              // Knackiges Weiß für Ziffern & Hauptstriche
   lv_color_t minor_gray = lv_palette_lighten(LV_PALETTE_GREY, 2);  // Klares Hellgrau für Zwischenstriche
   lv_color_t accent_color = GetTheme(THEME_DATE_DATA);             // Deine Datumsfarbe
 
@@ -679,11 +689,11 @@ void drawUVI(double uvi_val) {
   lv_arc_set_range(uvi_arc, 0, 110);
 
   // 2. Die 5 Hintergrund-Segmente mit helleren Farben und 5px Stärke
-  lv_color_t color_low = lv_palette_main(LV_PALETTE_GREEN);   // Helles Grün
-  lv_color_t color_mod = lv_palette_main(LV_PALETTE_YELLOW);  // Helles Gelb
+  lv_color_t color_low = lv_palette_main(LV_PALETTE_GREEN);    // Helles Grün
+  lv_color_t color_mod = lv_palette_main(LV_PALETTE_YELLOW);   // Helles Gelb
   lv_color_t color_high = lv_palette_main(LV_PALETTE_ORANGE);  // Helles Orange
-  lv_color_t color_very = lv_palette_main(LV_PALETTE_RED);  // Helles Rot
-  lv_color_t color_ext = lv_palette_main(LV_PALETTE_PURPLE);  // Helles Violett
+  lv_color_t color_very = lv_palette_main(LV_PALETTE_RED);     // Helles Rot
+  lv_color_t color_ext = lv_palette_main(LV_PALETTE_PURPLE);   // Helles Violett
 
   for (int i = 0; i < 5; i++) {
     lv_obj_t *background_arc = lv_arc_create(uvi_control);
@@ -735,4 +745,156 @@ void drawUVI(double uvi_val) {
   char buf[16];
   lv_snprintf(buf, sizeof(buf), "%.1f", uvi_val);
   lv_label_set_text(uvi_label_value, buf);
+}
+
+// Hilfsfunktion: Setze Wortbereich auf aktiv
+void set_range(bool mask[10][11], int start_idx, int end_idx) {
+  for (int i = start_idx; i <= end_idx; i++) {
+    mask[i / 11][i % 11] = true;
+  }
+}
+
+lv_obj_t *matrix_labels[10][11];
+lv_obj_t *corner_dots[4];
+
+// Matrix der Buchstaben
+const char *grid = "ITLISASAMPM"
+                   "ACQUARTERDC"
+                   "TWENTYFIVEX"
+                   "HALFSTENFTO"
+                   "PASTERUNINE"
+                   "ONESIXTHREE"
+                   "FOURFIVETWO"
+                   "EIGHTELEVEN"
+                   "SEVENTWELVE"
+                   "TENSEOCLOCK";
+
+void drawQlockTwo() {
+  // --------------------
+  // get time
+  struct tm timeinfo;
+  int hour;
+  int minute;
+  if (!getLocalTime(&timeinfo)) {
+    return;
+  }
+  char buf[6];
+  snprintf(buf, sizeof(buf), "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
+  hour = timeinfo.tm_hour;
+  minute = timeinfo.tm_min;
+
+  // ----------------------------
+  // create watch
+  lv_obj_t *cont = lv_obj_create(screen);
+  lv_obj_set_size(cont, 170, 170);
+  lv_obj_align(cont, LV_ALIGN_TOP_LEFT, 35, 35);  // Abstand 10 von links und oben
+  lv_obj_set_style_pad_all(cont, 0, 0);
+  lv_obj_set_style_border_width(cont, 0, 0);
+  lv_obj_set_style_bg_color(cont, color_bg, 0);
+  lv_obj_set_scrollbar_mode(cont, LV_SCROLLBAR_MODE_OFF);
+
+  // Grid-Layout erstellen
+  lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW_WRAP);
+
+  for (int i = 0; i < 110; i++) {
+    matrix_labels[i / 11][i % 11] = lv_label_create(cont);
+    lv_label_set_text_fmt(matrix_labels[i / 11][i % 11], "%c", grid[i]);
+    lv_obj_set_style_text_font(matrix_labels[i / 11][i % 11], &lv_font_unscii_8, 0);
+  }
+
+  // Corner Dots (Minimalistisch in den Ecken des 120x120 Bereichs)
+  // Erstelle die Dots direkt auf dem Screen, NICHT im cont
+  for (int i = 0; i < 4; i++) {
+    corner_dots[i] = lv_obj_create(screen);  // statt cont
+    lv_obj_set_size(corner_dots[i], 6, 6);
+    lv_obj_set_style_radius(corner_dots[i], LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_border_width(corner_dots[i], 0, 0);  // Wichtig, damit sie keine Ränder haben
+  }
+  // Jetzt funktionieren die Align-Befehle, da sie sich auf den Screen beziehen
+  int x = 25;
+  lv_obj_align(corner_dots[0], LV_ALIGN_TOP_LEFT, x, x);
+  lv_obj_align(corner_dots[1], LV_ALIGN_TOP_RIGHT, -x, x);
+  lv_obj_align(corner_dots[2], LV_ALIGN_BOTTOM_LEFT, x, -x);
+  lv_obj_align(corner_dots[3], LV_ALIGN_BOTTOM_RIGHT, -x, -x);
+
+  // -----------------------
+  // update time on watch
+  bool mask[10][11] = { false };
+
+  // 1. "IT IS" immer aktiv
+  set_range(mask, 0, 1);
+  set_range(mask, 3, 4);
+
+  // 2. Minuten-Logik
+  int m = (minute / 5) * 5;
+
+  if (m == 5) set_range(mask, 28, 31);   // FIVE
+  if (m == 10) set_range(mask, 38, 40);  // TEN
+  if (m == 15) set_range(mask, 13, 19);  // QUARTER
+  if (m == 20) set_range(mask, 22, 27);  // TWENTY
+  if (m == 25) {
+    set_range(mask, 22, 27);
+    set_range(mask, 28, 31);
+  }                                      // TWENTY FIVE
+  if (m == 30) set_range(mask, 33, 36);  // HALF
+  if (m == 35) {
+    set_range(mask, 22, 27);
+    set_range(mask, 28, 31);
+  }                                          // TWENTY FIVE (vor der Stunde)
+  if (m == 40) { set_range(mask, 22, 27); }  // TWENTY (vor der Stunde)
+  if (m == 45) { set_range(mask, 13, 19); }  // QUARTER (vor der Stunde)
+  if (m == 50) { set_range(mask, 38, 41); }  // TEN (vor der Stunde)
+  if (m == 55) { set_range(mask, 28, 31); }  // FIVE (vor der Stunde)
+
+  if (m > 0 && m < 35) set_range(mask, 44, 47);  // PAST
+  if (m > 30) set_range(mask, 42, 43);           // TO
+
+  // 3. Stunden-Logik
+  // Korrektur: m >= 30, damit bei 12:30 bereits "HALF PAST" und "ONE" (bzw. die nächste Stunde) greift
+  int h = (m >= 30) ? (hour + 1) : hour;
+  if (h >= 12) h -= 12;  // 13:00 wird zu 1:00, 24:00 zu 0:00
+  if (h == 0) h = 12;    // 0:00 oder 12:00 auf 12 setzen
+
+  /* const char* grid = "ITLISASAMPM" //  0-10
+                      "ACQUARTERDC" // 11-21
+                      "TWENTYFIVEX" // 22-32
+                      "HALFSTENFTO" // 33-43
+                      "PASTERUNINE" // 44-54
+                      "ONESIXTHREE" // 55-65
+                      "FOURFIVETWO" // 66-76
+                      "EIGHTELEVEN" // 77-87
+                      "SEVENTWELVE" // 88-98
+                      "TENSEOCLOCK";// 99-109 */
+  Serial.printf("Stunde: %d, Minute: %d\n", h, m);
+
+  switch (h) {
+    case 1: set_range(mask, 55, 57); break;    // ONE
+    case 2: set_range(mask, 74, 76); break;    // TWO
+    case 3: set_range(mask, 61, 65); break;    // THREE
+    case 4: set_range(mask, 66, 69); break;    // FOUR
+    case 5: set_range(mask, 70, 73); break;    // FIVE
+    case 6: set_range(mask, 58, 60); break;    // SIX
+    case 7: set_range(mask, 88, 92); break;    // SEVEN
+    case 8: set_range(mask, 77, 81); break;    // EIGHT
+    case 9: set_range(mask, 51, 54); break;    // NINE
+    case 10: set_range(mask, 99, 101); break;  // TEN
+    case 11: set_range(mask, 82, 87); break;   // ELEVEN
+    case 12: set_range(mask, 93, 98); break;   // TWELVE
+  }
+
+  if (m == 0) set_range(mask, 104, 109);  // OCLOCK
+
+  // UI Update
+  for (int r = 0; r < 10; r++) {
+    for (int c = 0; c < 11; c++) {
+      lv_obj_set_style_text_color(matrix_labels[r][c],
+                                  mask[r][c] ? GetTheme(THEME_TIME_DATA) : lv_palette_darken(LV_PALETTE_GREY, 4), 0);
+    }
+  }
+
+  // Dots
+  for (int i = 0; i < 4; i++) {
+    lv_obj_set_style_bg_color(corner_dots[i],
+                              (i < (minute % 5)) ? GetTheme(THEME_TIME_DATA) : lv_palette_darken(LV_PALETTE_GREY, 4), 0);
+  }
 }

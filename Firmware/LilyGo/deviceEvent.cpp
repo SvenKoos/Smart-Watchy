@@ -317,7 +317,7 @@ lv_obj_t* prepareAlertScreen(int count) {
   // --- MESSAGE TEXT ---
   labelTitleBody = lv_label_create(card);
   lv_obj_set_style_text_font(labelTitleBody, &watchface_font, LV_PART_MAIN);
-  lv_obj_set_style_text_color(labelTitleBody, lv_color_white(), LV_PART_MAIN);
+  lv_obj_set_style_text_color(labelTitleBody, color_text, LV_PART_MAIN);
   
   lv_label_set_long_mode(labelTitleBody, LV_LABEL_LONG_WRAP);
   lv_obj_set_width(labelTitleBody, lv_pct(92));

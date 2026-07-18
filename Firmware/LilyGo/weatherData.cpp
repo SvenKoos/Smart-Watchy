@@ -123,7 +123,7 @@ locationData getReverseLocation(double latitude, double longitude, String url, S
 
 			// create short city name for display
 			String name;
-			int maxNameLength = 12;
+			int maxNameLength = 9;
 			if (strlen(currentLocation.city) > maxNameLength) {
 				name = String(currentLocation.city, maxNameLength - 1);
 				if (name[maxNameLength - 2] != ' ') {

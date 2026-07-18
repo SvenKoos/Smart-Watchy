@@ -433,18 +433,21 @@ static lv_obj_t *subStepCounterFunction(lv_obj_t *menu) {
 }
 
 // Event-Callback für die Radio-Buttons
-static void watch_type_event_cb(lv_event_t * e) {
-    lv_obj_t * obj = (lv_obj_t *)lv_event_get_target(e);
-    uint32_t id = lv_buttonmatrix_get_selected_button(obj);
-    
-    if(id == 0) {
-        watchType = ANALOGUE_WATCH;
-        Serial.println("Watch type set to: ANALOGUE");
-    } else if(id == 1) {
-        watchType = DIGITAL_WATCH;
-        Serial.println("Watch type set to: DIGITAL");
-    }
-    // Hier kannst du in Zukunft einfach erweitern: else if(id == 2) { ... }
+static void watch_type_event_cb(lv_event_t *e) {
+  lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+  uint32_t id = lv_buttonmatrix_get_selected_button(obj);
+
+  if (id == 0) {
+    watchType = ANALOGUE_WATCH;
+    Serial.println("Watch type set to: ANALOGUE");
+  } else if (id == 1) {
+    watchType = DIGITAL_WATCH;
+    Serial.println("Watch type set to: DIGITAL");
+  } else if (id == 2) {
+    watchType = QLOCKTWO_WATCH;
+    Serial.println("Watch type set to: QLOCKTWO");
+  }
+  // Hier kannst du in Zukunft einfach erweitern: else if(id == 2) { ... }
 }
 
 static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
@@ -455,28 +458,27 @@ static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
 
   /* Sub-Page und Container erstellen */
   lv_obj_t *pageSub = lv_menu_page_create(menu, NULL);
-  
+
   // Wir nutzen hier ein einfaches Flex-Layout im Container, damit die Elemente untereinander stehen
   lv_obj_t *contSub = lv_menu_cont_create(pageSub);
   lv_obj_set_flex_flow(contSub, LV_FLEX_FLOW_COLUMN);
-  lv_obj_set_style_pad_all(contSub, 10, 0);
-  lv_obj_set_style_pad_row(contSub, 15, 0); // Abstand zwischen den Zeilen (Titel und Buttons)
 
   // 1. Statischer Titel oben
   labelWatchType = lv_label_create(contSub);
   lv_obj_set_style_text_font(labelWatchType, &lv_font_montserrat_18, LV_PART_MAIN);
-  lv_obj_set_style_text_color(labelWatchType, lv_color_white(), LV_PART_MAIN);
+  lv_obj_set_style_text_color(labelWatchType, color_text, LV_PART_MAIN);
   lv_label_set_text(labelWatchType, "Watch Type");
-  registerDefaultEvents(labelWatchType); // Deine Event-Registrierung beibehalten
+  registerDefaultEvents(labelWatchType);  // Deine Event-Registrierung beibehalten
 
   // 2. Die Radio-Button-Matrix erstellen
   // WICHTIG: Die Namen der Buttons. Das "\n" sorgt dafür, dass sie UNTEREINANDER stehen!
-  static const char * btn_map[] = {"Analog", "\n", "Digital", ""};
+  static const char *btn_map[] = { "Analog", "\n", "Digital", "\n", "QlockTwo", "" };
 
-  lv_obj_t * radio_matrix = lv_buttonmatrix_create(contSub);
+  lv_obj_t *radio_matrix = lv_buttonmatrix_create(contSub);
   lv_buttonmatrix_set_map(radio_matrix, btn_map);
   lv_obj_set_width(radio_matrix, lv_pct(100));
-  
+  lv_obj_set_height(radio_matrix, 180); // Setze eine größere Höhe
+
   // Button-Matrix optisch aufräumen (kein Hintergrund, flacher Look)
   lv_obj_set_style_bg_opa(radio_matrix, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(radio_matrix, 0, 0);
@@ -489,21 +491,14 @@ static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
 
   // 3. Den aktuell aktiven Status beim Öffnen der Seite vorselektieren
   if (watchType == ANALOGUE_WATCH) {
-      lv_buttonmatrix_set_button_ctrl(radio_matrix, 0, LV_BUTTONMATRIX_CTRL_CHECKED);
+    lv_buttonmatrix_set_button_ctrl(radio_matrix, 0, LV_BUTTONMATRIX_CTRL_CHECKED);
+  } else if (watchType == DIGITAL_WATCH) {
+    lv_buttonmatrix_set_button_ctrl(radio_matrix, 1, LV_BUTTONMATRIX_CTRL_CHECKED);
   } else {
-      lv_buttonmatrix_set_button_ctrl(radio_matrix, 1, LV_BUTTONMATRIX_CTRL_CHECKED);
+    lv_buttonmatrix_set_button_ctrl(radio_matrix, 2, LV_BUTTONMATRIX_CTRL_CHECKED);
   }
 
-  // 4. Styles für die gedrückten/aktiven Zustände verpassen
-  // Wenn ausgewählt, leuchtet der Button in deiner Alert/Theme-Farbe
-  // lv_obj_set_style_bg_color(radio_matrix, GetTheme(THEME_ALERT_DATA), LV_PART_ITEMS | LV_STATE_CHECKED);
-  // lv_obj_set_style_text_color(radio_matrix, lv_color_white(), LV_PART_ITEMS | LV_STATE_CHECKED);
-  
-  // Unausgewählte Buttons dezent grau/dunkel halten
-  // lv_obj_set_style_bg_color(radio_matrix, lv_palette_darken(LV_PALETTE_GREY, 3), LV_PART_ITEMS);
-  // lv_obj_set_style_text_color(radio_matrix, lv_palette_lighten(LV_PALETTE_GREY, 1), LV_PART_ITEMS);
-
-  lv_obj_set_style_radius(radio_matrix, 8, LV_PART_ITEMS); // Leicht abgerundete Ecken für die Buttons
+  lv_obj_set_style_radius(radio_matrix, 8, LV_PART_ITEMS);  // Leicht abgerundete Ecken für die Buttons
   lv_obj_set_style_text_font(radio_matrix, &lv_font_montserrat_18, LV_PART_MAIN);
 
   // Event-Handler anhängen
@@ -599,9 +594,9 @@ static lv_obj_t *subRefreshDataFunction(lv_obj_t *menu) {
 
 void menuHandler() {
   // 1. Basis-Farben und Themes holen
-  lv_color_t item_bg_color = lv_palette_darken(LV_PALETTE_BLUE_GREY, 4); // Elegantes Anthrazit analog zur Message-Card
-  lv_color_t text_color_main = lv_color_white();        // Text knackig weiß für Lesbarkeit
-  lv_color_t accent_color = GetTheme(THEME_MENU); // Deine System-Akzentfarbe
+  lv_color_t item_bg_color = lv_palette_darken(LV_PALETTE_BLUE_GREY, 4);  // Elegantes Anthrazit analog zur Message-Card
+  lv_color_t text_color_main = lv_color_white();                          // Text knackig weiß für Lesbarkeit
+  lv_color_t accent_color = GetTheme(THEME_MENU);                         // Deine System-Akzentfarbe
 
   // menu erstellen
   lv_obj_t *menu = lv_menu_create(lv_screen_active());
@@ -614,9 +609,9 @@ void menuHandler() {
   // Basis-Style für das Menü-Hintergrund-System
   lv_obj_set_style_bg_color(menu, color_bg, 0);
   lv_obj_set_style_border_width(menu, 0, 0);
-  lv_obj_set_style_pad_all(menu, 0, 0); // Platz maximal ausnutzen
+  lv_obj_set_style_pad_all(menu, 0, 0);  // Platz maximal ausnutzen
 
-  // 
+  //
   lv_obj_set_style_text_color(menu, lv_palette_lighten(LV_PALETTE_GREY, 2), 0);
 
   // Spinner für Ladezeit
@@ -630,13 +625,13 @@ void menuHandler() {
   lv_obj_set_style_pad_bottom(back_btn, 12, LV_PART_MAIN);
   lv_obj_set_style_pad_left(back_btn, 8, LV_PART_MAIN);
   // Vererbungsschutz und Hintergrundfarbe
-  lv_obj_set_style_text_opa(back_btn, LV_OPA_TRANSP, LV_PART_MAIN); 
+  lv_obj_set_style_text_opa(back_btn, LV_OPA_TRANSP, LV_PART_MAIN);
   lv_obj_set_style_bg_color(back_btn, color_bg, LV_PART_MAIN);
   // Dein Label erstellen
   lv_obj_t *back_button_label = lv_label_create(back_btn);
   lv_obj_set_style_text_font(back_button_label, &lv_font_montserrat_26, LV_PART_MAIN);
   lv_obj_set_style_text_color(back_button_label, accent_color, LV_PART_MAIN);
-  lv_obj_set_style_text_opa(back_button_label, LV_OPA_COVER, LV_PART_MAIN); 
+  lv_obj_set_style_text_opa(back_button_label, LV_OPA_COVER, LV_PART_MAIN);
   lv_label_set_text(back_button_label, LV_SYMBOL_LEFT " Back");
 
   // Gemeinsamer Style für alle Menü-Container (Kacheln)
@@ -644,17 +639,17 @@ void menuHandler() {
   lv_style_init(&styleCont);
   lv_style_set_bg_color(&styleCont, item_bg_color);
   lv_style_set_bg_opa(&styleCont, LV_OPA_COVER);
-  lv_style_set_radius(&styleCont, 10);                     // Schön abgerundete Ecken
+  lv_style_set_radius(&styleCont, 10);  // Schön abgerundete Ecken
   lv_style_set_border_width(&styleCont, 0);
-  lv_style_set_pad_all(&styleCont, 12);                    // Genug Touch-Fläche im Inneren
-  lv_style_set_margin_bottom(&styleCont, 8);               // Abstand zur nächsten Kachel
-  lv_style_set_margin_left(&styleCont, 8);                 // Abstand zum Displayrand links
-  lv_style_set_margin_right(&styleCont, 8);                // Abstand zum Displayrand rechts
+  lv_style_set_pad_all(&styleCont, 12);       // Genug Touch-Fläche im Inneren
+  lv_style_set_margin_bottom(&styleCont, 8);  // Abstand zur nächsten Kachel
+  lv_style_set_margin_left(&styleCont, 8);    // Abstand zum Displayrand links
+  lv_style_set_margin_right(&styleCont, 8);   // Abstand zum Displayrand rechts
 
   // Gemeinsamer Style für die Labeltexte
   static lv_style_t styleLabel;
   lv_style_init(&styleLabel);
-  lv_style_set_text_font(&styleLabel, &lv_font_montserrat_26); // Etwas schlanker als 34 für Icon-Platz
+  lv_style_set_text_font(&styleLabel, &lv_font_montserrat_26);  // Etwas schlanker als 34 für Icon-Platz
   lv_style_set_text_color(&styleLabel, text_color_main);
 
   // Create a main page
@@ -688,7 +683,7 @@ void menuHandler() {
   lv_obj_add_event_cb(cont, eventFunctionTotpCB, LV_EVENT_CLICKED, menu);
   label = lv_label_create(cont);
   lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_EYE_OPEN "  TOTP"); // Schlüssel-Icon vorangestellt
+  lv_label_set_text(label, LV_SYMBOL_EYE_OPEN "  TOTP");  // Schlüssel-Icon vorangestellt
   lv_menu_set_load_page_event(menu, cont, subTotpFunction(menu));
 
   // --- ITEM: LORA MESSAGES ---
@@ -697,7 +692,7 @@ void menuHandler() {
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
   lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_ENVELOPE "  LoRa Msg"); // Brief-Icon
+  lv_label_set_text(label, LV_SYMBOL_ENVELOPE "  LoRa Msg");  // Brief-Icon
   lv_menu_set_load_page_event(menu, cont, subLoRaMsgFunction(menu));
 
   // --- ITEM: Refresh Data ---
@@ -706,7 +701,7 @@ void menuHandler() {
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
   lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_REFRESH "  New Data"); // Refresh Icon
+  lv_label_set_text(label, LV_SYMBOL_REFRESH "  New Data");  // Refresh Icon
   lv_menu_set_load_page_event(menu, cont, subRefreshDataFunction(menu));
 
   // --- ITEM: BATTERY ---
@@ -715,7 +710,7 @@ void menuHandler() {
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
   lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_CHARGE "  Battery"); // Batterie/Lade-Icon
+  lv_label_set_text(label, LV_SYMBOL_CHARGE "  Battery");  // Batterie/Lade-Icon
   lv_menu_set_load_page_event(menu, cont, subBatteryFunction(menu));
 
   // --- ITEM: STEPS ---
@@ -724,7 +719,7 @@ void menuHandler() {
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
   lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_IMAGE "  Steps"); // Platzhalter für Aktivität
+  lv_label_set_text(label, LV_SYMBOL_IMAGE "  Steps");  // Platzhalter für Aktivität
   lv_menu_set_load_page_event(menu, cont, subStepCounterFunction(menu));
 
   // --- ITEM: Watch Type ---
@@ -733,7 +728,7 @@ void menuHandler() {
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
   lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_SETTINGS "  Watch"); // Platzhalter für Aktivität
+  lv_label_set_text(label, LV_SYMBOL_SETTINGS "  Watch");  // Platzhalter für Aktivität
   lv_menu_set_load_page_event(menu, cont, subWatchTypeFunction(menu));
 
   // --- ITEM: ABOUT ---
@@ -742,15 +737,15 @@ void menuHandler() {
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
   lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_LIST "  About"); // Info-i Icon
+  lv_label_set_text(label, LV_SYMBOL_LIST "  About");  // Info-i Icon
   lv_menu_set_load_page_event(menu, cont, subAboutFunction(menu));
 
   // --- SYSTEM SEPARATOR (Dezente Linie statt Unterstrichen) ---
   cont = lv_menu_cont_create(pageMain);
   lv_obj_set_size(cont, lv_pct(100), 20);
-  lv_obj_set_style_bg_opa(cont, LV_OPA_TRANSP, 0); // Container unsichtbar machen
+  lv_obj_set_style_bg_opa(cont, LV_OPA_TRANSP, 0);  // Container unsichtbar machen
   lv_obj_set_style_border_width(cont, 0, 0);
-  lv_obj_t *line = lv_obj_create(cont);            // Echte feine Linie einziehen
+  lv_obj_t *line = lv_obj_create(cont);  // Echte feine Linie einziehen
   lv_obj_set_size(line, lv_pct(90), 1);
   lv_obj_center(line);
   lv_obj_set_style_bg_color(line, lv_palette_darken(LV_PALETTE_BLUE_GREY, 3), 0);
@@ -762,7 +757,7 @@ void menuHandler() {
   lv_obj_add_event_cb(cont, eventFunctionWifiCB, LV_EVENT_CLICKED, menu);
   label = lv_label_create(cont);
   lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_WIFI "  WiFi"); // WiFi-Icon
+  lv_label_set_text(label, LV_SYMBOL_WIFI "  WiFi");  // WiFi-Icon
   lv_menu_set_load_page_event(menu, cont, subWifiFunction(menu));
 
   // spinner löschen
