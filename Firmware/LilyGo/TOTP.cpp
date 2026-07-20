@@ -82,7 +82,7 @@ String calculateTotpCode() {
   uint32_t finalCode = truncatedHash % 1000000;
 
   // Als 6-stelligen String mit führenden Nullen zurückgeben
-  char buf[8];
-  sprintf(buf, "%06u", finalCode);
+  char buf[12];
+  snprintf(buf, sizeof(buf), "%06u", finalCode);
   return String(buf);
 }

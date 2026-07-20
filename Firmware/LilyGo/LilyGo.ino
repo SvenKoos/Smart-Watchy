@@ -51,8 +51,7 @@ RTC_DATA_ATTR bool bleBonded = false;
 RTC_DATA_ATTR uint8_t binKey[32];
 RTC_DATA_ATTR int keyLen = 0;
 
-// int watchType = DIGITAL_WATCH;
-int watchType = QLOCKTWO_WATCH;
+int watchType = DIGITAL_WATCH;
 
 bool newAlertsIndicator = false;
 

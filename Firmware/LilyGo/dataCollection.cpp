@@ -33,6 +33,7 @@ extern alertData currentAlerts;
 extern powerData currentPower;
 extern accellData currentAccelleration;
 
+RTC_DATA_ATTR int weatherIntervalCounter;
 RTC_DATA_ATTR int locationIntervalCounter;
 
 String scannedWifiNetworks;
@@ -42,6 +43,7 @@ void setupDataCollection() {
 
   scannedWifiNetworks.clear();
 
+  weatherIntervalCounter = -1;
   locationIntervalCounter = -1;
 }
 
@@ -61,10 +63,16 @@ void collectData(void) {
   currentAccelleration = getAccellData();
 
   if (currentAccelleration.isMoved) {
-    if ((locationIntervalCounter >= settings.locationUpdateInterval) || (locationIntervalCounter < 0)) {  // only update if UPDATE_INTERVAL has elapsed
+    if (locationIntervalCounter < 0) {  //-1 on first run, set to updateInterval
+      locationIntervalCounter = settings.locationUpdateInterval;
+    }
+
+    if (locationIntervalCounter >= settings.locationUpdateInterval) {  // only update if UPDATE_INTERVAL has elapsed
       scannedWifiNetworks = discoverWiFiNetworks();
+
+      locationIntervalCounter = 0;
     } else {
-      scannedWifiNetworks.clear();
+      locationIntervalCounter++;
     }
 
     if (connectWiFi(localIP, gatewayIP, macAdress)) {
@@ -76,11 +84,11 @@ void collectData(void) {
       strncpy(currentLocation.gatewayIP, gatewayIP.c_str(), sizeof(currentLocation.gatewayIP) - 1);
       currentLocation.gatewayIP[sizeof(currentLocation.gatewayIP) - 1] = '\0';
 
-      if (locationIntervalCounter < 0) {  //-1 on first run, set to updateInterval
-        locationIntervalCounter = settings.locationUpdateInterval;
+      if (weatherIntervalCounter < 0) {  //-1 on first run, set to updateInterval
+        weatherIntervalCounter = settings.weatherUpdateInterval;
       }
 
-      if (locationIntervalCounter >= settings.locationUpdateInterval) {  // only update if UPDATE_INTERVAL has elapsed
+      if (weatherIntervalCounter >= settings.weatherUpdateInterval) {  // only update if UPDATE_INTERVAL has elapsed
         // 1. Google Geolocation
         if (scannedWifiNetworks.length() > 0) {
           currentLocation = getLocationDataGoogle(settings.googleGeoLocationURL, settings.googleApiKey, scannedWifiNetworks);
@@ -113,11 +121,11 @@ void collectData(void) {
           currentWeather = getWeatherDataByLocation(ltd, lng, settings.weatherUnit,
                                                     settings.weatherLang, settings.weatherURL,
                                                     settings.weatherAPIKey);
-        } 
+        }
 
-        locationIntervalCounter = 0;
+        weatherIntervalCounter = 0;
       } else {
-        locationIntervalCounter++;
+        weatherIntervalCounter++;
       }
 
       // get alert data

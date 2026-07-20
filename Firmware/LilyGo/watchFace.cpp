@@ -829,7 +829,7 @@ void drawQlockTwo() {
   int m = (minute / 5) * 5;
 
   if (m == 5) set_range(mask, 28, 31);   // FIVE
-  if (m == 10) set_range(mask, 38, 40);  // TEN
+  if (m == 10) set_range(mask, 38, 39);  // TEN
   if (m == 15) set_range(mask, 13, 19);  // QUARTER
   if (m == 20) set_range(mask, 22, 27);  // TWENTY
   if (m == 25) {
@@ -855,7 +855,7 @@ void drawQlockTwo() {
   if (h >= 12) h -= 12;  // 13:00 wird zu 1:00, 24:00 zu 0:00
   if (h == 0) h = 12;    // 0:00 oder 12:00 auf 12 setzen
 
-  /* const char* grid = "ITLISASAMPM" //  0-10
+  /* const char* grid="ITLISASAMPM" //  0-10
                       "ACQUARTERDC" // 11-21
                       "TWENTYFIVEX" // 22-32
                       "HALFSTENFTO" // 33-43

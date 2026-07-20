@@ -7,7 +7,7 @@
 #define TEMP_LANG "en"
 #define NTP_SERVER "pool.ntp.org"
 #define GEOIP_URL "http://ipwho.is"  //  GeoIP (Get IP address location in JSON format)
-#define LOCATION_UPDATE_INTERVAL 15
+#define WEATHER_UPDATE_INTERVAL 15
 #define WIFI_SSID "--------"
 #define WIFI_PWD "--------"
 #define TOTP_ACCOUNT "----------------"
@@ -18,6 +18,7 @@
 #define GOOGLE_APIKEY "--------------------------------"
 #define GOOGLE_LOCATION_URL "https://www.googleapis.com/geolocation/v1/geolocate"
 #define REVERSE_LOCATION_URL "https://api.openweathermap.org/geo/1.0/reverse"
+#define LOCATION_UPDATE_INTERVAL 120 
 
 typedef struct lilygoSettings {
   // Weather Settings
@@ -25,6 +26,7 @@ typedef struct lilygoSettings {
   String weatherURL;
   String weatherUnit;
   String weatherLang;
+  int8_t weatherUpdateInterval;
   // NTP Settings
   String ntpServer;
   int dstOffset;

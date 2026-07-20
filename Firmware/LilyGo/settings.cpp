@@ -26,7 +26,7 @@ lilygoSettings setSetting() {
   settings.ntpServer = NTP_SERVER;
   settings.dstOffset = 0;
   settings.geoipURL = GEOIP_URL;
-  settings.locationUpdateInterval = LOCATION_UPDATE_INTERVAL;
+  settings.weatherUpdateInterval = WEATHER_UPDATE_INTERVAL;
   settings.wifiSSID = WIFI_SSID;
   settings.wifiPwd = WIFI_PWD;
   settings.totpAccount = TOTP_ACCOUNT;
@@ -36,6 +36,7 @@ lilygoSettings setSetting() {
   settings.googleApiKey = GOOGLE_APIKEY;
   settings.googleGeoLocationURL = GOOGLE_LOCATION_URL;
   settings.weatherReverseLocationURL = REVERSE_LOCATION_URL;
+  settings.locationUpdateInterval = LOCATION_UPDATE_INTERVAL;
 
   settings.displayBGrndBlack = BACKGROUND_BLACK;
   setTheme(settings.displayBGrndBlack);

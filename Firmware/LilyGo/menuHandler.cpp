@@ -15,6 +15,7 @@
 #include "alertData.h"
 #include "lora.h"
 
+extern int weatherIntervalCounter;
 extern int locationIntervalCounter;
 extern int guiState;
 extern lilygoSettings settings;
@@ -583,6 +584,7 @@ static lv_obj_t *subRefreshDataFunction(lv_obj_t *menu) {
   lv_label_set_long_mode(labelRefreshData, LV_LABEL_LONG_WRAP);
   registerDefaultEvents(labelRefreshData);
 
+  weatherIntervalCounter = -1;
   locationIntervalCounter = -1;
 
   char refreshDataText[256] = "";
