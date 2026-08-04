@@ -33,6 +33,10 @@ extern alertData currentAlerts;
 extern powerData currentPower;
 extern accellData currentAccelleration;
 
+extern String lastLocalIP;
+extern String lastGatewayIP;
+extern String lastMACAdress;
+
 RTC_DATA_ATTR int weatherIntervalCounter;
 RTC_DATA_ATTR int locationIntervalCounter;
 
@@ -83,6 +87,11 @@ void collectData(void) {
       currentLocation.localIP[sizeof(currentLocation.localIP) - 1] = '\0';
       strncpy(currentLocation.gatewayIP, gatewayIP.c_str(), sizeof(currentLocation.gatewayIP) - 1);
       currentLocation.gatewayIP[sizeof(currentLocation.gatewayIP) - 1] = '\0';
+
+      // store last IP data
+      lastLocalIP = localIP;
+      lastGatewayIP = gatewayIP;
+      lastMACAdress = macAdress;
 
       if (weatherIntervalCounter < 0) {  //-1 on first run, set to updateInterval
         weatherIntervalCounter = settings.weatherUpdateInterval;

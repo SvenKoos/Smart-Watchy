@@ -28,6 +28,10 @@ extern lv_color_t color_text;
 
 extern int watchType;
 
+extern String lastLocalIP;
+extern String lastGatewayIP;
+extern String lastMACAdress;
+
 static lv_obj_t *pageMain;
 static lv_obj_t *labelWifi;
 static lv_obj_t *labelAbout;
@@ -151,27 +155,14 @@ static lv_obj_t *subAboutFunction(lv_obj_t *menu) {
   lv_label_set_long_mode(labelAbout, LV_LABEL_LONG_WRAP);
   registerDefaultEvents(labelAbout);
 
-  char aboutText[128] = "";
-  String localIP;
-  String gatewayIP;
-  String macAdress;
+  char aboutText[256] = "";
 
-  // connect WiFi
-  if (connectWiFi(localIP, gatewayIP, macAdress)) {
-    strcpy(aboutText, "About Smart Watchy:\n - Local IP\n   ");
-    strcat(aboutText, localIP.c_str());
-    strcat(aboutText, "\n - Router IP\n   ");
-    strcat(aboutText, gatewayIP.c_str());
-    strcat(aboutText, "\n - WiFi MAC\n   ");
-    strcat(aboutText, macAdress.c_str());
-  } else {
-    strcpy(aboutText, "WiFi Not Configured\n");
-  }
-  // spinner
-  lv_refr_now(NULL);
-
-  // disconnect WiFi
-  disconnectWifi();
+  strcpy(aboutText, "About Smart Watchy:\n - Last local IP\n   ");
+  strcat(aboutText, lastLocalIP.c_str());
+  strcat(aboutText, "\n - Last router IP\n   ");
+  strcat(aboutText, lastGatewayIP.c_str());
+  strcat(aboutText, "\n - WiFi MAC\n   ");
+  strcat(aboutText, lastMACAdress.c_str());
 
   // BLE
   uint8_t mac[6];
@@ -478,7 +469,7 @@ static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
   lv_obj_t *radio_matrix = lv_buttonmatrix_create(contSub);
   lv_buttonmatrix_set_map(radio_matrix, btn_map);
   lv_obj_set_width(radio_matrix, lv_pct(100));
-  lv_obj_set_height(radio_matrix, 180); // Setze eine größere Höhe
+  lv_obj_set_height(radio_matrix, 180);  // Setze eine größere Höhe
 
   // Button-Matrix optisch aufräumen (kein Hintergrund, flacher Look)
   lv_obj_set_style_bg_opa(radio_matrix, LV_OPA_TRANSP, 0);

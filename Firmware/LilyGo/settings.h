@@ -18,7 +18,7 @@
 #define GOOGLE_APIKEY "--------------------------------"
 #define GOOGLE_LOCATION_URL "https://www.googleapis.com/geolocation/v1/geolocate"
 #define REVERSE_LOCATION_URL "https://api.openweathermap.org/geo/1.0/reverse"
-#define LOCATION_UPDATE_INTERVAL 120 
+#define LOCATION_UPDATE_INTERVAL 1440
 
 typedef struct lilygoSettings {
   // Weather Settings
