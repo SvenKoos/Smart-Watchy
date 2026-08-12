@@ -29,7 +29,7 @@ lv_style_t styleAlerts;
 lv_obj_t* labelTime;
 lv_obj_t* labelApp;
 lv_obj_t* labelTitleBody;
-lv_obj_t *dots_container = NULL; // Speichert den Container für die Punkte
+lv_obj_t* dots_container = NULL;  // Speichert den Container für die Punkte
 
 uint32_t last_gesture_time = 0;
 
@@ -70,10 +70,6 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
       case PMU_EVENT_KEY_CLICKED:
         Serial.println("Power button is clicked");
 
-        // set brightness
-        displayWakup();
-        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
-
         handle_button_emergency_reset();
 
         if (guiState == DARK_STATE) {
@@ -87,6 +83,11 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
           // call the menu
           menuHandler();
         }
+
+        // sequence: update content, wake-up display, set brightness
+        lv_timer_handler();
+        displayWakup();
+        startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         break;
       case PMU_EVENT_KEY_LONG_PRESSED:
@@ -106,9 +107,10 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
         currentAccelleration.isMoved = true;
         drawWatchFace();
 
+        // sequence: update content, wake-up display, set brightness
+        lv_timer_handler();
         displayWakup();
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
-
         break;
       case PMU_EVENT_USBC_INSERT:
         // Serial.println("Power adapter plugged in");
@@ -118,6 +120,8 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
         currentAccelleration.isMoved = true;
         drawWatchFace();
 
+        // sequence: update content, wake-up display, set brightness
+        lv_timer_handler();
         displayWakup();
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
@@ -187,7 +191,8 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
           drawWatchFace();
         }
 
-        // set brightness
+        // sequence: update content, wake-up display, set brightness
+        lv_timer_handler();
         displayWakup();
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
@@ -273,13 +278,13 @@ lv_obj_t* prepareAlertScreen(int count) {
   // --- DYNAMISCHE PUNKT-ZEILE (INDEX ANZEIGE) ---
   dots_container = lv_obj_create(alert_scr);
   lv_obj_set_size(dots_container, lv_pct(100), 12);
-  lv_obj_align(dots_container, LV_ALIGN_TOP_MID, 0, 40); // Zwischen Header und Karte
-  
+  lv_obj_align(dots_container, LV_ALIGN_TOP_MID, 0, 40);  // Zwischen Header und Karte
+
   lv_obj_set_style_bg_opa(dots_container, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(dots_container, 0, 0);
   lv_obj_set_style_pad_all(dots_container, 0, 0);
   lv_obj_remove_flag(dots_container, LV_OBJ_FLAG_SCROLLABLE);
-  
+
   // Flex-Layout für automatische horizontale Zentrierung
   lv_obj_set_flex_flow(dots_container, LV_FLEX_FLOW_ROW);
   lv_obj_set_style_flex_main_place(dots_container, LV_FLEX_ALIGN_CENTER, 0);
@@ -287,27 +292,27 @@ lv_obj_t* prepareAlertScreen(int count) {
   lv_obj_set_style_pad_column(dots_container, 6, 0);
 
   // Punkte im Ausgangszustand (alle dunkelgrau) zeichnen
-  for(int i = 0; i < count; i++) {
-    lv_obj_t *dot = lv_obj_create(dots_container);
+  for (int i = 0; i < count; i++) {
+    lv_obj_t* dot = lv_obj_create(dots_container);
     lv_obj_set_size(dot, 5, 5);
     lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_border_width(dot, 0, 0);
-    lv_obj_set_style_bg_color(dot, lv_palette_darken(LV_PALETTE_GREY, 4), 0); // Alle dunkelgrau
+    lv_obj_set_style_bg_color(dot, lv_palette_darken(LV_PALETTE_GREY, 4), 0);  // Alle dunkelgrau
   }
 
   // --- CONTENT CONTAINER ("Die Message-Karte") ---
-  lv_obj_t *card = lv_obj_create(alert_scr);
+  lv_obj_t* card = lv_obj_create(alert_scr);
   lv_obj_set_size(card, lv_pct(92), LV_SIZE_CONTENT);
-  lv_obj_align(card, LV_ALIGN_TOP_MID, 0, 54); // Platz für die Punkte gelassen
-  
+  lv_obj_align(card, LV_ALIGN_TOP_MID, 0, 54);  // Platz für die Punkte gelassen
+
   lv_obj_set_style_bg_color(card, lv_palette_darken(LV_PALETTE_BLUE_GREY, 4), 0);
   lv_obj_set_style_radius(card, 8, 0);
   lv_obj_set_style_border_width(card, 0, 0);
   lv_obj_set_style_pad_all(card, 10, 0);
-  lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE); 
+  lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
 
   // --- VERTICAL ACCENT BAR ---
-  lv_obj_t *accent_bar = lv_obj_create(card);
+  lv_obj_t* accent_bar = lv_obj_create(card);
   lv_obj_set_size(accent_bar, 3, lv_pct(100));
   lv_obj_align(accent_bar, LV_ALIGN_LEFT_MID, -4, 0);
   lv_obj_set_style_bg_color(accent_bar, GetTheme(THEME_ALERT_DATA), 0);
@@ -318,7 +323,7 @@ lv_obj_t* prepareAlertScreen(int count) {
   labelTitleBody = lv_label_create(card);
   lv_obj_set_style_text_font(labelTitleBody, &watchface_font, LV_PART_MAIN);
   lv_obj_set_style_text_color(labelTitleBody, color_text, LV_PART_MAIN);
-  
+
   lv_label_set_long_mode(labelTitleBody, LV_LABEL_LONG_WRAP);
   lv_obj_set_width(labelTitleBody, lv_pct(92));
   lv_obj_align(labelTitleBody, LV_ALIGN_LEFT_MID, 8, 0);
@@ -345,14 +350,14 @@ void showAlert(singleAlert alert, int index, int count) {
   // 5. AKTUELLEN PUNKT HELLGRAU INTEGRIEREN
   if (dots_container != NULL) {
     uint32_t child_count = lv_obj_get_child_count(dots_container);
-    
-    for(uint32_t i = 0; i < child_count; i++) {
-      lv_obj_t *dot = lv_obj_get_child(dots_container, i);
-      
+
+    for (uint32_t i = 0; i < child_count; i++) {
+      lv_obj_t* dot = lv_obj_get_child(dots_container, i);
+
       if (i == index) {
-        lv_obj_set_style_bg_color(dot, lv_palette_lighten(LV_PALETTE_GREY, 2), 0); // Aktueller Index = Hellgrau
+        lv_obj_set_style_bg_color(dot, lv_palette_lighten(LV_PALETTE_GREY, 2), 0);  // Aktueller Index = Hellgrau
       } else {
-        lv_obj_set_style_bg_color(dot, lv_palette_darken(LV_PALETTE_GREY, 4), 0);   // Alle anderen = Dunkelgrau
+        lv_obj_set_style_bg_color(dot, lv_palette_darken(LV_PALETTE_GREY, 4), 0);  // Alle anderen = Dunkelgrau
       }
     }
   }

@@ -34,8 +34,8 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
   currentAlerts.code = CODE_NO_ERROR;
   HTTPClient http;               // Use location API if WiFi is connected
   http.setConnectTimeout(3000);  // 3 second max timeout
-  http.setTimeout(4000);        // Max. 4 Sek auf die eigentlichen JSON-Daten warten
-  
+  http.setTimeout(4000);         // Max. 4 Sek auf die eigentlichen JSON-Daten warten
+
   String locationQueryURL = "http://" + gatewayIP + ":8080/alert?MAC=" + macAdress;
   http.begin(locationQueryURL.c_str());
   int httpResponseCode = http.GET();
@@ -127,7 +127,7 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
 
       if ((oldNo != newNo) || (oldMin != newMin) || (oldMax != newMax)) {
         newAlertsIndicator = true;
-        
+
         if (currentPower.batteryPercent > 5) {
           vibMotor();
         }
@@ -142,7 +142,8 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
           int alertIndex = currentAlerts.count - 1;
           showAlert(allAlerts[alertIndex], alertIndex, 0);
 
-          // set brightness
+          // sequence: update content, wake-up display, set brightness
+          lv_timer_handler();
           displayWakup();
           startBrightnessTimer(BRIGHTNESS_TIMEOUT_ALERT);
         }

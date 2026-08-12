@@ -31,7 +31,6 @@ extern lv_color_t color_text;
 
 extern int watchType;
 
-static lv_display_t *display;
 static lv_obj_t *screen;
 static lv_style_t styleMicro;
 static lv_style_t styleSmall;
@@ -83,10 +82,6 @@ void watchFaceSetup() {
 
 void drawWatchFace() {
   Serial.println("drawWatchFace Start");
-
-  // display
-  // 1. Get the current display
-  display = lv_display_get_default();
 
   // screen
   // get active screen

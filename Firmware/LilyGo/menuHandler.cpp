@@ -61,6 +61,7 @@ static void back_event_handler(lv_event_t *e) {
     // draw the watchface screen
     guiState = WATCHFACE_STATE;
     drawWatchFace();
+    lv_timer_handler();
   }
 }
 

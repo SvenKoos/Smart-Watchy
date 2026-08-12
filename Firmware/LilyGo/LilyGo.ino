@@ -190,6 +190,9 @@ void loop() {
         guiState = WATCHFACE_STATE;
         currentAccelleration.isMoved = true;
         drawWatchFace();
+
+        // sequence: update content, wake-up display, set brightness
+        lv_timer_handler();
         displayWakup();
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
       }
@@ -212,6 +215,7 @@ void loop() {
     if (guiState == WATCHFACE_STATE) {
       // draw watch face
       drawWatchFace();
+      lv_timer_handler();
     }
   }
 
