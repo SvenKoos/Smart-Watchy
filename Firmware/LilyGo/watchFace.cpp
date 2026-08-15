@@ -613,9 +613,9 @@ void drawAnalogClock() {
   lv_obj_set_style_line_rounded(min_line, true, 0);
 
   struct tm timeinfo;
-  int hours;
-  int minutes;
-  int day;
+  int hours = 0;
+  int minutes = 0;
+  int day = 0;
 
   if (getLocalTime(&timeinfo)) {
     hours = timeinfo.tm_hour;
