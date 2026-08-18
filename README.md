@@ -93,10 +93,109 @@ The firmware is based on LilyGo library 0.1.0 sharing the same features as firmw
 ### Build and Deployment
 Change additionally the TOTP secret in settings.h to your own.
 
-# Smart Watchy goes LoRa WAN
+# Smart Watchy goes LoRa WAN on LilyGo
 Smart Watchy on LiLygo is using LoRa WAN to
 - forward messages from mobile message center on Android received with Smart Watchy on LilyGo T-Watch to T-Echo Lite,
 - send messages from LoRa Messenger menu item of Smart Watchy on LilyGo to T-Echo Lite.
 
 LoRa transmitting is encrypted and uses a sender identifier (LoRa magic) to ensure information security.
 Firmware for T-Echo Lite is added to the repository.
+
+# Smart Watchy on LilyGo gets Daily Agenda Watchface
+Daily calendar entries are transferred as messages through message center to Smart Watchy on LilyGo as JSON paylod containing the subject (Topic), start time (Start) and end time (End).
+```JSON  
+{"Topic":"Project NOVA - EIS - Reference Group#2","Start":"2026-08-18T11:00:00.0000000","End":"2026-08-18T11:45:00.0000000"}
+```
+
+Application name and title depend on the way to transfer the agenda items to the message center of Android.
+- JSON structure, message application name and title can be adepted in code (alertData.cpp, deviceEvent.cpp, config.h) to any specific solution.
+
+## Transfer agenda items to message center (Microsoft way)
+- use Power Automate to create the periodic cloud-based flow, read daily agenda from Outlook 365 and transfer the items to Teams
+  - recurrency
+```Power Automate
+ {
+  "type": "Recurrence",
+  "recurrence": {
+    "frequency": "Day",
+    "interval": "1",
+    "timeZone": "W. Europe Standard Time",
+    "schedule": {
+      "hours": [
+        "7"
+      ],
+      "minutes": [
+        0
+      ]
+    }
+  }
+}
+```
+  - retrieve calendar view of the events (V3)
+```Power Automate
+{
+  "type": "OpenApiConnection",
+  "inputs": {
+    "parameters": {
+      "calendarId": "your_calendar_id",
+      "startDateTimeUtc": "@startOfDay(utcNow())",
+      "endDateTimeUtc": "@addDays(startOfDay(utcNow()), 1)"
+    },
+    "host": {
+      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+      "connection": "shared_office365",
+      "operationId": "GetEventsCalendarViewV3"
+    }
+  },
+  "runAfter": {}
+}
+```
+ - Select
+```Power Automate
+{
+  "type": "Select",
+  "inputs": {
+    "from": "@outputs('Kalenderansicht_der_Termine_abrufen_(V3)')?['body/value']",
+    "select": {
+      "Topic": "@item()?['subject']",
+      "Start": "@item()?['start']",
+      "End": "@item()?['end']"
+    }
+  },
+  "runAfter": {
+    "Kalenderansicht_der_Termine_abrufen_(V3)": [
+      "Succeeded"
+    ]
+  }
+}
+```
+  - For each
+```Power Automate
+{
+  "type": "Foreach",
+  "foreach": "@outputs('Auswählen')['body']",
+  "actions": {
+    "Nachricht_in_einem_Chat_oder_Kanal_veröffentlichen": {
+      "type": "OpenApiConnection",
+      "inputs": {
+        "parameters": {
+          "poster": "Flow bot",
+          "location": "Chat with Flow bot",
+          "body/recipient": "your_email_address",
+          "body/messageBody": "<p class=\"editor-paragraph\">@{items('For_each')}</p>"
+        },
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+          "connection": "shared_teams",
+          "operationId": "PostMessageToConversation"
+        }
+      }
+    }
+  },
+  "runAfter": {
+    "Auswählen": [
+      "Succeeded"
+    ]
+  }
+}
+```

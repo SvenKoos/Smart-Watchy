@@ -37,6 +37,7 @@ void setupPowerMgt();
 void verifyPowerMgt();
 void resetBatteryCalibration();
 uint8_t getCustomBatteryPercent(uint16_t mv);
+void resetPowerData();
 
 /**********************
  *      MACROS

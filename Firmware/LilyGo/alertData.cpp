@@ -9,6 +9,12 @@
 #include <Time.h>
 #include <TimeLib.h>
 #include <esp_sntp.h>
+#include <cstdint>
+#include <cstdio>
+#include <ctime>
+#include <string>
+#include <algorithm>
+#include <chrono>
 
 #include "dataCollection.h"
 #include "alertData.h"
@@ -25,6 +31,8 @@ extern powerData currentPower;
 extern int guiState;
 extern bool newAlertsIndicator;
 
+extern agendaItem allAgendaItems[AGENDA_MAX_NO];
+extern int agendaCount;
 
 alertData getAlertData(const String gatewayIP, const String macAdress) {
   JSONVar alerts;
@@ -149,6 +157,10 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
         }
         // process to Lora
         processNewAlertsToLora(oldMin, oldMax, newMin, newMax);
+
+        // process to agenda
+        agendaCount = extractAgendaFromAlerts(currentAlerts.count);
+        updateAndSortAgenda();
       }
     }
 
@@ -158,6 +170,9 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
     Serial.print(newMin, DEC);
     Serial.print(" Max. ID: ");
     Serial.println(newMax, DEC);
+
+    Serial.print("getAlertData No. of agenda items: ");
+    Serial.println(agendaCount, DEC);
   } else {
     // http error
     currentAlerts.code = CODE_HTTP_ERROR;
@@ -405,4 +420,146 @@ String cleanNotificationText(String source) {
   source.replace("\xE2\x80\xAF", " ");
 
   return source;
+}
+
+int extractAgendaFromAlerts(int alertCount) {
+  for (int i = 0; i < alertCount; i++) {
+    String appName = allAlerts[i].appName;
+    String title = allAlerts[i].title;
+
+    if (appName.equalsIgnoreCase(agendaMsgAppName) && title.equalsIgnoreCase(agendaMsgTitle)) {
+      String rawBody = allAlerts[i].body;
+      if (rawBody.length() == 0 || rawBody == "null") continue;
+
+      JSONVar bodyJson = JSON.parse(rawBody);
+
+      if (JSON.typeof(bodyJson) == "undefined") {
+        continue;  // Ungültiges JSON überspringen
+      }
+
+      if (agendaCount >= AGENDA_MAX_NO) {
+        break;  // Maximale Kapazität erreicht
+      }
+
+      // --- 2. Sicheres Auslesen mit hasOwnProperty() ---
+      String sub = bodyJson.hasOwnProperty("Topic") ? (const char *)bodyJson["Topic"] : "";
+      String start = bodyJson.hasOwnProperty("Start") ? (const char *)bodyJson["Start"] : "";
+      String end = bodyJson.hasOwnProperty("End") ? (const char *)bodyJson["End"] : "";
+
+      if (sub.length() == 0 || start.length() == 0 || end.length() == 0) {
+        continue;  // Unvollständiges Item überspringen
+      }
+
+      uint64_t startMs = parseIsoToUnixMs(start);
+      uint64_t endMs = parseIsoToUnixMs(end);
+
+      // --- 4. In Ziel-Array schreiben ---
+      agendaItem &item = allAgendaItems[agendaCount];
+      item.alertID = allAlerts[i].id;
+
+      strncpy(item.subject, sub.c_str(), sizeof(item.subject) - 1);
+      item.subject[sizeof(item.subject) - 1] = '\0';
+
+      item.startTime = startMs;
+      item.endTime = endMs;
+
+      agendaCount++;
+    }
+  }
+
+  return agendaCount;
+}
+
+// Lightweight, fully portable UTC timegm replacement (Howard Hinnant algorithm)
+time_t portableTimegm(const tm *tm) {
+  int y = tm->tm_year + 1900;
+  int m = tm->tm_mon + 1;
+  if (m <= 2) {
+    y -= 1;
+    m += 12;
+  }
+  int era = (y >= 0 ? y : y - 399) / 400;
+  unsigned yoe = static_cast<unsigned>(y - era * 400);
+  unsigned doy = (153 * (m - 3) + 2) / 5 + static_cast<unsigned>(tm->tm_mday) - 1;
+  unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+  int64_t days = static_cast<int64_t>(era) * 146097 + static_cast<int64_t>(doe) - 719468;
+
+  return static_cast<time_t>(
+    days * 86400 + tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec);
+}
+
+uint64_t parseIsoToUnixMs(const String &timeStr) {
+  int year, month, day, hour, min, sec;
+
+  if (sscanf(timeStr.c_str(), "%d-%d-%dT%d:%d:%d",
+             &year, &month, &day, &hour, &min, &sec)
+      < 6) {
+    return 0;
+  }
+
+  tm tm = {};
+  tm.tm_year = year - 1900;
+  tm.tm_mon = month - 1;
+  tm.tm_mday = day;
+  tm.tm_hour = hour;
+  tm.tm_min = min;
+  tm.tm_sec = sec;
+
+  time_t timeSec = portableTimegm(&tm);
+  return static_cast<uint64_t>(timeSec) * 1000;
+}
+
+void updateAndSortAgenda() {
+  agendaItem tempBuffer[AGENDA_MAX_NO];
+  memset(tempBuffer, 0, sizeof(tempBuffer));
+
+  int validCount = 0;
+
+  for (int i = 0; i < agendaCount; ++i) {
+    // 2. Duplikat-Prüfung gegen das NEUE (bereits gefilterte) Ziel-Array!
+    bool isDuplicate = false;
+    for (int j = 0; j < validCount; ++j) {
+      // Fall B: Identischer Inhalt (Startzeit + Endzeit + Betreff)
+      bool sameContent = (tempBuffer[j].startTime == allAgendaItems[i].startTime) && (tempBuffer[j].endTime == allAgendaItems[i].endTime) && (strcmp(tempBuffer[j].subject, allAgendaItems[i].subject) == 0);
+
+      if (sameContent) {
+        isDuplicate = true;
+        break;
+      }
+    }
+
+    // 3. Nur echte neue Einträge ins temporäre Array übernehmen
+    if (!isDuplicate && validCount < AGENDA_MAX_NO) {
+      tempBuffer[validCount] = allAgendaItems[i];
+      validCount++;
+    }
+  }
+
+  // 4. Chronologisch sortieren (im Temp-Puffer)
+  std::sort(tempBuffer, tempBuffer + validCount,
+            [](const agendaItem &a, const agendaItem &b) {
+              return a.startTime < b.startTime;
+            });
+
+  // 5. Haupt-Array komplett zurücksetzen und saubere Daten zurückkopieren
+  memset(allAgendaItems, 0, sizeof(allAgendaItems));
+  for (int i = 0; i < validCount; ++i) {
+    allAgendaItems[i] = tempBuffer[i];
+
+    Serial.print(allAgendaItems[i].alertID, DEC);
+    Serial.print(" ");
+    Serial.print(allAgendaItems[i].startTime, DEC);
+    Serial.print(" ");
+    Serial.print(allAgendaItems[i].endTime, DEC);
+    Serial.print(" ");
+    Serial.println(allAgendaItems[i].subject);
+  }
+
+  agendaCount = validCount;
+}
+
+void resetAgenda() {
+  // Array komplett zurücksetzen!
+  memset(allAgendaItems, 0, sizeof(allAgendaItems));
+  int agendaCount = 0;
 }

@@ -1,6 +1,8 @@
 #include <lvgl.h>
 #include <LilyGoLib.h>
 #include <WiFiManager.h>
+#include <Arduino_JSON.h>
+#include <string>
 
 #include "dataCollection.h"
 #include "alertData.h"
@@ -344,7 +346,41 @@ void showAlert(singleAlert alert, int index, int count) {
   // 4. Inhalt (Titel + Body) zusammenbauen
   strcpy(text, alert.title);
   strcat(text, "\n");
-  strcat(text, alert.body);
+  String appName = alert.appName;
+  String title = alert.title;
+  if (appName.equalsIgnoreCase(agendaMsgAppName) && title.equalsIgnoreCase(agendaMsgTitle)) {
+    // workflow from Power Automate to Teams to LolyGo
+    String rawBody = alert.body;
+    if (rawBody.length() != 0 && rawBody != "null") {
+
+      JSONVar bodyJson = JSON.parse(rawBody);
+
+      if (JSON.typeof(bodyJson) != "undefined") {
+        // --- 2. Sicheres Auslesen mit hasOwnProperty() ---
+        String sub = bodyJson.hasOwnProperty("Topic") ? (const char*)bodyJson["Topic"] : "";
+        String start = bodyJson.hasOwnProperty("Start") ? (const char*)bodyJson["Start"] : "";
+        String end = bodyJson.hasOwnProperty("End") ? (const char*)bodyJson["End"] : "";
+
+        if (sub.length() != 0 && start.length() != 0 && end.length() != 0) {
+          // {"Topic":"test 2","Start":"2026-08-17T15:30:00.0000000","End":"2026-08-17T16:00:00.0000000"}
+          // {"Topic":"[Your action required] New compliance assessments created for your application GRC Business Application: Chargebee","Start":"2026-08-18T12:00:00.0000000","End":"2026-08-18T13:00:00.0000000"}
+          start = start.substring(0, 16);
+          start.replace("T", " ");
+          end = end.substring(0, 16);
+          end.replace("T", " ");
+
+          strcat(text, start.c_str());
+          strcat(text, " - ");
+          strcat(text, end.c_str());
+          strcat(text, " ");
+          strcat(text, sub.c_str());
+        }
+      }
+    }
+  } else {
+    // any other app message
+    strcat(text, alert.body);
+  }
   lv_label_set_text(labelTitleBody, text);
 
   // 5. AKTUELLEN PUNKT HELLGRAU INTEGRIEREN

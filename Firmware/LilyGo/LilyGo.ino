@@ -31,7 +31,6 @@ RTC_DATA_ATTR uint32_t stepCounter;
 RTC_DATA_ATTR locationData currentLocation;
 
 RTC_DATA_ATTR alertData currentAlerts;
-RTC_DATA_ATTR singleAlert allAlerts[ALERT_MAX_NO];
 
 RTC_DATA_ATTR accellData currentAccelleration;
 
@@ -51,9 +50,11 @@ RTC_DATA_ATTR bool bleBonded = false;
 RTC_DATA_ATTR uint8_t binKey[32];
 RTC_DATA_ATTR int keyLen = 0;
 
-RTC_DATA_ATTR String lastLocalIP = "";
-RTC_DATA_ATTR String lastGatewayIP = "";
-RTC_DATA_ATTR String lastMACAdress = "";
+singleAlert allAlerts[ALERT_MAX_NO];
+
+String lastLocalIP = "";
+String lastGatewayIP = "";
+String lastMACAdress = "";
 
 int watchType = DIGITAL_WATCH;
 
@@ -66,6 +67,9 @@ uint16_t stepCounterHistory[1440];
 
 lv_color_t color_bg;
 lv_color_t color_text;
+
+agendaItem allAgendaItems[AGENDA_MAX_NO];
+int agendaCount;
 
 void setup() {
   Serial.begin(115200);

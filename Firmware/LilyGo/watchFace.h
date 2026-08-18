@@ -33,6 +33,8 @@ void drawAlert();
 void drawAnalogClock();
 void drawUVI(double uvi_val);
 void drawQlockTwo();
+void drawAgendaHeader(lv_obj_t *parent);
+void drawAgendaWatchface(void);
 
 /**********************
  *      MACROS

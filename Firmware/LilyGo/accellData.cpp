@@ -20,37 +20,26 @@ extern uint16_t stepCounterHistory[1440];
 accellData getAccellData() {
   Serial.println("getAccellData Start");
 
-  // reset step counter at midnight
+  int16_t oldAccelX = currentAccelleration.xAccell;
+  int16_t oldAccelY = currentAccelleration.yAccell;
+  int16_t oldAccelZ = currentAccelleration.zAccell;
+
+  instance.sensor.getAccelerometer(currentAccelleration.xAccell, currentAccelleration.yAccell, currentAccelleration.zAccell);
+  currentAccelleration.stepCounter = instance.sensor.getPedometerCounter();
+
+  currentAccelleration.isMoved = ((abs(oldAccelX - currentAccelleration.xAccell) > MAX_ACCEL_QUIET) || (abs(oldAccelY - currentAccelleration.yAccell) > MAX_ACCEL_QUIET) || (abs(oldAccelZ - currentAccelleration.zAccell) > MAX_ACCEL_QUIET));
+
+  currentAccelleration.code = CODE_NO_ERROR;
+
+  Serial.print("getAccellData X: ");
+  Serial.print(currentAccelleration.xAccell, DEC);
+  Serial.print(" Y: ");
+  Serial.print(currentAccelleration.yAccell, DEC);
+  Serial.print(" Z: ");
+  Serial.println(currentAccelleration.zAccell, DEC);
+
   struct tm timeinfo;
   if (getLocalTime(&timeinfo)) {
-    if (timeinfo.tm_hour == 0 && timeinfo.tm_min == 0) {
-      // step counter history
-      for (int i = 0; i < 1440; i++) {
-        stepCounterHistory[i] = 0;
-      }
-
-      // reset step counter
-      resetAccellData();
-    }
-
-    int16_t oldAccelX = currentAccelleration.xAccell;
-    int16_t oldAccelY = currentAccelleration.yAccell;
-    int16_t oldAccelZ = currentAccelleration.zAccell;
-
-    instance.sensor.getAccelerometer(currentAccelleration.xAccell, currentAccelleration.yAccell, currentAccelleration.zAccell);
-    currentAccelleration.stepCounter = instance.sensor.getPedometerCounter();
-
-    currentAccelleration.isMoved = ((abs(oldAccelX - currentAccelleration.xAccell) > MAX_ACCEL_QUIET) || (abs(oldAccelY - currentAccelleration.yAccell) > MAX_ACCEL_QUIET) || (abs(oldAccelZ - currentAccelleration.zAccell) > MAX_ACCEL_QUIET));
-
-    currentAccelleration.code = CODE_NO_ERROR;
-
-    Serial.print("getAccellData X: ");
-    Serial.print(currentAccelleration.xAccell, DEC);
-    Serial.print(" Y: ");
-    Serial.print(currentAccelleration.yAccell, DEC);
-    Serial.print(" Z: ");
-    Serial.println(currentAccelleration.zAccell, DEC);
-
     // store current step counter value
     int currentMinuteIndex = 0;
     currentMinuteIndex = timeinfo.tm_hour * 60 + timeinfo.tm_min;
@@ -61,6 +50,11 @@ accellData getAccellData() {
 }
 
 void resetAccellData() {
+  // reset step counter at midnight
+  for (int i = 0; i < 1440; i++) {
+    stepCounterHistory[i] = 0;
+  }
+
   instance.sensor.resetPedometer();
 }
 
@@ -91,4 +85,6 @@ void setupAccellData() {
 
   // Nur Wakeup (Double Tap) darf den Hardware-Pin triggern
   instance.sensor.enableWakeupIRQ();
+
+  currentAccelleration.isMoved = true;
 }

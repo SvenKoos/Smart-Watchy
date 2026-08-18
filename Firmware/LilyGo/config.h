@@ -37,6 +37,11 @@
 #define DIGITAL_WATCH 1
 #define ANALOGUE_WATCH 2
 #define QLOCKTWO_WATCH 3
+#define AGENDA_WATCH 4
+
+// agenda variables
+#define agendaMsgAppName "Teams"
+#define agendaMsgTitle "Workflows"
 
 // encryption
 // 16-Byte Schlüssel (128-Bit), den T-Watch und T-Echo teilen

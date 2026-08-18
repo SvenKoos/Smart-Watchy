@@ -17,10 +17,10 @@
 #define IP_LEN 64
 #define TITLE_LEN 64
 #define LOG_LEN 128
-#define BODY_LEN 128
-#define MESSAGE_LEN 24
+#define BODY_LEN 256
 #define TIMESTAMP_LEN 24
 #define ALERT_MAX_NO 20
+#define AGENDA_MAX_NO 40
 #define MAX_ACCEL_QUIET 5
 
 /**********************

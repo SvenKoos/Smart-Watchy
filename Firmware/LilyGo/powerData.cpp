@@ -83,14 +83,6 @@ powerData getPowerData() {
 
   struct tm timeinfo;
   if (getLocalTime(&timeinfo)) {
-    // reset battery history at midnight
-    if (timeinfo.tm_hour == 0 && timeinfo.tm_min == 0) {
-      for (int i = 0; i < 1440; i++) {
-        batteryCapacityHistory[i] = 0;
-        batteryVoltageHistory[i] = 0;
-      }
-    }
-
     // store current battery capacity value
     int currentMinuteIndex = 0;
     currentMinuteIndex = timeinfo.tm_hour * 60 + timeinfo.tm_min;
@@ -140,4 +132,12 @@ uint8_t getCustomBatteryPercent(uint16_t mv) {
 
   // Lineares Mapping: Rechnet den Bereich [3550...4330] sauber auf [0...100] um
   return (uint8_t)(((mv - minVolt) * 100) / (maxVolt - minVolt));
+}
+
+void resetPowerData() {
+  // reset battery history at midnight
+  for (int i = 0; i < 1440; i++) {
+    batteryCapacityHistory[i] = 0;
+    batteryVoltageHistory[i] = 0;
+  }
 }

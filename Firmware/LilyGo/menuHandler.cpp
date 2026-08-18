@@ -439,8 +439,10 @@ static void watch_type_event_cb(lv_event_t *e) {
   } else if (id == 2) {
     watchType = QLOCKTWO_WATCH;
     Serial.println("Watch type set to: QLOCKTWO");
+  } else if (id == 3) {
+    watchType = AGENDA_WATCH;
+    Serial.println("Watch type set to: AGENDA");
   }
-  // Hier kannst du in Zukunft einfach erweitern: else if(id == 2) { ... }
 }
 
 static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
@@ -458,19 +460,19 @@ static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
 
   // 1. Statischer Titel oben
   labelWatchType = lv_label_create(contSub);
-  lv_obj_set_style_text_font(labelWatchType, &lv_font_montserrat_18, LV_PART_MAIN);
+  lv_obj_set_style_text_font(labelWatchType, &lv_font_montserrat_24, LV_PART_MAIN);
   lv_obj_set_style_text_color(labelWatchType, color_text, LV_PART_MAIN);
   lv_label_set_text(labelWatchType, "Watch Type");
   registerDefaultEvents(labelWatchType);  // Deine Event-Registrierung beibehalten
 
   // 2. Die Radio-Button-Matrix erstellen
   // WICHTIG: Die Namen der Buttons. Das "\n" sorgt dafür, dass sie UNTEREINANDER stehen!
-  static const char *btn_map[] = { "Analog", "\n", "Digital", "\n", "QlockTwo", "" };
+  static const char *btn_map[] = { "Analog", "\n", "Digital", "\n", "QlockTwo", "\n", "Agenda", "" };
 
   lv_obj_t *radio_matrix = lv_buttonmatrix_create(contSub);
   lv_buttonmatrix_set_map(radio_matrix, btn_map);
   lv_obj_set_width(radio_matrix, lv_pct(100));
-  lv_obj_set_height(radio_matrix, 180);  // Setze eine größere Höhe
+  lv_obj_set_height(radio_matrix, 240);  // Setze eine größere Höhe
 
   // Button-Matrix optisch aufräumen (kein Hintergrund, flacher Look)
   lv_obj_set_style_bg_opa(radio_matrix, LV_OPA_TRANSP, 0);
@@ -487,12 +489,14 @@ static lv_obj_t *subWatchTypeFunction(lv_obj_t *menu) {
     lv_buttonmatrix_set_button_ctrl(radio_matrix, 0, LV_BUTTONMATRIX_CTRL_CHECKED);
   } else if (watchType == DIGITAL_WATCH) {
     lv_buttonmatrix_set_button_ctrl(radio_matrix, 1, LV_BUTTONMATRIX_CTRL_CHECKED);
-  } else {
+  } else if (watchType == QLOCKTWO_WATCH) {
     lv_buttonmatrix_set_button_ctrl(radio_matrix, 2, LV_BUTTONMATRIX_CTRL_CHECKED);
+  } else {
+    lv_buttonmatrix_set_button_ctrl(radio_matrix, 3, LV_BUTTONMATRIX_CTRL_CHECKED);
   }
 
   lv_obj_set_style_radius(radio_matrix, 8, LV_PART_ITEMS);  // Leicht abgerundete Ecken für die Buttons
-  lv_obj_set_style_text_font(radio_matrix, &lv_font_montserrat_18, LV_PART_MAIN);
+  lv_obj_set_style_text_font(radio_matrix, &lv_font_montserrat_24, LV_PART_MAIN);
 
   // Event-Handler anhängen
   lv_obj_add_event_cb(radio_matrix, watch_type_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
@@ -680,15 +684,6 @@ void menuHandler() {
   lv_label_set_text(label, LV_SYMBOL_EYE_OPEN "  TOTP");  // Schlüssel-Icon vorangestellt
   lv_menu_set_load_page_event(menu, cont, subTotpFunction(menu));
 
-  // --- ITEM: LORA MESSAGES ---
-  cont = lv_menu_cont_create(pageMain);
-  lv_obj_add_style(cont, &styleCont, 0);
-  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
-  label = lv_label_create(cont);
-  lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_ENVELOPE "  LoRa Msg");  // Brief-Icon
-  lv_menu_set_load_page_event(menu, cont, subLoRaMsgFunction(menu));
-
   // --- ITEM: Refresh Data ---
   cont = lv_menu_cont_create(pageMain);
   lv_obj_add_style(cont, &styleCont, 0);
@@ -697,6 +692,15 @@ void menuHandler() {
   lv_obj_add_style(label, &styleLabel, 0);
   lv_label_set_text(label, LV_SYMBOL_REFRESH "  New Data");  // Refresh Icon
   lv_menu_set_load_page_event(menu, cont, subRefreshDataFunction(menu));
+
+  // --- ITEM: Watch Type ---
+  cont = lv_menu_cont_create(pageMain);
+  lv_obj_add_style(cont, &styleCont, 0);
+  lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
+  label = lv_label_create(cont);
+  lv_obj_add_style(label, &styleLabel, 0);
+  lv_label_set_text(label, LV_SYMBOL_SETTINGS "  Watch");  // Platzhalter für Aktivität
+  lv_menu_set_load_page_event(menu, cont, subWatchTypeFunction(menu));
 
   // --- ITEM: BATTERY ---
   cont = lv_menu_cont_create(pageMain);
@@ -716,14 +720,14 @@ void menuHandler() {
   lv_label_set_text(label, LV_SYMBOL_IMAGE "  Steps");  // Platzhalter für Aktivität
   lv_menu_set_load_page_event(menu, cont, subStepCounterFunction(menu));
 
-  // --- ITEM: Watch Type ---
+  // --- ITEM: LORA MESSAGES ---
   cont = lv_menu_cont_create(pageMain);
   lv_obj_add_style(cont, &styleCont, 0);
   lv_obj_add_event_cb(cont, eventGestureDefaultCB, LV_EVENT_CLICKED, NULL);
   label = lv_label_create(cont);
   lv_obj_add_style(label, &styleLabel, 0);
-  lv_label_set_text(label, LV_SYMBOL_SETTINGS "  Watch");  // Platzhalter für Aktivität
-  lv_menu_set_load_page_event(menu, cont, subWatchTypeFunction(menu));
+  lv_label_set_text(label, LV_SYMBOL_ENVELOPE "  LoRa Msg");  // Brief-Icon
+  lv_menu_set_load_page_event(menu, cont, subLoRaMsgFunction(menu));
 
   // --- ITEM: ABOUT ---
   cont = lv_menu_cont_create(pageMain);

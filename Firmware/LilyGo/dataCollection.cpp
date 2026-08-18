@@ -56,6 +56,16 @@ void collectData(void) {
   String gatewayIP;
   String macAdress;
 
+  struct tm timeinfo;
+  if (getLocalTime(&timeinfo)) {
+    // reset battery history at midnight
+    if (timeinfo.tm_hour == 0 && timeinfo.tm_min == 0) {
+      resetPowerData();
+      resetAccellData();
+      resetAgenda();
+    }
+  }
+
   String scannedWifiNetworks;
   double ltd = 0;
   double lng = 0;

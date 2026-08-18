@@ -31,6 +31,9 @@ extern lv_color_t color_text;
 
 extern int watchType;
 
+extern agendaItem allAgendaItems[AGENDA_MAX_NO];
+extern int agendaCount;
+
 static lv_obj_t *screen;
 static lv_style_t styleMicro;
 static lv_style_t styleSmall;
@@ -100,11 +103,11 @@ void drawWatchFace() {
   lv_obj_clean(screen);
 
   if (currentAccelleration.isMoved) {
-    if (watchType != QLOCKTWO_WATCH)
+    if ((watchType != QLOCKTWO_WATCH) && (watchType != AGENDA_WATCH))
       drawBattery();
 
     if (WIFI_CONNECTED) {
-      if (watchType != QLOCKTWO_WATCH) {
+      if ((watchType != QLOCKTWO_WATCH) && (watchType != AGENDA_WATCH)) {
         drawWeather();
 
         drawSolarArc(currentWeather.currentSunrise, currentWeather.currentSunset, currentWeather.currentDT);
@@ -117,7 +120,7 @@ void drawWatchFace() {
       }
     }
 
-    if (watchType != QLOCKTWO_WATCH)
+    if ((watchType != QLOCKTWO_WATCH) && (watchType != AGENDA_WATCH))
       drawSteps();
   }
 
@@ -129,8 +132,11 @@ void drawWatchFace() {
     // analogue clock
     drawAnalogClock();
   } else if (watchType == QLOCKTWO_WATCH) {
-    // analogue clock
+    // Qlock 2
     drawQlockTwo();
+  } else if (watchType == AGENDA_WATCH) {
+    // agenda
+    drawAgendaWatchface();
   }
 
   // draw the screen
@@ -891,5 +897,236 @@ void drawQlockTwo() {
   for (int i = 0; i < 4; i++) {
     lv_obj_set_style_bg_color(corner_dots[i],
                               (i < (minute % 5)) ? GetTheme(THEME_TIME_DATA) : lv_palette_darken(LV_PALETTE_GREY, 4), 0);
+  }
+}
+
+void drawAgendaHeader(lv_obj_t *parent) {
+  lv_obj_t *header = lv_obj_create(parent);
+  lv_obj_set_size(header, 240, 40);
+  lv_obj_align(header, LV_ALIGN_TOP_MID, 0, 0);
+
+  // --- Scrollen und Scrollbalken deaktivieren ---
+  lv_obj_remove_flag(header, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_scrollbar_mode(header, LV_SCROLLBAR_MODE_OFF);
+
+  lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(header, 0, 0);
+  lv_obj_set_style_pad_left(header, 10, 0);
+  lv_obj_set_style_pad_right(header, 10, 0);
+  lv_obj_set_style_pad_top(header, 5, 0);
+
+  struct tm timeinfo;
+  if (getLocalTime(&timeinfo)) {
+    // Uhrzeit links
+    lv_obj_t *lbl_time = lv_label_create(header);
+    char time_buf[6];
+    snprintf(time_buf, sizeof(time_buf), "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
+    lv_label_set_text(lbl_time, time_buf);
+    lv_obj_set_style_text_color(lbl_time, GetTheme(THEME_TIME_DATA), 0);
+    lv_obj_set_style_text_font(lbl_time, &lv_font_montserrat_20, 0);
+    lv_obj_align(lbl_time, LV_ALIGN_LEFT_MID, 5, 5);
+
+    // Datum rechts
+    const char *month_names[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    const char *wday_names[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+    lv_obj_t *lbl_date = lv_label_create(header);
+    char date_buf[20];
+    snprintf(date_buf, sizeof(date_buf), "%s, %d %s",
+             wday_names[timeinfo.tm_wday],
+             timeinfo.tm_mday,
+             month_names[timeinfo.tm_mon]);
+
+    lv_label_set_text(lbl_date, date_buf);
+    lv_obj_set_style_text_color(lbl_date, GetTheme(THEME_DATE_DATA), 0);
+    lv_obj_set_style_text_font(lbl_date, &lv_font_montserrat_20, 0);
+    lv_obj_align(lbl_date, LV_ALIGN_RIGHT_MID, -5, 5);
+  }
+}
+
+#define COLOR_CARD_BG lv_palette_darken(LV_PALETTE_GREY, 4)  // Sehr dunkles Hintergrund-Grau
+#define COLOR_TIME lv_palette_darken(LV_PALETTE_GREY, 2)     // Sehr dunkles Hintergrund-Grau
+#define COLOR_SUB lv_palette_darken(LV_PALETTE_GREY, 1)      // Sehr dunkles Hintergrund-Grau
+
+#define COLOR_ACTIVE_CARD_BG lv_palette_lighten(LV_PALETTE_GREY, 1)  // Gut lesbares, helles Grau für Dezentes
+#define COLOR_ACTIVE_TIME lv_palette_lighten(LV_PALETTE_GREY, 2)     // Gut lesbares, helles Grau für Dezentes
+#define COLOR_ACTIVE_SUB lv_palette_lighten(LV_PALETTE_GREY, 4)      // Gut lesbares, helles Grau für Dezentes
+
+void drawAgendaWatchface(void) {
+  drawAgendaHeader(screen);
+
+  lv_obj_t *agenda_container = lv_obj_create(screen);
+  lv_obj_set_size(agenda_container, 240, 202);
+  lv_obj_align(agenda_container, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+  lv_obj_set_flex_flow(agenda_container, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(agenda_container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+  lv_obj_set_style_pad_all(agenda_container, 4, 0);
+  lv_obj_set_style_pad_row(agenda_container, 6, 0);
+  lv_obj_set_style_bg_opa(agenda_container, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(agenda_container, 0, 0);
+
+  lv_obj_set_scroll_dir(agenda_container, LV_DIR_VER);
+  lv_obj_set_scrollbar_mode(agenda_container, LV_SCROLLBAR_MODE_AUTO);
+
+  // Offset in Sekunden und Millisekunden ermitteln
+  int32_t tz_offset_sec = (int32_t)currentWeather.offset;
+  int64_t tz_offset_ms = (int64_t)tz_offset_sec * 1000LL;
+
+  time_t now_utc_sec;
+  time(&now_utc_sec);
+
+  // Systemzeit in UTC ms
+  uint64_t now_ms = (uint64_t)now_utc_sec * 1000ULL;
+
+  int visible_count = 0;
+
+  for (int i = 0; i < AGENDA_MAX_NO; i++) {
+    // 1. Ungültige/Leere Eintrags-Prüfung
+    if (allAgendaItems[i].startTime == 0 || allAgendaItems[i].endTime == 0) {
+      continue;
+    }
+
+    // Falls allAgendaItems[] bereits als UTC ms gespeichert ist:
+    uint64_t start_utc = allAgendaItems[i].startTime;
+    uint64_t end_utc = allAgendaItems[i].endTime;
+
+    // Falls time(&now_utc_sec) bereits Lokalzeit liefert:
+    uint64_t now_ms_local = (uint64_t)now_utc_sec * 1000ULL;
+    uint64_t now_ms_utc = now_ms_local - tz_offset_ms;  // 2 Stunden abziehen für UTC-Vergleich
+
+    // Jetzt stimmt der Vergleich mit den UTC-Terminen wieder:
+    if (now_ms_utc > end_utc) {
+      continue;  // Blendet abgelaufene Termine korrekt aus
+    }
+
+    visible_count++;
+    bool is_current = (now_ms_utc >= start_utc && now_ms_utc <= end_utc);
+
+    // --- TERMIN-KARTE ---
+    lv_obj_t *card = lv_obj_create(agenda_container);
+    lv_obj_set_width(card, 212);
+    lv_obj_set_height(card, LV_SIZE_CONTENT);
+    lv_obj_set_style_pad_all(card, 6, 0);
+    lv_obj_set_style_pad_row(card, 3, 0);  // Abstand zwischen Zeit, Titel, Bar
+    lv_obj_set_style_radius(card, 8, 0);
+
+    // Flex-Layout auf der Karte verhindert Überlappungen
+    lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(card, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+
+    if (is_current) {
+      lv_obj_set_style_bg_color(card, COLOR_ACTIVE_CARD_BG, 0);
+      lv_obj_set_style_bg_opa(card, LV_OPA_30, 0);
+      lv_obj_set_style_border_color(card, COLOR_ACTIVE_CARD_BG, 0);
+      lv_obj_set_style_border_width(card, 2, 0);
+    } else {
+      lv_obj_set_style_bg_color(card, COLOR_CARD_BG, 0);
+      lv_obj_set_style_bg_opa(card, LV_OPA_10, 0);
+      lv_obj_set_style_border_color(card, COLOR_CARD_BG, 0);
+      lv_obj_set_style_border_width(card, 1, 0);
+    }
+
+    // --- 1. Zeit-Label (Umrechnung in lokale Zeit für die Anzeige) ---
+    // not for whole day events
+    uint64_t total_duration = end_utc - start_utc;
+    // 1. Prüfen, ob der UTC-Zeitstempel exakt auf Mitternacht (00:00) fällt
+    time_t start_utc_sec = (time_t)(start_utc / 1000ULL);
+    struct tm *tm_start_raw = gmtime(&start_utc_sec);
+    bool is_midnight_start = (tm_start_raw && tm_start_raw->tm_hour == 0 && tm_start_raw->tm_min == 0);
+    // Ganztägig = Startet um 00:00 UTC und dauert mindestens 24 Stunden (86.400.000 ms)
+    bool is_all_day = is_midnight_start && (total_duration >= 86400000ULL);
+
+    time_t start_local_sec = (time_t)(start_utc / 1000ULL);
+    time_t end_local_sec = (time_t)(end_utc / 1000ULL);
+    if (!is_all_day) {
+      start_local_sec = start_local_sec + tz_offset_sec;
+      end_local_sec = end_local_sec + tz_offset_sec;
+    }
+
+    struct tm *tm_start = gmtime(&start_local_sec);
+    char start_str[6];
+    if (tm_start) {
+      strftime(start_str, sizeof(start_str), "%H:%M", tm_start);
+    } else {
+      snprintf(start_str, sizeof(start_str), "--:--");
+    }
+
+    struct tm *tm_end = gmtime(&end_local_sec);
+    char end_str[6];
+    if (tm_end) {
+      strftime(end_str, sizeof(end_str), "%H:%M", tm_end);
+    } else {
+      snprintf(end_str, sizeof(end_str), "--:--");
+    }
+
+    char time_buf[32];
+    snprintf(time_buf, sizeof(time_buf), "%s %s - %s", is_current ? "• LIVE" : "•", start_str, end_str);
+
+    lv_obj_t *lbl_time = lv_label_create(card);
+    lv_label_set_text(lbl_time, time_buf);
+    lv_obj_set_style_text_color(lbl_time, is_current ? COLOR_ACTIVE_TIME : COLOR_TIME, 0);
+    lv_obj_set_style_text_font(lbl_time, &lv_font_montserrat_12, 0);
+
+    // --- 2. Titel-Label ---
+    lv_obj_t *lbl_title = lv_label_create(card);
+    lv_label_set_text(lbl_title, allAgendaItems[i].subject);
+    lv_label_set_long_mode(lbl_title, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_width(lbl_title, 196);
+    lv_obj_set_style_text_color(lbl_title, is_current ? COLOR_ACTIVE_SUB : COLOR_SUB, 0);
+    lv_obj_set_style_text_font(lbl_title, &lv_font_montserrat_12, 0);
+
+    // --- 3. Fortschrittsbalken für aktive Termine ---
+    if (is_current) {
+      uint64_t total_duration = end_utc - start_utc;
+      int progress = 0;
+
+      const uint64_t ONE_DAY_MS = 86400000ULL;
+
+      if (total_duration > ONE_DAY_MS) {
+        // Mehrtägiger Termin: Fortschritt basierend auf dem heutigen Tag berechnen
+        time_t now_sec = (time_t)(now_ms_utc / 1000ULL) + tz_offset_sec;
+        struct tm *tm_now = gmtime(&now_sec);
+
+        uint64_t day_start_ms = now_ms_utc - ((tm_now->tm_hour * 3600 + tm_now->tm_min * 60 + tm_now->tm_sec) * 1000ULL);
+        uint64_t day_elapsed = (now_ms_utc > day_start_ms) ? (now_ms_utc - day_start_ms) : 0;
+
+        progress = (int)((day_elapsed * 100ULL) / ONE_DAY_MS);
+      } else if (total_duration > 0) {
+        // Normaler Tages-Termin: Regulärer Fortschritt
+        uint64_t elapsed = now_ms_utc - start_utc;
+        progress = (int)((elapsed * 100ULL) / total_duration);
+      }
+
+      // Begrenzung & Mindestbreite (mind. 5% sichtbare Füllung bei aktiven Terminen)
+      if (progress < 5) progress = 5;
+      if (progress > 100) progress = 100;
+
+      lv_obj_t *bar = lv_bar_create(card);
+      lv_obj_set_size(bar, 196, 4);  // Reduziert von 210 auf 196
+      lv_bar_set_value(bar, progress, LV_ANIM_OFF);
+      lv_obj_set_style_bg_color(bar, lv_palette_darken(LV_PALETTE_GREY, 2), LV_PART_MAIN);
+      lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, LV_PART_MAIN);
+    }
+  }
+
+  // Leer-Zustand
+  if (visible_count == 0) {
+    lv_obj_t *empty_card = lv_obj_create(agenda_container);
+    lv_obj_set_width(empty_card, 228);
+    lv_obj_set_height(empty_card, 70);
+    lv_obj_set_style_bg_color(empty_card, COLOR_CARD_BG, 0);
+    lv_obj_set_style_bg_opa(empty_card, LV_OPA_10, 0);
+    lv_obj_set_style_border_width(empty_card, 1, 0);
+    lv_obj_set_style_border_color(empty_card, lv_palette_main(LV_PALETTE_GREY), 0);
+    lv_obj_set_style_radius(empty_card, 8, 0);
+
+    lv_obj_t *lbl_empty = lv_label_create(empty_card);
+    lv_label_set_text(lbl_empty, "No remaining agenda items.");
+    lv_obj_set_style_text_align(lbl_empty, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(lbl_empty, lv_palette_main(LV_PALETTE_GREY), 0);
+    lv_obj_set_style_text_font(lbl_empty, &lv_font_montserrat_14, 0);
+    lv_obj_center(lbl_empty);
   }
 }
