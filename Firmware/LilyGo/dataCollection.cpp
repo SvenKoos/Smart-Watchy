@@ -81,6 +81,8 @@ void collectData(void) {
       locationIntervalCounter = settings.locationUpdateInterval;
     }
 
+    Serial.printf("Location interval counter:%d\n", locationIntervalCounter);
+    Serial.printf("Location update interval:%d\n", settings.locationUpdateInterval);
     if (locationIntervalCounter >= settings.locationUpdateInterval) {  // only update if UPDATE_INTERVAL has elapsed
       scannedWifiNetworks = discoverWiFiNetworks();
 
