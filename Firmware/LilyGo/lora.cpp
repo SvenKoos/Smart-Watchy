@@ -115,8 +115,6 @@ void transmitAlertsToLora() {
       Serial.printf("LoRa payload size: %u bytes\n", sizeof(LoraNotification));
       //  Senden (Blockiert kurz während des Funkvorgangs)
       int state = radio.transmit((uint8_t *)&loraMsg, sizeof(LoraNotification));
-      // non-blocking
-      // int state = radio.startTransmit((uint8_t *)&loraMsg, sizeof(LoraNotification));
       Serial.print("transmitAlertsToLora transmit state: ");
       Serial.println(state, DEC);
     } else {

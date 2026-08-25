@@ -601,9 +601,25 @@ void drawAnalogClock() {
   lv_obj_set_style_text_font(date_label, &lv_font_montserrat_16, 0);
   lv_obj_set_style_text_color(date_label, accent_color, 0);
 
+  // Rahmendicke & Farbe (nutzt accent_color oder z. B. lv_color_white())
+  lv_obj_set_style_border_width(date_label, 1, 0);
+  lv_obj_set_style_border_color(date_label, accent_color, 0);
+
+  // Abgerundete Ecken für das Datumsfenster (z. B. 3px)
+  lv_obj_set_style_radius(date_label, 3, 0);
+
+  // Innenabstände (Padding): Macht das Datumsfenster gleichmäßig breit
+  lv_obj_set_style_pad_left(date_label, 3, 0);
+  lv_obj_set_style_pad_right(date_label, 3, 0);
+  lv_obj_set_style_pad_top(date_label, 1, 0);
+  lv_obj_set_style_pad_bottom(date_label, 1, 0);
+
+  lv_obj_set_style_min_width(date_label, 22, 0);
+  lv_obj_set_style_text_align(date_label, LV_TEXT_ALIGN_CENTER, 0);
+
   // Da die "3" bei -12px vom rechten Rand sitzt, platzieren wir das Datum
   // einfach bei -26px. So steht es wunderschön links daneben!
-  lv_obj_align(date_label, LV_ALIGN_RIGHT_MID, -26, 0);
+  lv_obj_align(date_label, LV_ALIGN_RIGHT_MID, -25, 0);
 
   // 4. Zeiger (Stunde)
   lv_obj_t *hour_line = lv_line_create(clock_cont);
