@@ -21,7 +21,7 @@ typedef struct {
   uint32_t magic;
   char appName[NAME_LEN];
   char title[TITLE_LEN];
-  char body[BODY_LEN];
+  char body[LORA_BODY_LEN];
 } EncryptedPayload;
 
 typedef struct {

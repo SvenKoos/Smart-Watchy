@@ -13,6 +13,7 @@
 #include "weatherData.h"
 #include "config.h"
 #include "settings.h"
+#include "timerEvent.h"
 
 extern accellData currentAccelleration;
 extern alertData currentAlerts;
@@ -970,6 +971,8 @@ void drawAgendaWatchface(void) {
   lv_obj_set_scroll_dir(agenda_container, LV_DIR_VER);
   lv_obj_set_scrollbar_mode(agenda_container, LV_SCROLLBAR_MODE_AUTO);
 
+  registerAgendaEvents(agenda_container);
+
   // Offset in Sekunden und Millisekunden ermitteln
   int32_t tz_offset_sec = (int32_t)currentWeather.offset;
   int64_t tz_offset_ms = (int64_t)tz_offset_sec * 1000LL;
@@ -1129,4 +1132,33 @@ void drawAgendaWatchface(void) {
     lv_obj_set_style_text_font(lbl_empty, &lv_font_montserrat_14, 0);
     lv_obj_center(lbl_empty);
   }
+}
+
+// sub CB: Default
+static void eventGestureAgendaCB(lv_event_t *e) {
+  // 1. Den Event-Code abrufen
+  lv_event_code_t code = lv_event_get_code(e);
+
+  // 2. Den Code prüfen
+  if ((code == LV_EVENT_SCROLL_END) || (code == LV_EVENT_GESTURE) || (code == LV_EVENT_SCROLL)) {
+
+    const char *name = lv_event_code_get_name(code);
+    if (name != NULL) {
+      Serial.print("Event code / name: ");
+      Serial.print(code, DEC);
+      Serial.print(" / ");
+      Serial.println(name);
+    } else {
+      Serial.print("Event code: ");
+      Serial.println(code, DEC);
+    }
+
+    startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
+  }
+}
+
+static void registerAgendaEvents(lv_obj_t *cont) {
+  lv_obj_add_event_cb(cont, eventGestureAgendaCB, LV_EVENT_SCROLL_END, NULL);
+  lv_obj_add_event_cb(cont, eventGestureAgendaCB, LV_EVENT_GESTURE, NULL);
+  lv_obj_add_event_cb(cont, eventGestureAgendaCB, LV_EVENT_SCROLL, NULL);
 }

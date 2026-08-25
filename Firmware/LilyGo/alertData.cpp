@@ -159,7 +159,7 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
         processNewAlertsToLora(oldMin, oldMax, newMin, newMax);
 
         // process to agenda
-        agendaCount = extractAgendaFromAlerts(currentAlerts.count);
+        extractAgendaFromAlerts(currentAlerts.count);
         updateAndSortAgenda();
       }
     }
@@ -422,7 +422,7 @@ String cleanNotificationText(String source) {
   return source;
 }
 
-int extractAgendaFromAlerts(int alertCount) {
+void extractAgendaFromAlerts(int alertCount) {
   for (int i = 0; i < alertCount; i++) {
     String appName = allAlerts[i].appName;
     String title = allAlerts[i].title;
@@ -466,8 +466,6 @@ int extractAgendaFromAlerts(int alertCount) {
       agendaCount++;
     }
   }
-
-  return agendaCount;
 }
 
 // Lightweight, fully portable UTC timegm replacement (Howard Hinnant algorithm)

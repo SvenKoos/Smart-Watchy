@@ -22,6 +22,7 @@
 #define ALERT_MAX_NO 20
 #define AGENDA_MAX_NO 40
 #define MAX_ACCEL_QUIET 5
+#define LORA_BODY_LEN 128
 
 /**********************
  *      TYPEDEFS

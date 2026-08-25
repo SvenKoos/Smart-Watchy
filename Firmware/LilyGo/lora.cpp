@@ -23,21 +23,35 @@ QueueHandle_t loraQueue;
 CTR<AES128> ctraes;
 
 uint32_t getEpochTime() {
-    time_t now;
-    time(&now); // Füllt 'now' mit den aktuellen Sekunden seit 1970
-    return (uint32_t)now;
+  time_t now;
+  time(&now);  // Füllt 'now' mit den aktuellen Sekunden seit 1970
+  return (uint32_t)now;
 }
 
 void setupLora() {
   loraQueue = xQueueCreate(ALERT_MAX_NO, sizeof(LoraNotification));
   xQueueReset(loraQueue);
+
+  // HARTER POWER-CYCLE DES SX1262 VIA PMU
+  Serial.println("Force-Resetting LoRa Power Rail (ALDO4)...");
+  instance.pmu.disableALDO4();  // Strom zum SX1262 komplett KAPPEN
+  delay(1000);                  // 1 Sekunde warten, damit alle Kondensatoren entladen
+  instance.pmu.enableALDO4();   // Strom wieder EINSCHALTEN
+  delay(200);                   // Warten, bis Spannung stabil ist
+
+  // Jetzt das Radio neu initialisieren
+  int initResult = radio.begin();
+  Serial.printf("Radio re-init state: %d\n", initResult);
+
+  // Parameter anwenden
+  settingLoRaParams();
 }
 
 void addMsgToLora(const char *msg) {
   LoraNotification loraMsg;
   strncpy(loraMsg.data.appName, "LilyGo", NAME_LEN);
   strncpy(loraMsg.data.title, "Messenger", TITLE_LEN);
-  strncpy(loraMsg.data.body, msg, BODY_LEN);
+  strncpy(loraMsg.data.body, msg, LORA_BODY_LEN);
   loraMsg.data.magic = settings.loraMagic;
   loraMsg.packetCounter = getEpochTime();
 
@@ -51,7 +65,7 @@ void addAlertToLora(singleAlert alert) {
   LoraNotification loraMsg;
   strncpy(loraMsg.data.appName, alert.appName, NAME_LEN);
   strncpy(loraMsg.data.title, alert.title, TITLE_LEN);
-  strncpy(loraMsg.data.body, alert.body, BODY_LEN);
+  strncpy(loraMsg.data.body, alert.body, LORA_BODY_LEN);
   loraMsg.data.magic = settings.loraMagic;
   loraMsg.packetCounter = getEpochTime();
 
@@ -79,12 +93,6 @@ void transmitAlertsToLora() {
   if (uxMessagesWaiting > 0) {
     // Queue is not empty
 
-    // 1. Radio aufwecken (falls RadioLib Standby/Sleep nutzt)
-    instance.pmu.enableALDO4();  // Radio
-    delay(10);
-    radio.standby();
-    settingLoRaParams();
-
     // send only 1 message per cycle (1 min)
     if (xQueueReceive(loraQueue, &loraMsg, 0) == pdPASS) {
       // encryption
@@ -100,22 +108,24 @@ void transmitAlertsToLora() {
       // Wir überschreiben die Klartext-Daten direkt mit dem Chiffre
       ctraes.encrypt((byte *)&(loraMsg.data), (byte *)&(loraMsg.data), sizeof(EncryptedPayload));
 
+      // Vor dem Senden prüfen, ob der BUSY-Pin noch als belegt gilt
+      Serial.printf("Radio busy check before transmit: %d\n", radio.standby());
+
+      // max 255 bytes in LoRa mode
+      Serial.printf("LoRa payload size: %u bytes\n", sizeof(LoraNotification));
       //  Senden (Blockiert kurz während des Funkvorgangs)
-      int state = radio.transmit((uint8_t*)&loraMsg, sizeof(LoraNotification));
+      int state = radio.transmit((uint8_t *)&loraMsg, sizeof(LoraNotification));
       // non-blocking
       // int state = radio.startTransmit((uint8_t *)&loraMsg, sizeof(LoraNotification));
-
       Serial.print("transmitAlertsToLora transmit state: ");
       Serial.println(state, DEC);
-    }
-    else {
+    } else {
       Serial.print("transmitAlertsToLora No msg. in the queue");
     }
 
     // 4. Radio sofort wieder in den Deep Sleep
     // can be done only in blocking mode
     radio.sleep();
-    instance.pmu.disableALDO4();  // Radio
   }
 }
 

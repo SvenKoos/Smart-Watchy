@@ -45,7 +45,6 @@ void setupPowerMgt() {
 
   instance.pmu.disableDC3();    // GPS aus
   instance.pmu.disableBLDO1();  // GPS aus
-  instance.pmu.disableALDO4();  // Radio (Falls du nur BLE nutzt, prüfe ob das nötig ist. Oft ist das die Versorgung für externe Funkmodule)
 
   // CPU clock
   setCpuFrequencyMhz(80);

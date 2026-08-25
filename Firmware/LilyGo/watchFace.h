@@ -35,6 +35,8 @@ void drawUVI(double uvi_val);
 void drawQlockTwo();
 void drawAgendaHeader(lv_obj_t *parent);
 void drawAgendaWatchface(void);
+static void eventGestureAgendaCB(lv_event_t *e);
+static void registerAgendaEvents(lv_obj_t *cont);
 
 /**********************
  *      MACROS

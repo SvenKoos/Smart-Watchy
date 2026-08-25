@@ -45,7 +45,7 @@ typedef struct agendaItem {
 alertData getAlertData(const String gatewayIP, const String macAdress);
 void vibMotor();
 String cleanNotificationText(String source);
-int extractAgendaFromAlerts(int count);
+void extractAgendaFromAlerts(int count);
 time_t portableTimegm(const tm* tm);
 uint64_t parseIsoToUnixMs(const String& timeStr);
 void updateAndSortAgenda();
