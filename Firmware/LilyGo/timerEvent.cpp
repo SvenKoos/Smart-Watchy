@@ -64,7 +64,7 @@ void startBrightnessTimer(uint seconds) {
     esp_timer_stop(brightness_timer);
   }
 
-  esp_timer_start_once(brightness_timer, seconds * 1000 * 1000);  
+  esp_timer_start_once(brightness_timer, seconds * 1000 * 1000);
 
   Serial.println("startBrightnessTimer Start");
 }
@@ -78,8 +78,15 @@ void stopBrightnessTimer() {
 }
 
 void displayWakup() {
+  // Reset-Pin kurz pulsieren lassen, um den ST7789-Controller aufzuwecken
+  pinMode(DISP_RST, OUTPUT);
+  digitalWrite(DISP_RST, LOW);
+  delay(10);
+  digitalWrite(DISP_RST, HIGH);
+  delay(50);  // Dem Chip Zeit geben, sich zu berappeln
+
   instance.powerControl(POWER_DISPLAY_BACKLIGHT, true);  // Erst Strom an...
-  delay(5);                                             // Ganz kurzes Warten für stabile Spannung
+  delay(5);                                              // Ganz kurzes Warten für stabile Spannung
 
   // 4. Licht wieder an
   uint brightness = DEVICE_MAX_BRIGHTNESS_LEVEL;
