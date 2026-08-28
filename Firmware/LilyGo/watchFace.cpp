@@ -526,34 +526,35 @@ static lv_point_precise_t hour_points[2] = { { 60, 60 }, { 60, 30 } };
 static lv_point_precise_t min_points[2] = { { 60, 60 }, { 60, 15 } };
 
 void drawAnalogClock() {
-  lv_color_t main_white = color_text;                              // Knackiges Weiß für Ziffern & Hauptstriche
-  lv_color_t minor_gray = lv_palette_lighten(LV_PALETTE_GREY, 2);  // Klares Hellgrau für Zwischenstriche
-  lv_color_t accent_color = GetTheme(THEME_DATE_DATA);             // Deine Datumsfarbe
+  lv_color_t main_white = color_text;
+  lv_color_t minor_gray = lv_palette_lighten(LV_PALETTE_GREY, 2);
+  lv_color_t accent_color = GetTheme(THEME_DATE_DATA);
 
-  // 1. Haupt-Container vergrößert auf 120x120
+  // 1. Haupt-Container (120x120)
   lv_obj_t *clock_cont = lv_obj_create(lv_screen_active());
   lv_obj_set_size(clock_cont, 120, 120);
-  lv_obj_align(clock_cont, LV_ALIGN_TOP_LEFT, 12, 12);  // Abstand 10 von links und oben
+  lv_obj_align(clock_cont, LV_ALIGN_TOP_LEFT, 12, 12);
   lv_obj_set_style_bg_opa(clock_cont, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(clock_cont, 0, 0);
   lv_obj_set_style_pad_all(clock_cont, 0, 0);
   lv_obj_set_scrollbar_mode(clock_cont, LV_SCROLLBAR_MODE_OFF);
 
-  // 2. Das Ziffernblatt (Skala) - Jetzt REIN für die Striche, ohne Text-Stress
+  // 2. Das Ziffernblatt (Skala für 24 Stunden)
   lv_obj_t *scale = lv_scale_create(clock_cont);
   lv_obj_set_size(scale, 120, 120);
   lv_obj_center(scale);
 
   lv_scale_set_mode(scale, LV_SCALE_MODE_ROUND_INNER);
-  lv_scale_set_rotation(scale, 270);  // 12 Uhr oben
+  lv_scale_set_rotation(scale, 270);  // Mitternacht / 24 Uhr oben
   lv_scale_set_angle_range(scale, 360);
 
-  lv_scale_set_range(scale, 0, 12);
-  lv_scale_set_total_tick_count(scale, 13);
-  lv_scale_set_major_tick_every(scale, 3);  // Striche bei 12, 3, 6, 9
+  // 24 Stunden Skalierung
+  lv_scale_set_range(scale, 0, 24);
+  lv_scale_set_total_tick_count(scale, 25);  // Striche für jede Stunde
+  lv_scale_set_major_tick_every(scale, 6);   // Hauptstriche alle 6 Stunden (24, 6, 12, 18)
 
-  // STYLES für Striche
-  lv_obj_set_style_length(scale, 8, LV_PART_INDICATOR);  // Schöne, feine Striche
+  // Styles für Striche
+  lv_obj_set_style_length(scale, 8, LV_PART_INDICATOR);
   lv_obj_set_style_length(scale, 4, LV_PART_ITEMS);
   lv_obj_set_style_line_color(scale, main_white, LV_PART_INDICATOR);
   lv_obj_set_style_line_color(scale, minor_gray, LV_PART_ITEMS);
@@ -565,50 +566,46 @@ void drawAnalogClock() {
   lv_obj_set_style_text_opa(scale, LV_OPA_TRANSP, LV_PART_MAIN);
 
   // ==========================================
-  // NEU: Absolute Kontrolle über die 4 Zahlen via Labels
+  // 24H BESCHRIFTUNG VIA LABELS
   // ==========================================
 
-  // 12 Uhr (Oben zentriert, leicht nach unten versetzt)
+  // 24 Uhr / Mitternacht (Oben)
+  lv_obj_t *lbl_24 = lv_label_create(clock_cont);
+  lv_obj_set_style_text_font(lbl_24, &lv_font_montserrat_12, 0);
+  lv_obj_set_style_text_color(lbl_24, main_white, 0);
+  lv_label_set_text(lbl_24, "24");
+  lv_obj_align(lbl_24, LV_ALIGN_TOP_MID, 0, 12);
+
+  // 12 Uhr / Mittag (Unten)
   lv_obj_t *lbl_12 = lv_label_create(clock_cont);
   lv_obj_set_style_text_font(lbl_12, &lv_font_montserrat_12, 0);
   lv_obj_set_style_text_color(lbl_12, main_white, 0);
   lv_label_set_text(lbl_12, "12");
-  lv_obj_align(lbl_12, LV_ALIGN_TOP_MID, 0, 12);
+  lv_obj_align(lbl_12, LV_ALIGN_BOTTOM_MID, 0, -12);
 
-  // 6 Uhr (Unten zentriert, leicht nach oben versetzt)
+  // 18 Uhr / Abend (Links)
+  lv_obj_t *lbl_18 = lv_label_create(clock_cont);
+  lv_obj_set_style_text_font(lbl_18, &lv_font_montserrat_12, 0);
+  lv_obj_set_style_text_color(lbl_18, main_white, 0);
+  lv_label_set_text(lbl_18, "18");
+  lv_obj_align(lbl_18, LV_ALIGN_LEFT_MID, 12, 0);
+
+  // 6 Uhr / Morgen (Rechts)
   lv_obj_t *lbl_6 = lv_label_create(clock_cont);
   lv_obj_set_style_text_font(lbl_6, &lv_font_montserrat_12, 0);
   lv_obj_set_style_text_color(lbl_6, main_white, 0);
   lv_label_set_text(lbl_6, "6");
-  lv_obj_align(lbl_6, LV_ALIGN_BOTTOM_MID, 0, -12);
+  lv_obj_align(lbl_6, LV_ALIGN_RIGHT_MID, -12, 0);
 
-  // 9 Uhr (Links zentriert, leicht nach rechts versetzt)
-  lv_obj_t *lbl_9 = lv_label_create(clock_cont);
-  lv_obj_set_style_text_font(lbl_9, &lv_font_montserrat_12, 0);
-  lv_obj_set_style_text_color(lbl_9, main_white, 0);
-  lv_label_set_text(lbl_9, "9");
-  lv_obj_align(lbl_9, LV_ALIGN_LEFT_MID, 12, 0);
-
-  // 3 Uhr (Rechts zentriert, leicht nach links versetzt)
-  lv_obj_t *lbl_3 = lv_label_create(clock_cont);
-  lv_obj_set_style_text_font(lbl_3, &lv_font_montserrat_12, 0);
-  lv_obj_set_style_text_color(lbl_3, main_white, 0);
-  lv_label_set_text(lbl_3, "3");
-  lv_obj_align(lbl_3, LV_ALIGN_RIGHT_MID, -12, 0);
-
-  // 3. Datumsanzeige (Perfekt LINKS neben der eben erstellten "3")
+  // 3. Datumsanzeige (Gerahmt, links neben der "6")
   lv_obj_t *date_label = lv_label_create(clock_cont);
   lv_obj_set_style_text_font(date_label, &lv_font_montserrat_16, 0);
   lv_obj_set_style_text_color(date_label, accent_color, 0);
 
-  // Rahmendicke & Farbe (nutzt accent_color oder z. B. lv_color_white())
   lv_obj_set_style_border_width(date_label, 1, 0);
   lv_obj_set_style_border_color(date_label, accent_color, 0);
-
-  // Abgerundete Ecken für das Datumsfenster (z. B. 3px)
   lv_obj_set_style_radius(date_label, 3, 0);
 
-  // Innenabstände (Padding): Macht das Datumsfenster gleichmäßig breit
   lv_obj_set_style_pad_left(date_label, 3, 0);
   lv_obj_set_style_pad_right(date_label, 3, 0);
   lv_obj_set_style_pad_top(date_label, 1, 0);
@@ -617,8 +614,6 @@ void drawAnalogClock() {
   lv_obj_set_style_min_width(date_label, 22, 0);
   lv_obj_set_style_text_align(date_label, LV_TEXT_ALIGN_CENTER, 0);
 
-  // Da die "3" bei -12px vom rechten Rand sitzt, platzieren wir das Datum
-  // einfach bei -26px. So steht es wunderschön links daneben!
   lv_obj_align(date_label, LV_ALIGN_RIGHT_MID, -25, 0);
 
   // 4. Zeiger (Stunde)
@@ -648,16 +643,17 @@ void drawAnalogClock() {
 
   lv_label_set_text_fmt(date_label, "%02d", day);
 
-  // NEU: Neuer Mittelpunkt für 120x120
   const int cx = 60;
   const int cy = 60;
 
-  // NEU: Längen an die neue Skala angepasst (Zahlen liegen weiter innen)
   const int hour_len = 28;
   const int min_len = 42;
 
+  // Minutenseiger: Bleibt wie gewohnt (1 Volldrehung = 60 Min = 360°)
   double min_angle = (minutes * 6.0) * M_PI / 180.0 - M_PI_2;
-  double hour_angle = ((hours % 12) * 30.0 + minutes * 0.5) * M_PI / 180.0 - M_PI_2;
+
+  // 24H Stundenzeiger: 360° / 24h = 15° pro Stunde (plus 0.25° pro Minute für fließenden Übergang)
+  double hour_angle = (hours * 15.0 + minutes * 0.25) * M_PI / 180.0 - M_PI_2;
 
   hour_points[1].x = cx + cos(hour_angle) * hour_len;
   hour_points[1].y = cy + sin(hour_angle) * hour_len;
