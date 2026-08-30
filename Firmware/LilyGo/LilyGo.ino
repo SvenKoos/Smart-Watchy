@@ -116,7 +116,7 @@ void setup() {
   // Set brightness to MAX
   // T-LoRa-Pager brightness level is 0 ~ 16
   // T-Watch-S3 , T-Watch-S3-Plus , T-Watch-Ultra brightness level is 0 ~ 255
-  displayWakup();
+  displayWakeUp();
   Serial.println("setup Brightness set to Max");
 
   // initial operation:
@@ -193,11 +193,12 @@ void loop() {
         Serial.println("Echtes Klopfen erkannt! Wecke System...");
         guiState = WATCHFACE_STATE;
         currentAccelleration.isMoved = true;
-        drawWatchFace();
 
-        // sequence: update content, wake-up display, set brightness
+        // sequence: wake-up display, update content, lvgl handler, backlight on, set brightness timer
+        displayWakeUp();
+        drawWatchFace();
         lv_timer_handler();
-        displayWakup();
+        BacklightOn();
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
       }
     }

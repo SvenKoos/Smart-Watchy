@@ -74,9 +74,14 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
 
         handle_button_emergency_reset();
 
+        // sequence: wake-up display, update content, lvgl handler, backlight on, set brightness timer
+
         if (guiState == DARK_STATE) {
           guiState = WATCHFACE_STATE;
           currentAccelleration.isMoved = true;
+
+          displayWakeUp();
+
           drawWatchFace();
         } else if (guiState == WATCHFACE_STATE) {
           // GUI state
@@ -86,9 +91,10 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
           menuHandler();
         }
 
-        // sequence: update content, wake-up display, set brightness
         lv_timer_handler();
-        displayWakup();
+
+        BacklightOn();
+
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         break;
@@ -104,27 +110,36 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
       case PMU_EVENT_USBC_REMOVE:
         // Serial.println("Power adapter removed");
 
+        // sequence: wake-up display, update content, lvgl handler, backlight on, set brightness timer
+        displayWakeUp();
+
         // draw the watchface screen
         guiState = WATCHFACE_STATE;
         currentAccelleration.isMoved = true;
         drawWatchFace();
 
-        // sequence: update content, wake-up display, set brightness
         lv_timer_handler();
-        displayWakup();
+
+        BacklightOn();
+
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
+
         break;
       case PMU_EVENT_USBC_INSERT:
         // Serial.println("Power adapter plugged in");
 
+        // sequence: wake-up display, update content, lvgl handler, backlight on, set brightness timer
+        displayWakeUp();
+
         // draw the watchface screen
         guiState = WATCHFACE_STATE;
         currentAccelleration.isMoved = true;
         drawWatchFace();
 
-        // sequence: update content, wake-up display, set brightness
         lv_timer_handler();
-        displayWakup();
+
+        BacklightOn();
+
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         break;
@@ -161,6 +176,8 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
       case SENSOR_DOUBLE_TAP_DETECTED:
         Serial.println("DoubleTap event");
 
+        // sequence: wake-up display, update content, lvgl handler, backlight on, set brightness timer
+
         if (guiState == WATCHFACE_STATE) {
           Serial.println("DoubleTap event: watchface state");
 
@@ -188,14 +205,17 @@ static void device_event_cb(DeviceEvent_t event, void* params, void* user_data) 
         } else if (guiState == DARK_STATE) {
           Serial.println("DoubleTap event: dark state");
 
+          displayWakeUp();
+
           guiState = WATCHFACE_STATE;
           currentAccelleration.isMoved = true;
           drawWatchFace();
         }
 
-        // sequence: update content, wake-up display, set brightness
         lv_timer_handler();
-        displayWakup();
+
+        BacklightOn();
+
         startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
         break;

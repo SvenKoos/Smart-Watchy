@@ -39,7 +39,7 @@ static void timerBrightness_cb(void *arg) {
   Serial.println("timerBrightness_cb Start");
   // Set brightness to MIN
   // T-Watch-S3 , T-Watch-S3-Plus , T-Watch-Ultra brightness level is 0 ~ 255
-  displayGoToSleep();
+  BacklightOff();
 
   // GUI state
   guiState = DARK_STATE;
@@ -77,14 +77,16 @@ void stopBrightnessTimer() {
     Serial.printf("stopBrightnessTimer Stop Failure: %u\n", err);
 }
 
-void displayWakup() {
-  // Reset-Pin kurz pulsieren lassen, um den ST7789-Controller aufzuwecken
-  pinMode(DISP_RST, OUTPUT);
-  digitalWrite(DISP_RST, LOW);
+void displayWakeUp() {
+  // Display & Touch
+  instance.pmu.disableALDO3();
   delay(10);
-  digitalWrite(DISP_RST, HIGH);
-  delay(50);  // Dem Chip Zeit geben, sich zu berappeln
+  instance.pmu.enableALDO3();
+  delay(30);  // Zeit geben, damit der Display-Chip booten kann
+}
 
+void BacklightOn() {
+  // Backlight
   instance.powerControl(POWER_DISPLAY_BACKLIGHT, true);  // Erst Strom an...
   delay(5);                                              // Ganz kurzes Warten für stabile Spannung
 
@@ -98,7 +100,7 @@ void displayWakup() {
   instance.setBrightness(brightness);
 }
 
-void displayGoToSleep() {
+void BacklightOff() {
   // 1. Licht aus (Soforteffekt)
   // instance.setBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);
   instance.decrementBrightness(DEVICE_MIN_BRIGHTNESS_LEVEL);

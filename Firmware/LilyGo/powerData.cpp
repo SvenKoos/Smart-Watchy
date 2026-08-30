@@ -42,6 +42,9 @@ void setupPowerMgt() {
   instance.pmu.enableVbusVoltageMeasure();
   instance.pmu.enableBattVoltageMeasure();
   instance.pmu.enableSystemVoltageMeasure();
+  
+  instance.pmu.enableALDO3(); // Display & Touch
+  instance.pmu.enableALDO2(); // backlight
 
   instance.pmu.disableDC3();    // GPS aus
   instance.pmu.disableBLDO1();  // GPS aus

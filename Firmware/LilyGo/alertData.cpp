@@ -143,6 +143,9 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
           // GUI state
           guiState = ALERT_STATE;
 
+          // sequence: wake-up display, update content, lvgl handler, backlight on, set brightness timer
+          displayWakeUp();
+
           // prepare the  screen object
           prepareAlertScreen(0);
 
@@ -150,9 +153,10 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
           int alertIndex = currentAlerts.count - 1;
           showAlert(allAlerts[alertIndex], alertIndex, 0);
 
-          // sequence: update content, wake-up display, set brightness
           lv_timer_handler();
-          displayWakup();
+
+          BacklightOn();
+
           startBrightnessTimer(BRIGHTNESS_TIMEOUT_ALERT);
         }
         // process to Lora
