@@ -192,6 +192,10 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
 }
 
 void vibMotor() {
+  // Stromversorgung für den DRV2605-Treiber auf der T-Watch-S3 aktivieren
+  instance.pmu.enableBLDO2();
+  delay(5);  // Kurze Pause, damit die Spannung am Chip stabil steht
+
   // from firmware src
   instance.drv.selectLibrary(1);
   instance.drv.setMode(SensorDRV2605::MODE_INTTRIG);
