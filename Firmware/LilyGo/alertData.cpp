@@ -165,7 +165,11 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
         // process to agenda
         extractAgendaFromAlerts(currentAlerts.count);
         updateAndSortAgenda();
+      } else {
+        newAlertsIndicator = false;
       }
+    } else {
+      newAlertsIndicator = false;
     }
 
     Serial.print("getAlertData No. of alerts: ");
