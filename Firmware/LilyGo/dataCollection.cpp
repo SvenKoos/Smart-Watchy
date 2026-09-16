@@ -66,7 +66,6 @@ void collectData(void) {
     }
   }
 
-  String scannedWifiNetworks;
   double ltd = 0;
   double lng = 0;
 

@@ -113,6 +113,21 @@ void transmitAlertsToLora() {
 
       // max 255 bytes in LoRa mode
       Serial.printf("LoRa payload size: %u bytes\n", sizeof(LoraNotification));
+
+      // observed case: ALDO4 off
+      if (instance.pmu.isEnableALDO4() == false) {
+        instance.pmu.enableALDO4();  // Strom wieder EINSCHALTEN
+        delay(200);                  // Warten, bis Spannung stabil ist
+
+        // Jetzt das Radio neu initialisieren
+        int initResult = radio.begin();
+        delay(200);
+        Serial.printf("Radio re-init state: %d\n", initResult);
+
+        // Parameter anwenden
+        settingLoRaParams();
+      }
+
       //  Senden (Blockiert kurz während des Funkvorgangs)
       int state = radio.transmit((uint8_t *)&loraMsg, sizeof(LoraNotification));
       Serial.print("transmitAlertsToLora transmit state: ");
@@ -215,3 +230,4 @@ void settingLoRaParams() {
     Serial.println(F("Failed to set DIO2 as RF switch!"));
   }
 }
+

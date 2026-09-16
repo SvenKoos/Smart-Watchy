@@ -119,23 +119,28 @@ void setup() {
   displayWakeUp();
   Serial.println("setup Brightness set to Max");
 
+  // start timer for watch face
+  update_gui_request = false;
+
+  // timer for watchface
+  timerEventWatchface();
+
+  // timer for brightness
+  timerEventBrightness(10);
+
   // initial operation:
   // get the data initially
   Serial.println("setup Collect data");
   collectData();
 
+  // initial watchface
   // GUI state
   guiState = WATCHFACE_STATE;
-  // draw the watch face initially
   watchFaceSetup();
+  displayWakeUp();
   drawWatchFace();
-
-  // start timer for watch face - Problem
-  update_gui_request = false;
-  timerEventWatchface();
-
-  // start timer for minimal brightness
-  timerEventBrightness(10);
+  BacklightOn();
+  startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 }
 
 void loop() {
