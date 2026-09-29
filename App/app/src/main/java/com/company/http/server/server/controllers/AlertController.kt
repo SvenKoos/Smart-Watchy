@@ -22,23 +22,20 @@ fun Route.alertController(_httpService: HttpService) {
     get("/alert") {
         Timber.d("alertController {operation=GET /alert}")
 
-        // SvKo
-        val parameterString = "MAC="
         var responseCode = HttpStatusCode.OK
-        Timber.d(call.request.uri)
-//        if (call.request.uri.contains (parameterString)) {
-            val prefRemoteMACAddress = SettingsActivity.prefRemoteMACAddress
-            if (prefRemoteMACAddress != "00:00:00:00:00:00") {
-                val index = call.request.uri.indexOf(parameterString)
-                val remoteMACAddress = call.request.uri.substring(index + parameterString.length).replace("%3A", ":")
-                Timber.d("alertController {operation=GET /alert}, prefRemoteMACAddress=${prefRemoteMACAddress}, remoteMACAddress=${remoteMACAddress}")
-                if (prefRemoteMACAddress != remoteMACAddress) {
-                    responseCode = HttpStatusCode.Forbidden
-                }
-            }
-//        }
+        val prefRemoteMACAddress = SettingsActivity.prefRemoteMACAddress
 
-        // SvKo
+        if (prefRemoteMACAddress != "00:00:00:00:00:00") {
+            // Sicheres Auslesen des URL-Query-Parameters "MAC"
+            val remoteMACAddress = call.request.queryParameters["MAC"]?.replace("%3A", ":")
+
+            Timber.d("alertController {operation=GET /alert}, prefRemoteMACAddress=${prefRemoteMACAddress}, remoteMACAddress=${remoteMACAddress}")
+
+            if (remoteMACAddress == null || prefRemoteMACAddress != remoteMACAddress) {
+                responseCode = HttpStatusCode.Forbidden
+            }
+        }
+
         if (responseCode == HttpStatusCode.OK) {
             httpService.alertService = alertService
             call.respond(responseCode, ResponseBase(data = alertService.alertList()))

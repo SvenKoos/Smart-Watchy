@@ -23,7 +23,7 @@ class AlertRepositoryImp (): AlertRepository {
 
     override fun addAlert(alert: Alert): Alert {
         if (alertList.size >= maxNoAlerts) {
-            alertList.removeFirst()
+            alertList.removeAt(0)
         }
         val newAlert = alert.copy(id = ++idCount)
         alertList.add(newAlert)

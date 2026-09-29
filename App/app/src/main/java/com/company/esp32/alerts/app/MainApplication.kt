@@ -2,13 +2,10 @@ package com.company.esp32.alerts.app
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.support.multidex.MultiDexApplication
+import androidx.multidex.MultiDexApplication // Ersetzt android.support.multidex.MultiDexApplication
 import timber.log.Timber
 import com.company.esp32.alerts.BuildConfig
 
-/**
- *
- */
 class MainApplication : MultiDexApplication() {
 
     companion object {
@@ -25,6 +22,4 @@ class MainApplication : MultiDexApplication() {
             Timber.plant(Timber.DebugTree())
         }
     }
-
-
 }
