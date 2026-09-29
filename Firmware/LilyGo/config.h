@@ -41,7 +41,7 @@
 
 // agenda variables
 #define agendaMsgAppName "Teams"
-#define agendaMsgTitle "Workflows"
+#define agendaMsgTitle "Workflows: Workflows"
 
 // encryption
 // 16-Byte Schlüssel (128-Bit), den T-Watch und T-Echo teilen
