@@ -36,8 +36,8 @@ android {
         applicationId "com.company.esp32.alerts"
         minSdk 23
         targetSdk 34
-        versionCode 3
-        versionName = "3.0.0"    // Text-Anzeige: Das ist der String, den du in der App-Verwaltung siehst        multiDexEnabled true
+        versionCode 5
+        versionName = "3.0.2"    // Text-Anzeige: Das ist der String, den du in der App-Verwaltung siehst        multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -97,6 +97,9 @@ dependencies {
 
     // Dependency Injection
     implementation "io.insert-koin:koin-ktor:3.1.2"
+
+    // preferences
+    implementation 'androidx.preference:preference-ktx:1.2.1'
 
     // Testing
     testImplementation 'junit:junit:4.13.2'

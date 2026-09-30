@@ -43,6 +43,16 @@ class HttpService : Service() {
         initNotificationChannel()
     }
 
+    override fun onDestroy() {
+        Timber.w("Http Service onDestroy() called!")
+        super.onDestroy()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Timber.w("HttpService onTaskRemoved() - App removed from Recent Apps!")
+        super.onTaskRemoved(rootIntent)
+    }
+
     private fun initNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationMgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

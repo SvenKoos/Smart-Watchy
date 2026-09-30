@@ -1,6 +1,8 @@
 package com.company.esp32.alerts
 
 import android.Manifest
+import android.app.ActivityManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -31,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     lateinit var fab: FloatingActionButton
-    lateinit var menu: Menu
+    private var optionsMenu: Menu? = null
     var alertDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -114,8 +116,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
-        this.menu = menu
-        return super.onCreateOptionsMenu(menu)
+        this.optionsMenu = menu
+        return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val serviceRunning = isServiceRunning(ForegroundService::class.java)
+        menu.findItem(R.id.menu_item_kill)?.isVisible = serviceRunning
+        menu.findItem(R.id.menu_item_start)?.isVisible = !serviceRunning
+        return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -126,14 +135,12 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.menu_item_kill -> {
                 stopService(Intent(this, ForegroundService::class.java))
-                item.isVisible = false
-                menu.findItem(R.id.menu_item_start)?.isVisible = true
+                invalidateOptionsMenu() // Menü-Zustand aktualisieren
                 true
             }
             R.id.menu_item_start -> {
                 checkPermissionAndStartForegroundService()
-                item.isVisible = false
-                menu.findItem(R.id.menu_item_kill)?.isVisible = true
+                invalidateOptionsMenu() // Menü-Zustand aktualisieren
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -143,17 +150,24 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         checkPermissionAndStartForegroundService()
+        invalidateOptionsMenu()
         Timber.w("onStart")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        val isRunAsAService = PreferenceManager.getDefaultSharedPreferences(this)
-            .getBoolean(SettingsActivity.PREF_KEY_RUN_AS_A_SERVICE, false)
-        Timber.w("onDestroy {isService=$isRunAsAService}")
-        if (!isRunAsAService) {
-            stopService(Intent(this, ForegroundService::class.java))
+        Timber.w("MainActivity onDestroy - ForegroundService stays active.")
+    }
+
+    private fun isServiceRunning(serviceClass: Class<*>): Boolean {
+        val manager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        @Suppress("DEPRECATION")
+        for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+            if (serviceClass.name == service.service.className) {
+                return true
+            }
         }
+        return false
     }
 
     private fun checkPermissionAndStartForegroundService() {
