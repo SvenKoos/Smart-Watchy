@@ -215,7 +215,17 @@ class ForegroundService : Service() {
 
                     // Nachrichten direkt über den dauerhaft gebundenen HttpService senden
                     if (isBound && myService != null) {
-                        myService?.sendAlert(notificationId, notificationAppName, notificationTitle, notificationBody, notificationTimestamp)
+                        try {
+                            myService?.sendAlert(
+                                notificationId,
+                                notificationAppName,
+                                notificationTitle,
+                                notificationBody,
+                                notificationTimestamp
+                            )
+                        } catch (e: Exception) {
+                            Timber.w("ForegroundService: Fehler beim Verarbeiten/Senden des Alerts")
+                        }
                     } else {
                         Timber.w("HttpService nicht gebunden, versuche Re-Bind...")
                         startAndBindHttpService()

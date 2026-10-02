@@ -13,8 +13,6 @@ class AlertService (): KoinComponent {
     fun alertList(): List<Alert> = alertRepository.alertList()
 
     fun addAlert(alert: Alert): Alert {
-        if (alert.id == 0)
-            throw MissingParamsException("id")
         if (alert.appName == null)
             throw MissingParamsException("appName")
         if (alert.title == null)
