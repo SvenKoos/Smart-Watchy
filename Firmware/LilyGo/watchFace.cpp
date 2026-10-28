@@ -111,7 +111,10 @@ void drawWatchFace() {
       if ((watchType != QLOCKTWO_WATCH) && (watchType != AGENDA_WATCH)) {
         drawWeather();
 
-        drawSolarArc(currentWeather.currentSunrise, currentWeather.currentSunset, currentWeather.currentDT);
+        // Aktuelle Systemzeit als Unix-Timestamp holen
+        time_t now;
+        time(&now);
+        drawSolarArc(currentWeather.currentSunrise, currentWeather.currentSunset, (uint32_t)now);
 
         drawUVI(currentWeather.uvi);
       }
