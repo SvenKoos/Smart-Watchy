@@ -24,6 +24,8 @@ extern bool newAlertsIndicator;
 extern lv_color_t color_bg;
 extern lv_color_t color_text;
 
+extern bool newAlertsIndicator;
+
 int alertIndex = -1;
 
 lv_style_t styleAlerts;
@@ -232,6 +234,8 @@ static void alertEventCB(lv_event_t* e) {
   // set brightness
   startBrightnessTimer(BRIGHTNESS_TIMEOUT_DEFAULT);
 
+  newAlertsIndicator = false;
+
   if ((guiState == ALERT_STATE) && (lv_event_get_code(e) == LV_EVENT_GESTURE)) {
     // 500ms Sperrzeit nach der letzten erfolgreichen Geste
     if (lv_tick_elaps(last_gesture_time) < 500) {
@@ -266,6 +270,10 @@ static void alertEventCB(lv_event_t* e) {
         break;
     }
   }
+  // Wenn das Scroll-Event ausgelöst wird, sorgt der obere Aufruf von startBrightnessTimer(...) bereits dafür, dass das Display an bleibt.
+  else if ((guiState == ALERT_STATE) && (lv_event_get_code(e) == LV_EVENT_SCROLL)) {
+    // Hier ist keine zusätzliche Logik nötig, da der Timer am Anfang der Funktion bei jedem Scroll-Schritt ohnehin getriggert wird.
+  }
 }
 
 lv_obj_t* prepareAlertScreen(int count) {
@@ -278,6 +286,9 @@ lv_obj_t* prepareAlertScreen(int count) {
   lv_obj_add_flag(alert_scr, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_set_scrollbar_mode(alert_scr, LV_SCROLLBAR_MODE_AUTO);
   lv_obj_add_event_cb(alert_scr, alertEventCB, LV_EVENT_GESTURE, NULL);
+
+  // NEU: Auch das Scroll-Event abfangen, damit der Brightness-Timer beim Scrollen getriggert wird!
+  lv_obj_add_event_cb(alert_scr, alertEventCB, LV_EVENT_SCROLL, NULL);
 
   // --- HEADER AREA ---
   static lv_style_t styleHeader;

@@ -147,11 +147,11 @@ alertData getAlertData(const String gatewayIP, const String macAdress) {
           displayWakeUp();
 
           // prepare the  screen object
-          prepareAlertScreen(0);
+          prepareAlertScreen(currentAlerts.count);
 
           // show the newest alert
           int alertIndex = currentAlerts.count - 1;
-          showAlert(allAlerts[alertIndex], alertIndex, 0);
+          showAlert(allAlerts[alertIndex], alertIndex, currentAlerts.count);
 
           lv_timer_handler();
 
