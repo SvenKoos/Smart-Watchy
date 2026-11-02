@@ -363,6 +363,8 @@ lv_obj_t* prepareAlertScreen(int count) {
 
   last_gesture_time = 0;
 
+  alertIndex = count - 1;
+
   return alert_scr;
 }
 
